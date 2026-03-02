@@ -267,6 +267,7 @@ cd apps/mobile/build/web && python3 -m http.server 8888
 | mobile-automation | `/mobile-automation` | MCP (dart-mcp + Marionette) E2E自動化・UI検証ガイド |
 | self-review | `/self-review` | タスク完了前のセルフレビュー |
 | update-store | `/update-store` | ストアスクショ自動撮影 + メタデータテキスト更新 |
+| sim-preview | `/sim-preview` | シミュレーター起動 + TrollVNC でリモートプレビュー（iPhone VNC Viewer で確認） |
 | web-preview | `/web-preview` | Web版ビルド・サーバー起動・Playwrightアクセス確認・URL案内 |
 | flutter-ui-design | `/flutter-ui-design` | Flutter UI実装規約 (Bloc/Cubit + Freezed) |
 | merge | `/merge` | 作業ブランチをmainにマージ |
