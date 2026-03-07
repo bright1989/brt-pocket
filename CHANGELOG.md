@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.31.0] - 2026-03-07
+
+### Added
+- In-app review prompts for user feedback
+- Swipe gesture to switch between Claude and Codex in new session sheet
+- Swipe-to-archive with confirmation dialog for recent sessions
+- Dynamic model list delivery from Bridge Server
+
+### Changed
+- Model lists updated to latest available versions
+
+### Fixed
+- Image MIME type detection using magic bytes instead of file extension
+- Android autofill on prompt input field
+- App Store compliance: removed Apple trademark and OpenAI references from metadata
+
 ## [1.30.0] - 2026-03-03
 
 ### Added
