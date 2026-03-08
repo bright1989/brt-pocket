@@ -276,6 +276,20 @@ export async function validateClaudeAccessToken(): Promise<ClaudeAuthProbeResult
   return probeClaudeAccessToken(refreshed.accessToken);
 }
 
+/**
+ * Check Claude authentication status using **local credentials only**.
+ *
+ * This intentionally does NOT probe the upstream API to avoid redundant
+ * requests — the usage endpoint (`fetchClaudeUsage`) already contacts the
+ * same API, and firing both simultaneously causes 429 rate-limit errors.
+ *
+ * For OAuth credentials we verify:
+ *   1. An access token exists.
+ *   2. The token has not yet expired (with a small skew margin).
+ *
+ * Actual API reachability is implicitly validated by the usage fetch that
+ * runs in parallel on the Flutter settings screen.
+ */
 export async function getClaudeAuthStatus(): Promise<ClaudeAuthStatus> {
   if (process.env.ANTHROPIC_API_KEY) {
     return {
@@ -296,20 +310,29 @@ export async function getClaudeAuthStatus(): Promise<ClaudeAuthStatus> {
       };
     }
 
-    const validation = await validateClaudeAccessToken();
-    if (validation.ok) {
+    // Local expiry check — avoids an API round-trip.
+    if (creds.expiresAt && Date.now() > creds.expiresAt - TOKEN_EXPIRY_SKEW_MS) {
+      // Token expired or about to expire. If we have a refresh token the
+      // usage fetch will attempt a refresh anyway, so just flag it here.
+      if (creds.refreshToken) {
+        return {
+          authenticated: true,
+          source: "oauth",
+          message: "Claude Code is authenticated (token will be refreshed).",
+        };
+      }
       return {
-        authenticated: true,
-        source: "oauth",
-        message: "Claude Code is authenticated.",
+        authenticated: false,
+        source: "none",
+        message: "Claude Code access token has expired.",
+        errorCode: "auth_login_required",
       };
     }
 
     return {
-      authenticated: false,
-      source: "none",
-      message: validation.detail ?? "Claude Code authentication failed.",
-      errorCode: "auth_api_error",
+      authenticated: true,
+      source: "oauth",
+      message: "Claude Code is authenticated.",
     };
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
@@ -342,7 +365,9 @@ export async function fetchClaudeUsage(): Promise<UsageInfo> {
       },
     });
 
-    if (res.status === 401 && auth.refreshToken) {
+    // 401 = expired/invalid token, 429 = token-level rate limit.
+    // In both cases a fresh token resolves the issue.
+    if ((res.status === 401 || res.status === 429) && auth.refreshToken) {
       const refreshed = await refreshClaudeAccessToken(auth.refreshToken);
       token = refreshed.accessToken;
       res = await fetch("https://api.anthropic.com/api/oauth/usage", {
