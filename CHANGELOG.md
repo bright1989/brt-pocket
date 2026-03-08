@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.33.0] - 2026-03-08
+
+### Added
+- Claude authentication flow in settings for API key management
+- Extended FAB with "New" label and raised position for better accessibility
+
+### Changed
+- Improved error messages with errorCode and structured UI display
+
+### Fixed
+- Upgraded Flutter 3.41.2 → 3.41.4 to fix iOS launch crash
+- Reset plan mode state after exit approval
+
 ## [1.32.0] - 2026-03-07
 
 ### Added
