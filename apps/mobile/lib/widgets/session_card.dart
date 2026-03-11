@@ -28,6 +28,7 @@ class RunningSessionCard extends StatefulWidget {
   final ValueChanged<String>? onApproveAlways;
   final void Function(String toolUseId, {String? message})? onReject;
   final void Function(String toolUseId, String result)? onAnswer;
+  final bool isUnseen;
 
   const RunningSessionCard({
     super.key,
@@ -39,6 +40,7 @@ class RunningSessionCard extends StatefulWidget {
     this.onApproveAlways,
     this.onReject,
     this.onAnswer,
+    this.isUnseen = false,
   });
 
   @override
@@ -98,10 +100,15 @@ class _RunningSessionCardState extends State<RunningSessionCard> {
       permissionMode: session.permissionMode,
       pendingPermission: session.pendingPermission,
     );
+    final isReadyUnseen =
+        visualStatus.primary == SessionPrimaryStatus.ready && widget.isUnseen;
     final statusColor = switch (visualStatus.primary) {
       SessionPrimaryStatus.working => appColors.statusRunning,
       SessionPrimaryStatus.needsYou => appColors.statusApproval,
-      SessionPrimaryStatus.ready => appColors.statusIdle,
+      SessionPrimaryStatus.ready =>
+        isReadyUnseen
+            ? Theme.of(context).colorScheme.onSurface
+            : appColors.statusIdle,
     };
 
     final permission = session.pendingPermission;
@@ -171,7 +178,9 @@ class _RunningSessionCardState extends State<RunningSessionCard> {
                           visualStatus.label,
                           style: TextStyle(
                             fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: isReadyUnseen
+                                ? FontWeight.w700
+                                : FontWeight.w600,
                             color: statusColor,
                           ),
                         ),

@@ -25,6 +25,7 @@ class HomeContent extends StatefulWidget {
   final bool isInitialLoading;
   final bool hasMoreSessions;
   final Set<String> archivingSessionIds;
+  final Set<String> unseenSessionIds;
   final String? currentProjectFilter;
   final VoidCallback onNewSession;
   final void Function(
@@ -72,6 +73,7 @@ class HomeContent extends StatefulWidget {
     required this.isInitialLoading,
     required this.hasMoreSessions,
     this.archivingSessionIds = const {},
+    this.unseenSessionIds = const {},
     required this.currentProjectFilter,
     required this.onNewSession,
     required this.onTapRunning,
@@ -259,6 +261,7 @@ class _HomeContentState extends State<HomeContent> {
               },
               child: RunningSessionCard(
                 session: session,
+                isUnseen: widget.unseenSessionIds.contains(session.id),
                 onLongPress: () => widget.onLongPressRunningSession(session),
                 onTap: () => widget.onTapRunning(
                   session.id,

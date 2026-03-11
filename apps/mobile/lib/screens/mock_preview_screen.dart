@@ -652,11 +652,21 @@ class _MockSessionListWrapper extends StatefulWidget {
 class _MockSessionListWrapperState extends State<_MockSessionListWrapper> {
   late List<SessionInfo> _sessions;
   final List<String> _log = [];
+  final Set<String> _unseenSessionIds = {};
 
   @override
   void initState() {
     super.initState();
     _sessions = _buildSessions();
+    _initUnseenSessions();
+  }
+
+  /// Mark idle sessions as unseen for the "All Statuses" scenario
+  /// to demonstrate the unseen indicator.
+  void _initUnseenSessions() {
+    if (widget.scenario.name == 'All Statuses') {
+      _unseenSessionIds.add('mock-status-idle');
+    }
   }
 
   List<SessionInfo> _buildSessions() {
@@ -746,6 +756,8 @@ class _MockSessionListWrapperState extends State<_MockSessionListWrapper> {
   void _reset() {
     setState(() {
       _sessions = _buildSessions();
+      _unseenSessionIds.clear();
+      _initUnseenSessions();
       _log.clear();
     });
   }
@@ -776,7 +788,13 @@ class _MockSessionListWrapperState extends State<_MockSessionListWrapper> {
                 for (final session in _sessions)
                   RunningSessionCard(
                     session: session,
-                    onTap: () => _addLog('Tap: ${session.id}'),
+                    isUnseen: _unseenSessionIds.contains(session.id),
+                    onTap: () {
+                      if (_unseenSessionIds.contains(session.id)) {
+                        setState(() => _unseenSessionIds.remove(session.id));
+                      }
+                      _addLog('Tap: ${session.id}');
+                    },
                     onStop: () => _addLog('Stop: ${session.id}'),
                     onApprove:
                         (
