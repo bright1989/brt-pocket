@@ -191,3 +191,24 @@ gh pr diff <番号>
 - **修正が必要な点**: [具体的な修正箇所]
 - **Co-authored-by**: `Co-authored-by: Name <email>`
 ```
+
+## 返信コメントの言語ルール
+
+Issue/PRにコメントを投稿する際は、投稿者の言語に合わせて対応する:
+
+- **英語で書かれている場合**: 英語のみで返信
+- **英語以外の言語で書かれている場合**: 元の言語 + 英語の両方で返信
+
+Issue/PRのタイトル・本文・コメントから投稿者の言語を判定する。
+バイリンガル返信の場合は、元言語を先に書き、`---` で区切って英語を後に続ける。
+
+**例: 日本語のIssueへの返信**
+```
+ご提案ありがとうございます！この機能は v1.5.0 で実装済みです。
+セッション一覧画面で未読インジケーターが表示されます。
+
+---
+
+Thank you for the suggestion! This feature has been implemented in v1.5.0.
+You'll see unread indicators on the session list screen.
+```
