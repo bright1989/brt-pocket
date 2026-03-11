@@ -169,6 +169,7 @@ class _RunningSessionCardState extends State<RunningSessionCard> {
                         _StatusDot(
                           color: statusColor,
                           animate: visualStatus.animate,
+                          glow: isReadyUnseen,
                           inPlanMode:
                               visualStatus.showPlanBadge &&
                               visualStatus.animate,
@@ -179,7 +180,7 @@ class _RunningSessionCardState extends State<RunningSessionCard> {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: isReadyUnseen
-                                ? FontWeight.w700
+                                ? FontWeight.w800
                                 : FontWeight.w600,
                             color: statusColor,
                           ),
@@ -1995,10 +1996,12 @@ class _SummaryRow extends StatelessWidget {
 class _StatusDot extends StatefulWidget {
   final Color color;
   final bool animate;
+  final bool glow;
   final bool inPlanMode;
   const _StatusDot({
     required this.color,
     required this.animate,
+    this.glow = false,
     this.inPlanMode = false,
   });
 
@@ -2067,6 +2070,7 @@ class _StatusDotState extends State<_StatusDot> with TickerProviderStateMixin {
             color: widget.color,
             pulseValue: _pulseAnimation.value,
             animate: widget.animate,
+            glow: widget.glow,
             inPlanMode: widget.inPlanMode,
             orbitProgress: _orbitController.value,
             planColor: appColors.statusPlan,
@@ -2083,6 +2087,7 @@ class _StatusDotPainter extends CustomPainter {
   final Color color;
   final double pulseValue;
   final bool animate;
+  final bool glow;
   final bool inPlanMode;
   final double orbitProgress;
   final Color planColor;
@@ -2093,6 +2098,7 @@ class _StatusDotPainter extends CustomPainter {
     required this.color,
     required this.pulseValue,
     required this.animate,
+    this.glow = false,
     required this.inPlanMode,
     required this.orbitProgress,
     required this.planColor,
@@ -2105,10 +2111,15 @@ class _StatusDotPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     const dotRadius = 5.0;
 
-    // Glow behind the dot
+    // Glow behind the dot (animated pulse or static unseen glow)
     if (animate) {
       final glowPaint = Paint()
         ..color = color.withValues(alpha: pulseValue * 0.4)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+      canvas.drawCircle(center, dotRadius + 1.5, glowPaint);
+    } else if (glow) {
+      final glowPaint = Paint()
+        ..color = color.withValues(alpha: 0.4)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
       canvas.drawCircle(center, dotRadius + 1.5, glowPaint);
     }
@@ -2178,6 +2189,7 @@ class _StatusDotPainter extends CustomPainter {
       oldDelegate.pulseValue != pulseValue ||
       oldDelegate.orbitProgress != orbitProgress ||
       oldDelegate.color != color ||
+      oldDelegate.glow != glow ||
       oldDelegate.inPlanMode != inPlanMode;
 }
 

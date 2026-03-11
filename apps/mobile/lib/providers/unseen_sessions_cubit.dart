@@ -71,8 +71,13 @@ class UnseenSessionsCubit extends Cubit<Set<String>> {
   }
 
   /// Mark a session as seen (user tapped into it).
+  ///
+  /// Uses a timestamp far in the future (+1 day) so that activity generated
+  /// immediately after the user sends a message (before the session transitions
+  /// to "working") does not re-trigger the unseen indicator.
   void markSeen(String sessionId) {
-    _seenAt[sessionId] = DateTime.now().toUtc().toIso8601String();
+    _seenAt[sessionId] =
+        DateTime.now().toUtc().add(const Duration(days: 1)).toIso8601String();
     _saveSeenAt();
 
     final next = Set<String>.from(state)..remove(sessionId);

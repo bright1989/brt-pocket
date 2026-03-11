@@ -148,6 +148,9 @@ class _SessionListScreenState extends State<SessionListScreen>
           return;
         }
         if (msg.sessionId != null) {
+          // Mark the newly created session as seen so it doesn't
+          // appear as unseen when the user returns to the list.
+          _unseenCubit.markSeen(msg.sessionId!);
           if (_pendingNavigation) {
             // Chat screen may not have its listener yet — store for replay.
             _pendingNavigation = false;
