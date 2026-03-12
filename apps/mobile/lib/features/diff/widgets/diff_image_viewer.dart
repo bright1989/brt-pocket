@@ -299,20 +299,6 @@ class _SliderContentState extends State<_SliderContent> {
                       text: AppLocalizations.of(context).diffAfter,
                     ),
                   ),
-                  // Drag hint at bottom center
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 8,
-                    child: Center(
-                      child: _ModeLabel(
-                        text:
-                            '← ${AppLocalizations.of(context).diffBefore}'
-                            '  |  '
-                            '${AppLocalizations.of(context).diffAfter} →',
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -755,6 +741,45 @@ class _BottomBar extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Mode-specific controls above the segmented button
+          if (overlayOpacity != null) ...[
+            Row(
+              children: [
+                Text(
+                  l.diffBefore,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+                Expanded(
+                  child: SliderTheme(
+                    data: SliderThemeData(
+                      activeTrackColor: Colors.white70,
+                      inactiveTrackColor: Colors.white24,
+                      thumbColor: Colors.white,
+                      overlayColor: Colors.white.withValues(alpha: 0.1),
+                    ),
+                    child: Slider(
+                      value: overlayOpacity!,
+                      onChanged: onOpacityChanged,
+                    ),
+                  ),
+                ),
+                Text(
+                  l.diffAfter,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+          ],
+          if (mode == DiffCompareMode.slider) ...[
+            _ModeLabel(
+              text:
+                  '← ${l.diffBefore}'
+                  '  |  '
+                  '${l.diffAfter} →',
+            ),
+            const SizedBox(height: 8),
+          ],
           if (showModeSelector) ...[
             SegmentedButton<DiffCompareMode>(
               segments: [
@@ -808,35 +833,6 @@ class _BottomBar extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-          ],
-          if (overlayOpacity != null) ...[
-            Row(
-              children: [
-                Text(
-                  l.diffBefore,
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
-                ),
-                Expanded(
-                  child: SliderTheme(
-                    data: SliderThemeData(
-                      activeTrackColor: Colors.white70,
-                      inactiveTrackColor: Colors.white24,
-                      thumbColor: Colors.white,
-                      overlayColor: Colors.white.withValues(alpha: 0.1),
-                    ),
-                    child: Slider(
-                      value: overlayOpacity!,
-                      onChanged: onOpacityChanged,
-                    ),
-                  ),
-                ),
-                Text(
-                  l.diffAfter,
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
           ],
           // Size info
           _SizeInfoText(imageData: imageData),
