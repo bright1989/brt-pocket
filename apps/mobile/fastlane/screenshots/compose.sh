@@ -27,13 +27,13 @@ FONT_JA_REG="$(resolve_font Hiragino-Sans-W3 '/System/Library/Fonts/ヒラギノ
 
 # Screenshot definitions: key, keyword_en, title_en, keyword_ja, title_ja
 SCREENSHOTS=(
-  "01_session_list|Desktop coding AI|in your pocket|PCのコーディングAIを|スマホから操作"
+  "01_session_list|Code anywhere|On the couch, on the train|どこでもコーディング|ソファーでも電車でも"
   "02_approval_list|Multiple sessions|Approve at a glance|複数セッション一覧|まとめて承認対応"
   "03_multi_question|Mobile-first UI|Questions, answered instantly|モバイル最適化|承認UIで素早く回答"
   "04_markdown_input|Write rich prompts|Bullet lists made easy|リッチなプロンプト|箇条書きが簡単"
   "05_image_attach|Attach images|From clipboard or gallery|画像を添付|クリップボードから貼り付け"
   "06_git_diff|Review diffs|See every change at once|差分を確認|変更を一覧表示"
-  "07_new_session|Start fresh|Start from your phone|新しいセッション|スマホから開始"
+  "07_new_session|Just your phone|Open the app, pick a project, go|スマホだけでOK|アプリを開いて、すぐ開発"
 )
 
 compose_screenshot() {
