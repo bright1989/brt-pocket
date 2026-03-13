@@ -10,9 +10,35 @@ import '../../../utils/diff_parser.dart';
 const _codeFontSize = 12.0;
 const _codeHeight = 1.4;
 const _lineNumberFontSize = 10.0;
-const _lineNumberWidth = 40.0;
-const _prefixWidth = 12.0;
-const _gutterGap = 4.0;
+const _prefixWidth = 10.0;
+const _gutterGap = 2.0;
+
+/// Compute the optimal line-number column width for a file based on the
+/// maximum line number across all its hunks.
+double calcLineNumberWidth(DiffFile file) {
+  var maxNum = 0;
+  for (final hunk in file.hunks) {
+    for (final line in hunk.lines) {
+      final n = line.oldLineNumber ?? 0;
+      final m = line.newLineNumber ?? 0;
+      if (n > maxNum) maxNum = n;
+      if (m > maxNum) maxNum = m;
+    }
+  }
+  final digits = maxNum.toString().length.clamp(2, 6);
+  // Measure the actual width of a single monospace character at the
+  // line-number font size so we stay pixel-accurate across platforms.
+  final painter = TextPainter(
+    text: const TextSpan(
+      text: '0',
+      style: TextStyle(fontSize: _lineNumberFontSize, fontFamily: 'monospace'),
+    ),
+    textDirection: ui.TextDirection.ltr,
+  )..layout();
+  final charWidth = painter.width;
+  painter.dispose();
+  return digits * charWidth + 4; // 4dp right padding
+}
 
 const _codeStyle = TextStyle(
   fontSize: _codeFontSize,
@@ -45,6 +71,7 @@ const _codeStyle = TextStyle(
 
 class DiffHunkWidget extends StatefulWidget {
   final DiffHunk hunk;
+  final double lineNumberWidth;
   final bool selectionMode;
   final bool selected;
   final VoidCallback? onToggleSelection;
@@ -52,6 +79,7 @@ class DiffHunkWidget extends StatefulWidget {
   const DiffHunkWidget({
     super.key,
     required this.hunk,
+    required this.lineNumberWidth,
     this.selectionMode = false,
     this.selected = false,
     this.onToggleSelection,
@@ -113,6 +141,7 @@ class _DiffHunkWidgetState extends State<DiffHunkWidget> {
             _DiffHunkBody(
               lines: widget.hunk.lines,
               maxContentWidth: _maxContentWidth,
+              lineNumberWidth: widget.lineNumberWidth,
             ),
           const SizedBox(height: 4),
         ],
@@ -176,8 +205,13 @@ class _DiffHunkHeader extends StatelessWidget {
 class _DiffHunkBody extends StatelessWidget {
   final List<DiffLine> lines;
   final double maxContentWidth;
+  final double lineNumberWidth;
 
-  const _DiffHunkBody({required this.lines, required this.maxContentWidth});
+  const _DiffHunkBody({
+    required this.lines,
+    required this.maxContentWidth,
+    required this.lineNumberWidth,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -190,7 +224,11 @@ class _DiffHunkBody extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (final line in lines)
-              _DiffGutterRow(line: line, appColors: appColors),
+              _DiffGutterRow(
+                line: line,
+                appColors: appColors,
+                lineNumberWidth: lineNumberWidth,
+              ),
           ],
         ),
         // Scrollable code content
@@ -230,8 +268,13 @@ class _DiffHunkBody extends StatelessWidget {
 class _DiffGutterRow extends StatelessWidget {
   final DiffLine line;
   final AppColors appColors;
+  final double lineNumberWidth;
 
-  const _DiffGutterRow({required this.line, required this.appColors});
+  const _DiffGutterRow({
+    required this.line,
+    required this.appColors,
+    required this.lineNumberWidth,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -244,7 +287,7 @@ class _DiffGutterRow extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
-            width: _lineNumberWidth,
+            width: lineNumberWidth,
             child: Text(
               line.oldLineNumber?.toString() ?? '',
               textAlign: TextAlign.right,
@@ -256,7 +299,7 @@ class _DiffGutterRow extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: _lineNumberWidth,
+            width: lineNumberWidth,
             child: Text(
               line.newLineNumber?.toString() ?? '',
               textAlign: TextAlign.right,

@@ -60,6 +60,7 @@ class DiffContentList extends StatelessWidget {
       }
       final collapsed = collapsedFileIndices.contains(0);
       final hunkCount = collapsed ? 0 : file.hunks.length;
+      final lineNumberWidth = calcLineNumberWidth(file);
       return ListView.builder(
         padding: const EdgeInsets.symmetric(vertical: 8),
         itemCount: 1 + hunkCount,
@@ -80,6 +81,7 @@ class DiffContentList extends StatelessWidget {
           final hunkIdx = index - 1;
           return DiffHunkWidget(
             hunk: file.hunks[hunkIdx],
+            lineNumberWidth: lineNumberWidth,
             selectionMode: selectionMode,
             selected: selectedHunkKeys.contains('0:$hunkIdx'),
             onToggleSelection: onToggleHunkSelection != null
@@ -115,6 +117,12 @@ class DiffContentList extends StatelessWidget {
       );
     }
 
+    // Pre-compute line-number widths per file to avoid recalculating in
+    // each itemBuilder call.
+    final lineNumberWidths = {
+      for (final i in visibleFiles) i: calcLineNumberWidth(files[i]),
+    };
+
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: _countListItems(visibleFiles),
@@ -122,6 +130,7 @@ class DiffContentList extends StatelessWidget {
         index: index,
         visibleFiles: visibleFiles,
         files: files,
+        lineNumberWidths: lineNumberWidths,
         collapsedFileIndices: collapsedFileIndices,
         selectionMode: selectionMode,
         selectedHunkKeys: selectedHunkKeys,
@@ -156,6 +165,7 @@ class _DiffListItem extends StatelessWidget {
   final int index;
   final List<int> visibleFiles;
   final List<DiffFile> files;
+  final Map<int, double> lineNumberWidths;
   final Set<int> collapsedFileIndices;
   final bool selectionMode;
   final Set<String> selectedHunkKeys;
@@ -171,6 +181,7 @@ class _DiffListItem extends StatelessWidget {
     required this.index,
     required this.visibleFiles,
     required this.files,
+    required this.lineNumberWidths,
     required this.collapsedFileIndices,
     required this.selectionMode,
     required this.selectedHunkKeys,
@@ -227,6 +238,7 @@ class _DiffListItem extends StatelessWidget {
         final hunkIdx = localIdx - 1;
         return DiffHunkWidget(
           hunk: file.hunks[hunkIdx],
+          lineNumberWidth: lineNumberWidths[fileIdx]!,
           selectionMode: selectionMode,
           selected: selectedHunkKeys.contains('$fileIdx:$hunkIdx'),
           onToggleSelection: onToggleHunkSelection != null
