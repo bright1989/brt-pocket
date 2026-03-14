@@ -30,6 +30,7 @@ import '../../theme/app_theme.dart';
 import '../chat_session/state/streaming_state_cubit.dart';
 import '../chat_session/widgets/branch_chip.dart';
 import '../chat_session/widgets/chat_input_with_overlays.dart';
+import '../chat_session/widgets/bottom_overlay_layout.dart';
 import '../chat_session/widgets/chat_message_list.dart';
 import '../chat_session/widgets/reconnect_banner.dart';
 import '../chat_session/widgets/session_mode_bar.dart';
@@ -630,109 +631,130 @@ class _CodexChatBody extends HookWidget {
                     bridgeState == BridgeConnectionState.disconnected)
                   ReconnectBanner(bridgeState: bridgeState),
                 Expanded(
-                  child: Stack(
-                    children: [
-                      ChatMessageList(
-                        sessionId: sessionId,
-                        scrollController: scroll.controller,
-                        httpBaseUrl: context.read<BridgeService>().httpBaseUrl,
-                        onRetryMessage: (entry) {
-                          context.read<ChatSessionCubit>().retryMessage(entry);
-                        },
-                        // No rewind for Codex
-                        onRewindMessage: null,
-                        editedPlanText: editedPlanText,
-                        allowPlanEditing: pendingPlanToolUseId != null,
-                        pendingPlanToolUseId: pendingPlanToolUseId,
-                        scrollToUserEntry: scrollToUserEntry,
-                        collapseToolResults: collapseToolResults,
-                        onScrollToBottom: scroll.scrollToBottom,
-                      ),
-                      const Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        child: Center(child: SessionModeBar()),
-                      ),
-                      if (scroll.isScrolledUp)
-                        Positioned(
-                          right: 12,
-                          bottom: 12,
-                          child: FloatingActionButton.small(
-                            onPressed: () {
-                              if (scroll.controller.hasClients) {
-                                scroll.controller.animateTo(
-                                  scroll.controller.position.maxScrollExtent,
-                                  duration: const Duration(milliseconds: 200),
-                                  curve: Curves.easeOut,
-                                );
-                              }
-                            },
-                            child: const Icon(Icons.keyboard_arrow_down),
+                  child: BottomOverlayLayout(
+                    overlay:
+                        askToolUseId == null &&
+                            askInput == null &&
+                            pendingToolUseId == null
+                        ? null
+                        : Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (askToolUseId case final askId?
+                                  when askInput != null)
+                                if (isMcpApprovalRequestUserInput(askInput))
+                                  ApprovalBar(
+                                    key: ValueKey('approval_ask_$askId'),
+                                    appColors: appColors,
+                                    pendingPermission: PermissionRequestMessage(
+                                      toolUseId: askId,
+                                      toolName: 'AskUserQuestion',
+                                      input: askInput,
+                                    ),
+                                    isPlanApproval: false,
+                                    planApprovalUiMode:
+                                        PlanApprovalUiMode.codex,
+                                    planFeedbackController:
+                                        planFeedbackController,
+                                    onApprove: () => answerQuestion(
+                                      askId,
+                                      mcpApprovalApproveOnce,
+                                    ),
+                                    onReject: () =>
+                                        answerQuestion(askId, mcpApprovalDeny),
+                                    onApproveAlways: () => answerQuestion(
+                                      askId,
+                                      mcpApprovalApproveSession,
+                                    ),
+                                  )
+                                else
+                                  AskUserQuestionWidget(
+                                    toolUseId: askId,
+                                    input: askInput,
+                                    onAnswer: answerQuestion,
+                                  ),
+                              if (pendingToolUseId != null)
+                                ApprovalBar(
+                                  key: ValueKey('approval_$pendingToolUseId'),
+                                  appColors: appColors,
+                                  pendingPermission: pendingPermission,
+                                  isPlanApproval: isPlanApproval,
+                                  planApprovalUiMode: PlanApprovalUiMode.codex,
+                                  planFeedbackController:
+                                      planFeedbackController,
+                                  onApprove: approveToolUse,
+                                  onReject: rejectToolUse,
+                                  onApproveAlways: approveAlwaysToolUse,
+                                  onApproveClearContext: isPlanApproval
+                                      ? approveWithClearContext
+                                      : null,
+                                  onViewPlan: isPlanApproval
+                                      ? () async {
+                                          final originalText = _extractPlanText(
+                                            pendingPermission,
+                                            sessionState.entries,
+                                          );
+                                          if (originalText == null) return;
+                                          final current =
+                                              editedPlanText.value ??
+                                              originalText;
+                                          final edited =
+                                              await showPlanDetailSheet(
+                                                context,
+                                                current,
+                                                editable: true,
+                                              );
+                                          if (edited != null) {
+                                            editedPlanText.value = edited;
+                                          }
+                                        }
+                                      : null,
+                                ),
+                            ],
                           ),
+                    topOverlay: const Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: Center(child: SessionModeBar()),
+                    ),
+                    floatingButtonBuilder: (overlayHeight) {
+                      if (!scroll.isScrolledUp) return const SizedBox.shrink();
+                      return Positioned(
+                        right: 12,
+                        bottom: overlayHeight + 12,
+                        child: FloatingActionButton.small(
+                          onPressed: () {
+                            if (scroll.controller.hasClients) {
+                              scroll.controller.animateTo(
+                                scroll.controller.position.maxScrollExtent,
+                                duration: const Duration(milliseconds: 200),
+                                curve: Curves.easeOut,
+                              );
+                            }
+                          },
+                          child: const Icon(Icons.keyboard_arrow_down),
                         ),
-                    ],
+                      );
+                    },
+                    contentBuilder: (overlayHeight) => ChatMessageList(
+                      sessionId: sessionId,
+                      scrollController: scroll.controller,
+                      httpBaseUrl: context.read<BridgeService>().httpBaseUrl,
+                      onRetryMessage: (entry) {
+                        context.read<ChatSessionCubit>().retryMessage(entry);
+                      },
+                      onRewindMessage: null,
+                      editedPlanText: editedPlanText,
+                      allowPlanEditing: pendingPlanToolUseId != null,
+                      pendingPlanToolUseId: pendingPlanToolUseId,
+                      scrollToUserEntry: scrollToUserEntry,
+                      collapseToolResults: collapseToolResults,
+                      onScrollToBottom: scroll.scrollToBottom,
+                      bottomPadding: overlayHeight > 0 ? overlayHeight + 8 : 8,
+                    ),
                   ),
                 ),
-                if (askToolUseId case final askId? when askInput != null)
-                  if (isMcpApprovalRequestUserInput(askInput))
-                    ApprovalBar(
-                      key: ValueKey('approval_ask_$askId'),
-                      appColors: appColors,
-                      pendingPermission: PermissionRequestMessage(
-                        toolUseId: askId,
-                        toolName: 'AskUserQuestion',
-                        input: askInput,
-                      ),
-                      isPlanApproval: false,
-                      planApprovalUiMode: PlanApprovalUiMode.codex,
-                      planFeedbackController: planFeedbackController,
-                      onApprove: () =>
-                          answerQuestion(askId, mcpApprovalApproveOnce),
-                      onReject: () => answerQuestion(askId, mcpApprovalDeny),
-                      onApproveAlways: () =>
-                          answerQuestion(askId, mcpApprovalApproveSession),
-                    )
-                  else
-                    AskUserQuestionWidget(
-                      toolUseId: askId,
-                      input: askInput,
-                      onAnswer: answerQuestion,
-                    ),
-                if (pendingToolUseId != null)
-                  ApprovalBar(
-                    key: ValueKey('approval_$pendingToolUseId'),
-                    appColors: appColors,
-                    pendingPermission: pendingPermission,
-                    isPlanApproval: isPlanApproval,
-                    planApprovalUiMode: PlanApprovalUiMode.codex,
-                    planFeedbackController: planFeedbackController,
-                    onApprove: approveToolUse,
-                    onReject: rejectToolUse,
-                    onApproveAlways: approveAlwaysToolUse,
-                    onApproveClearContext: isPlanApproval
-                        ? approveWithClearContext
-                        : null,
-                    onViewPlan: isPlanApproval
-                        ? () async {
-                            final originalText = _extractPlanText(
-                              pendingPermission,
-                              sessionState.entries,
-                            );
-                            if (originalText == null) return;
-                            final current =
-                                editedPlanText.value ?? originalText;
-                            final edited = await showPlanDetailSheet(
-                              context,
-                              current,
-                              editable: true,
-                            );
-                            if (edited != null) {
-                              editedPlanText.value = edited;
-                            }
-                          }
-                        : null,
-                  ),
                 if (approval is ApprovalNone)
                   ChatInputWithOverlays(
                     sessionId: sessionId,

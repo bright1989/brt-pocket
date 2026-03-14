@@ -138,11 +138,9 @@ void main() {
       expect(find.text('Answered'), findsOneWidget);
     });
 
-    testWidgets('keyboard done closes keyboard without sending', (
+    testWidgets('free text input is configured for multiline entry', (
       tester,
     ) async {
-      String? answeredResult;
-
       await tester.pumpWidget(
         _wrap(
           AskUserQuestionWidget(
@@ -160,21 +158,19 @@ void main() {
                 },
               ],
             },
-            onAnswer: (_, result) {
-              answeredResult = result;
-            },
+            onAnswer: (_, _) {},
           ),
         ),
       );
 
-      final input = find.byType(TextField);
-      await tester.tap(input);
-      await tester.enterText(input, 'Charlie');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pumpAndSettle();
+      final input = tester.widget<TextField>(
+        find.byKey(const ValueKey('ask_custom_text_input')),
+      );
 
-      expect(answeredResult, isNull);
-      expect(find.text('Answered'), findsNothing);
+      expect(input.minLines, 1);
+      expect(input.maxLines, 3);
+      expect(input.keyboardType, TextInputType.multiline);
+      expect(input.textInputAction, TextInputAction.newline);
     });
 
     testWidgets('send button is disabled until text is entered', (

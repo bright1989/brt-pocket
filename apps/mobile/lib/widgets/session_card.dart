@@ -214,6 +214,17 @@ class _RunningSessionCardState extends State<RunningSessionCard> {
                             onReject: () =>
                                 widget.onReject?.call(permission.toolUseId),
                           )
+                        : permission.toolName == 'AskUserQuestion' &&
+                              !isRequestUserInputApproval
+                        ? _AskUserArea(
+                            permission: permission,
+                            statusColor: statusColor,
+                            onAnswer: (result) => widget.onAnswer?.call(
+                              permission.toolUseId,
+                              result,
+                            ),
+                            onTap: widget.onTap,
+                          )
                         : _ToolApprovalArea(
                             permission: permission,
                             statusColor: statusColor,
@@ -706,7 +717,8 @@ class _PlanApprovalArea extends StatelessWidget {
                     ),
                   ),
                   minLines: 1,
-                  maxLines: 2,
+                  maxLines: 3,
+                  keyboardType: TextInputType.multiline,
                   onSubmitted: (_) => onKeepPlanning(),
                 ),
               ),
@@ -1456,45 +1468,46 @@ class _OtherAnswerSection extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.only(top: 4),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Expanded(
-              child: SizedBox(
-                height: _buttonHeight,
-                child: TextField(
-                  controller: controller,
-                  autofocus: true,
-                  style: const TextStyle(fontSize: 13),
-                  decoration: InputDecoration(
-                    hintText: 'Type your answer...',
-                    hintStyle: TextStyle(
-                      fontSize: 13,
-                      color: statusColor.withValues(alpha: 0.4),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: statusColor.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: statusColor.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: statusColor),
-                    ),
-                    isDense: true,
+              child: TextField(
+                controller: controller,
+                autofocus: true,
+                style: const TextStyle(fontSize: 13),
+                minLines: 1,
+                maxLines: 3,
+                keyboardType: TextInputType.multiline,
+                textInputAction: TextInputAction.newline,
+                decoration: InputDecoration(
+                  hintText: 'Type your answer...',
+                  hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: statusColor.withValues(alpha: 0.4),
                   ),
-                  onChanged: (text) => onCustomTextChanged(questionIndex, text),
-                  onSubmitted: (_) => FocusScope.of(context).unfocus(),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: statusColor.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: statusColor.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: statusColor),
+                  ),
+                  isDense: true,
                 ),
+                onChanged: (text) => onCustomTextChanged(questionIndex, text),
               ),
             ),
             const SizedBox(width: 8),

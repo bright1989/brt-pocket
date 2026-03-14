@@ -32,6 +32,7 @@ import '../chat_session/state/chat_session_state.dart';
 import '../chat_session/state/streaming_state_cubit.dart';
 import '../chat_session/widgets/branch_chip.dart';
 import '../chat_session/widgets/chat_input_with_overlays.dart';
+import '../chat_session/widgets/bottom_overlay_layout.dart';
 import '../chat_session/widgets/chat_message_list.dart';
 import '../chat_session/widgets/reconnect_banner.dart';
 import '../chat_session/widgets/session_mode_bar.dart';
@@ -657,90 +658,103 @@ class _ChatScreenBody extends HookWidget {
                     bridgeState == BridgeConnectionState.disconnected)
                   ReconnectBanner(bridgeState: bridgeState),
                 Expanded(
-                  child: Stack(
-                    children: [
-                      ChatMessageList(
-                        sessionId: sessionId,
-                        scrollController: scroll.controller,
-                        httpBaseUrl: context.read<BridgeService>().httpBaseUrl,
-                        onRetryMessage: (entry) {
-                          context.read<ChatSessionCubit>().retryMessage(entry);
-                        },
-                        onRewindMessage: (entry) {
-                          _showRewindActionSheet(context, entry);
-                        },
-                        collapseToolResults: collapseToolResults,
-                        editedPlanText: editedPlanText,
-                        allowPlanEditing: pendingPlanToolUseId != null,
-                        pendingPlanToolUseId: pendingPlanToolUseId,
-                        onScrollToBottom: scroll.scrollToBottom,
-                        scrollToUserEntry: scrollToUserEntry,
-                      ),
-                      const Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        child: Center(child: SessionModeBar()),
-                      ),
-                      if (scroll.isScrolledUp)
-                        Positioned(
-                          right: 12,
-                          bottom: 12,
-                          child: FloatingActionButton.small(
-                            onPressed: () {
-                              // Force scroll to bottom even when scrolled up
-                              if (scroll.controller.hasClients) {
-                                scroll.controller.animateTo(
-                                  scroll.controller.position.maxScrollExtent,
-                                  duration: const Duration(milliseconds: 200),
-                                  curve: Curves.easeOut,
-                                );
-                              }
-                            },
-                            child: const Icon(Icons.keyboard_arrow_down),
+                  child: BottomOverlayLayout(
+                    overlay:
+                        askToolUseId == null &&
+                            askInput == null &&
+                            pendingToolUseId == null
+                        ? null
+                        : Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (askToolUseId != null && askInput != null)
+                                AskUserQuestionWidget(
+                                  toolUseId: askToolUseId,
+                                  input: askInput,
+                                  onAnswer: answerQuestion,
+                                ),
+                              if (pendingToolUseId != null)
+                                ApprovalBar(
+                                  key: ValueKey('approval_$pendingToolUseId'),
+                                  appColors: appColors,
+                                  pendingPermission: pendingPermission,
+                                  isPlanApproval: isPlanApproval,
+                                  planFeedbackController:
+                                      planFeedbackController,
+                                  onApprove: approveToolUse,
+                                  onReject: rejectToolUse,
+                                  onApproveAlways: approveAlwaysToolUse,
+                                  onApproveClearContext: isPlanApproval
+                                      ? approveWithClearContext
+                                      : null,
+                                  onViewPlan: isPlanApproval
+                                      ? () async {
+                                          final originalText = _extractPlanText(
+                                            sessionState.entries,
+                                          );
+                                          if (originalText == null) return;
+                                          final current =
+                                              editedPlanText.value ??
+                                              originalText;
+                                          final edited =
+                                              await showPlanDetailSheet(
+                                                context,
+                                                current,
+                                                editable: true,
+                                              );
+                                          if (edited != null) {
+                                            editedPlanText.value = edited;
+                                          }
+                                        }
+                                      : null,
+                                ),
+                            ],
                           ),
+                    topOverlay: const Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: Center(child: SessionModeBar()),
+                    ),
+                    floatingButtonBuilder: (overlayHeight) {
+                      if (!scroll.isScrolledUp) return const SizedBox.shrink();
+                      return Positioned(
+                        right: 12,
+                        bottom: overlayHeight + 12,
+                        child: FloatingActionButton.small(
+                          onPressed: () {
+                            if (scroll.controller.hasClients) {
+                              scroll.controller.animateTo(
+                                scroll.controller.position.maxScrollExtent,
+                                duration: const Duration(milliseconds: 200),
+                                curve: Curves.easeOut,
+                              );
+                            }
+                          },
+                          child: const Icon(Icons.keyboard_arrow_down),
                         ),
-                    ],
+                      );
+                    },
+                    contentBuilder: (overlayHeight) => ChatMessageList(
+                      sessionId: sessionId,
+                      scrollController: scroll.controller,
+                      httpBaseUrl: context.read<BridgeService>().httpBaseUrl,
+                      onRetryMessage: (entry) {
+                        context.read<ChatSessionCubit>().retryMessage(entry);
+                      },
+                      onRewindMessage: (entry) {
+                        _showRewindActionSheet(context, entry);
+                      },
+                      collapseToolResults: collapseToolResults,
+                      editedPlanText: editedPlanText,
+                      allowPlanEditing: pendingPlanToolUseId != null,
+                      pendingPlanToolUseId: pendingPlanToolUseId,
+                      onScrollToBottom: scroll.scrollToBottom,
+                      scrollToUserEntry: scrollToUserEntry,
+                      bottomPadding: overlayHeight > 0 ? overlayHeight + 8 : 8,
+                    ),
                   ),
                 ),
-                if (askToolUseId != null && askInput != null)
-                  AskUserQuestionWidget(
-                    toolUseId: askToolUseId,
-                    input: askInput,
-                    onAnswer: answerQuestion,
-                  ),
-                if (pendingToolUseId != null)
-                  ApprovalBar(
-                    key: ValueKey('approval_$pendingToolUseId'),
-                    appColors: appColors,
-                    pendingPermission: pendingPermission,
-                    isPlanApproval: isPlanApproval,
-                    planFeedbackController: planFeedbackController,
-                    onApprove: approveToolUse,
-                    onReject: rejectToolUse,
-                    onApproveAlways: approveAlwaysToolUse,
-                    onApproveClearContext: isPlanApproval
-                        ? approveWithClearContext
-                        : null,
-                    onViewPlan: isPlanApproval
-                        ? () async {
-                            final originalText = _extractPlanText(
-                              sessionState.entries,
-                            );
-                            if (originalText == null) return;
-                            final current =
-                                editedPlanText.value ?? originalText;
-                            final edited = await showPlanDetailSheet(
-                              context,
-                              current,
-                              editable: true,
-                            );
-                            if (edited != null) {
-                              editedPlanText.value = edited;
-                            }
-                          }
-                        : null,
-                  ),
                 if (approval is ApprovalNone)
                   ChatInputWithOverlays(
                     sessionId: sessionId,

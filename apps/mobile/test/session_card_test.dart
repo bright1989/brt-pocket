@@ -367,6 +367,52 @@ void main() {
       expect(answered, isNull);
     });
 
+    testWidgets('shows ask user area with multiline custom input', (
+      tester,
+    ) async {
+      final session = SessionInfo(
+        id: 'ask-single-multiline',
+        provider: 'codex',
+        projectPath: '/home/user/my-app',
+        status: 'waiting_approval',
+        createdAt: DateTime.now().toIso8601String(),
+        lastActivityAt: DateTime.now().toIso8601String(),
+        pendingPermission: const PermissionRequestMessage(
+          toolUseId: 'ask-tool-multiline',
+          toolName: 'AskUserQuestion',
+          input: {
+            'questions': [
+              {
+                'question': 'How should we handle this?',
+                'header': 'Approach',
+                'options': [
+                  {'label': 'A', 'description': ''},
+                  {'label': 'B', 'description': ''},
+                ],
+                'multiSelect': false,
+              },
+            ],
+          },
+        ),
+      );
+
+      await tester.pumpWidget(
+        _wrap(RunningSessionCard(session: session, onTap: () {})),
+      );
+
+      expect(find.text('Other answer...'), findsOneWidget);
+      expect(find.text('Approve'), findsNothing);
+
+      await tester.tap(find.widgetWithText(TextButton, 'Other answer...'));
+      await tester.pump();
+
+      final input = tester.widget<TextField>(find.byType(TextField));
+      expect(input.minLines, 1);
+      expect(input.maxLines, 3);
+      expect(input.keyboardType, TextInputType.multiline);
+      expect(input.textInputAction, TextInputAction.newline);
+    });
+
     testWidgets('ask user send button is disabled until input exists', (
       tester,
     ) async {

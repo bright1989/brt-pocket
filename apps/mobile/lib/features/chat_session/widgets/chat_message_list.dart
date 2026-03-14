@@ -28,6 +28,7 @@ class ChatMessageList extends StatefulWidget {
   final bool allowPlanEditing;
   final String? pendingPlanToolUseId;
   final VoidCallback? onScrollToBottom;
+  final double bottomPadding;
 
   /// When set (non-null), the list scrolls to the given [UserChatEntry].
   /// The notifier is reset to null after scrolling.
@@ -46,6 +47,7 @@ class ChatMessageList extends StatefulWidget {
     this.pendingPlanToolUseId,
     this.onScrollToBottom,
     this.scrollToUserEntry,
+    this.bottomPadding = 8,
   });
 
   @override
@@ -306,7 +308,7 @@ class _ChatMessageListState extends State<ChatMessageList> {
         child: AnimatedList(
           key: _listKey,
           controller: widget.scrollController,
-          padding: const EdgeInsets.only(top: 36, bottom: 8),
+          padding: EdgeInsets.only(top: 36, bottom: widget.bottomPadding),
           initialItemCount: _entries.length,
           itemBuilder: (context, index, animation) {
             final entry = _entries[index];

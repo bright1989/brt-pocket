@@ -134,6 +134,29 @@ void main() {
       expect(find.byKey(const ValueKey('plan_feedback_input')), findsOneWidget);
     });
 
+    testWidgets('keep planning input is configured for multiline entry', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildSubject(
+          pendingPermission: const PermissionRequestMessage(
+            toolUseId: 'tu-1',
+            toolName: 'ExitPlanMode',
+            input: {},
+          ),
+          isPlanApproval: true,
+        ),
+      );
+
+      final input = tester.widget<TextField>(
+        find.byKey(const ValueKey('plan_feedback_input')),
+      );
+      expect(input.minLines, 1);
+      expect(input.maxLines, 3);
+      expect(input.keyboardType, TextInputType.multiline);
+      expect(input.textInputAction, TextInputAction.newline);
+    });
+
     testWidgets('hides feedback field for regular approval', (tester) async {
       await tester.pumpWidget(
         buildSubject(

@@ -64,38 +64,40 @@ class ApprovalBar extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _ApprovalHeader(
-              appColors: appColors,
-              isPlanApproval: isPlanApproval,
-              toolName: toolName,
-              summary: summary,
-              onViewPlan: onViewPlan,
-            ),
-            const SizedBox(height: 6),
-            if (isPlanApproval &&
-                planApprovalUiMode == PlanApprovalUiMode.claude) ...[
-              const SizedBox(height: 6),
-              _KeepPlanningCard(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _ApprovalHeader(
                 appColors: appColors,
-                planFeedbackController: planFeedbackController,
-                onReject: onReject,
+                isPlanApproval: isPlanApproval,
+                toolName: toolName,
+                summary: summary,
+                onViewPlan: onViewPlan,
               ),
-              const SizedBox(height: 10),
-            ] else
               const SizedBox(height: 6),
-            _ApprovalButtons(
-              isPlanApproval: isPlanApproval,
-              planApprovalUiMode: planApprovalUiMode,
-              onApprove: onApprove,
-              onReject: onReject,
-              onApproveAlways: onApproveAlways,
-              onApproveClearContext: onApproveClearContext,
-            ),
-          ],
+              if (isPlanApproval &&
+                  planApprovalUiMode == PlanApprovalUiMode.claude) ...[
+                const SizedBox(height: 6),
+                _KeepPlanningCard(
+                  appColors: appColors,
+                  planFeedbackController: planFeedbackController,
+                  onReject: onReject,
+                ),
+                const SizedBox(height: 10),
+              ] else
+                const SizedBox(height: 6),
+              _ApprovalButtons(
+                isPlanApproval: isPlanApproval,
+                planApprovalUiMode: planApprovalUiMode,
+                onApprove: onApprove,
+                onReject: onReject,
+                onApproveAlways: onApproveAlways,
+                onApproveClearContext: onApproveClearContext,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -236,6 +238,8 @@ class _KeepPlanningCard extends StatelessWidget {
                   style: const TextStyle(fontSize: 13),
                   maxLines: 3,
                   minLines: 1,
+                  keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.newline,
                 ),
               ),
               const SizedBox(width: 4),

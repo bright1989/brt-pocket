@@ -325,6 +325,9 @@ class _AskUserQuestionWidgetState extends State<AskUserQuestionWidget> {
 
     final totalPages = _isMultiQuestion ? questions.length + 1 : 1;
 
+    final availableHeight = MediaQuery.of(context).size.height;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
@@ -340,126 +343,132 @@ class _AskUserQuestionWidgetState extends State<AskUserQuestionWidget> {
           top: BorderSide(color: appColors.askBubbleBorder, width: 1.5),
         ),
       ),
+      clipBehavior: Clip.hardEdge,
       child: SafeArea(
         top: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    color: appColors.askIcon.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: appColors.askIcon.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.help_outline,
+                      size: 18,
+                      color: appColors.askIcon,
+                    ),
                   ),
-                  child: Icon(
-                    Icons.help_outline,
-                    size: 18,
-                    color: appColors.askIcon,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  l.claudeIsAsking,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: appColors.askIcon,
-                  ),
-                ),
-                const Spacer(),
-                if (_isMultiQuestion)
+                  const SizedBox(width: 10),
                   Text(
-                    '${_currentPage + 1}/$totalPages',
-                    style: TextStyle(fontSize: 11, color: appColors.subtleText),
+                    l.claudeIsAsking,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: appColors.askIcon,
+                    ),
                   ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            if (_isMultiQuestion) ...[
-              LinearProgressIndicator(
-                value: (_currentPage + 1) / totalPages,
-                minHeight: 2,
-                backgroundColor: appColors.askIcon.withValues(alpha: 0.1),
-                valueColor: AlwaysStoppedAnimation<Color>(appColors.askIcon),
+                  const Spacer(),
+                  if (_isMultiQuestion)
+                    Text(
+                      '${_currentPage + 1}/$totalPages',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: appColors.subtleText,
+                      ),
+                    ),
+                ],
               ),
-              const SizedBox(height: 10),
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.42,
-                ),
-                child: ExpandablePageView.builder(
-                  controller: _pageController,
-                  itemCount: totalPages,
-                  onPageChanged: _onPageChanged,
-                  itemBuilder: (context, index) {
-                    if (index == questions.length) {
-                      return _AskSummaryPage(
-                        questions: questions,
-                        singleAnswers: _singleAnswers,
-                        onResetAll: _resetAll,
-                        onSubmitAll: _sendAllAnswers,
-                        onGoToPage: _goToPage,
-                      );
-                    }
-                    return _AskQuestionLayout(
-                      question: questions[index] as Map<String, dynamic>,
-                      questionIndex: index,
-                      isMultiQuestion: true,
-                      singleAnswers: _singleAnswers,
-                      multiAnswers: _multiAnswers,
-                      customInputs: _customInputs,
-                      getOrCreateController: _getOrCreateController,
-                      onAnswerSingle: _onAnswerSingle,
-                      onToggleMultiSelectLabel: _toggleMultiSelectLabel,
-                      onConfirmMultiSelect: _confirmMultiSelect,
-                      onSubmitCustomText: _submitCustomText,
-                      onCustomTextChanged: _onCustomTextChanged,
-                      onShowCustomInput: _showCustomInput,
-                    );
-                  },
-                ),
-              ),
-            ] else ...[
-              _AskQuestionLayout(
-                question: questions.first as Map<String, dynamic>,
-                questionIndex: 0,
-                isMultiQuestion: false,
-                singleAnswers: _singleAnswers,
-                multiAnswers: _multiAnswers,
-                customInputs: _customInputs,
-                getOrCreateController: _getOrCreateController,
-                onAnswerSingle: _onAnswerSingle,
-                onToggleMultiSelectLabel: _toggleMultiSelectLabel,
-                onConfirmMultiSelect: _confirmMultiSelect,
-                onSubmitCustomText: _submitCustomText,
-                onCustomTextChanged: _onCustomTextChanged,
-                onShowCustomInput: _showCustomInput,
-                alwaysShowTextInput: !_singleQuestionIsMultiSelect,
-              ),
-            ],
-            if (_singleQuestionIsMultiSelect) ...[
               const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  key: const ValueKey('ask_submit_multi_single_button'),
-                  onPressed: _allQuestionsAnswered ? _sendAllAnswers : null,
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+              if (_isMultiQuestion) ...[
+                LinearProgressIndicator(
+                  value: (_currentPage + 1) / totalPages,
+                  minHeight: 2,
+                  backgroundColor: appColors.askIcon.withValues(alpha: 0.1),
+                  valueColor: AlwaysStoppedAnimation<Color>(appColors.askIcon),
+                ),
+                const SizedBox(height: 10),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: (availableHeight - keyboardHeight) * 0.42,
                   ),
-                  child: Text(
-                    _allQuestionsAnswered
-                        ? l.submitWithCount(_multiAnswers[0]?.length ?? 0)
-                        : l.selectOptionsToSubmit,
-                    style: const TextStyle(fontSize: 13),
+                  child: ExpandablePageView.builder(
+                    controller: _pageController,
+                    itemCount: totalPages,
+                    onPageChanged: _onPageChanged,
+                    itemBuilder: (context, index) {
+                      if (index == questions.length) {
+                        return _AskSummaryPage(
+                          questions: questions,
+                          singleAnswers: _singleAnswers,
+                          onResetAll: _resetAll,
+                          onSubmitAll: _sendAllAnswers,
+                          onGoToPage: _goToPage,
+                        );
+                      }
+                      return _AskQuestionLayout(
+                        question: questions[index] as Map<String, dynamic>,
+                        questionIndex: index,
+                        isMultiQuestion: true,
+                        singleAnswers: _singleAnswers,
+                        multiAnswers: _multiAnswers,
+                        customInputs: _customInputs,
+                        getOrCreateController: _getOrCreateController,
+                        onAnswerSingle: _onAnswerSingle,
+                        onToggleMultiSelectLabel: _toggleMultiSelectLabel,
+                        onConfirmMultiSelect: _confirmMultiSelect,
+                        onSubmitCustomText: _submitCustomText,
+                        onCustomTextChanged: _onCustomTextChanged,
+                        onShowCustomInput: _showCustomInput,
+                      );
+                    },
                   ),
                 ),
-              ),
+              ] else ...[
+                _AskQuestionLayout(
+                  question: questions.first as Map<String, dynamic>,
+                  questionIndex: 0,
+                  isMultiQuestion: false,
+                  singleAnswers: _singleAnswers,
+                  multiAnswers: _multiAnswers,
+                  customInputs: _customInputs,
+                  getOrCreateController: _getOrCreateController,
+                  onAnswerSingle: _onAnswerSingle,
+                  onToggleMultiSelectLabel: _toggleMultiSelectLabel,
+                  onConfirmMultiSelect: _confirmMultiSelect,
+                  onSubmitCustomText: _submitCustomText,
+                  onCustomTextChanged: _onCustomTextChanged,
+                  onShowCustomInput: _showCustomInput,
+                  alwaysShowTextInput: !_singleQuestionIsMultiSelect,
+                ),
+              ],
+              if (_singleQuestionIsMultiSelect) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    key: const ValueKey('ask_submit_multi_single_button'),
+                    onPressed: _allQuestionsAnswered ? _sendAllAnswers : null,
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    child: Text(
+                      _allQuestionsAnswered
+                          ? l.submitWithCount(_multiAnswers[0]?.length ?? 0)
+                          : l.selectOptionsToSubmit,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -772,9 +781,13 @@ class _AskTextInputRow extends StatelessWidget {
       children: [
         Expanded(
           child: TextField(
+            key: const ValueKey('ask_custom_text_input'),
             controller: controller,
             onChanged: onChanged,
-            textInputAction: TextInputAction.done,
+            maxLines: 3,
+            minLines: 1,
+            keyboardType: TextInputType.multiline,
+            textInputAction: TextInputAction.newline,
             decoration: InputDecoration(
               hintText: hintText,
               filled: true,
@@ -792,7 +805,6 @@ class _AskTextInputRow extends StatelessWidget {
               ),
             ),
             style: const TextStyle(fontSize: 13),
-            onSubmitted: (_) => FocusScope.of(context).unfocus(),
           ),
         ),
         if (showSendButton) ...[
