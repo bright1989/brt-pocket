@@ -2,6 +2,11 @@
 
 All notable changes to `@ccpocket/bridge` will be documented in this file.
 
+## [1.21.2] - 2026-03-15
+
+### Changed
+- Session recording is now opt-in via `BRIDGE_RECORDING` env var (disabled by default)
+
 ## [1.21.1] - 2026-03-15
 
 ### Fixed
