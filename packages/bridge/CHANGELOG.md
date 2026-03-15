@@ -2,6 +2,11 @@
 
 All notable changes to `@ccpocket/bridge` will be documented in this file.
 
+## [1.20.2] - 2026-03-15
+
+### Fixed
+- `ANTHROPIC_AUTH_TOKEN` 環境変数による認証をサポート (#12)
+
 ## [1.20.1] - 2026-03-15
 
 ### Fixed
