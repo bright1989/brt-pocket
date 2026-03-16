@@ -1,8 +1,8 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../l10n/app_localizations.dart';
+import '../utils/platform_helper.dart';
 import '../models/messages.dart';
 import '../utils/diff_parser.dart';
 import 'bubbles/image_preview.dart';
@@ -99,6 +99,8 @@ class ChatInputBar extends StatelessWidget {
             controller: inputController,
             status: status,
             hintText: hintText,
+            onSend: onSend,
+            hasInputText: hasInputText,
           ),
           const SizedBox(height: 4),
           Row(
@@ -559,49 +561,77 @@ class _InputTextField extends StatelessWidget {
     required this.controller,
     required this.status,
     this.hintText,
+    required this.onSend,
+    required this.hasInputText,
   });
   final TextEditingController controller;
   final ProcessStatus status;
   final String? hintText;
+  final VoidCallback onSend;
+  final bool hasInputText;
+
+  /// On desktop: Enter sends, Shift+Enter inserts newline.
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (!isDesktopPlatform) return KeyEventResult.ignored;
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    if (event.logicalKey != LogicalKeyboardKey.enter) {
+      return KeyEventResult.ignored;
+    }
+    final isShiftPressed = HardwareKeyboard.instance.isShiftPressed;
+    if (isShiftPressed) {
+      // Shift+Enter: let TextField handle newline insertion
+      return KeyEventResult.ignored;
+    }
+    // Enter without Shift: send message
+    if (hasInputText) {
+      onSend();
+    }
+    return KeyEventResult.handled;
+  }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final l = AppLocalizations.of(context);
-    return TextField(
-      key: const ValueKey('message_input'),
-      controller: controller,
-      decoration: InputDecoration(
-        hintText: hintText ?? l.messagePlaceholder,
-        filled: true,
-        fillColor: cs.surfaceContainerLow,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24),
-          borderSide: BorderSide(color: cs.outlineVariant, width: 0.5),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24),
-          borderSide: BorderSide(
-            color: cs.primary.withValues(alpha: 0.5),
-            width: 1.5,
+    return Focus(
+      onKeyEvent: _handleKeyEvent,
+      child: TextField(
+        key: const ValueKey('message_input'),
+        controller: controller,
+        decoration: InputDecoration(
+          hintText: hintText ?? l.messagePlaceholder,
+          filled: true,
+          fillColor: cs.surfaceContainerLow,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(24),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(24),
+            borderSide: BorderSide(color: cs.outlineVariant, width: 0.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(24),
+            borderSide: BorderSide(
+              color: cs.primary.withValues(alpha: 0.5),
+              width: 1.5,
+            ),
+          ),
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 10,
           ),
         ),
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 10,
-        ),
+        enabled: status != ProcessStatus.starting,
+        autofillHints: null,
+        maxLines: 6,
+        minLines: 1,
+        keyboardType: TextInputType.multiline,
+        textInputAction: TextInputAction.newline,
       ),
-      enabled: status != ProcessStatus.starting,
-      autofillHints: null,
-      maxLines: 6,
-      minLines: 1,
-      keyboardType: TextInputType.multiline,
-      textInputAction: TextInputAction.newline,
     );
   }
 }
