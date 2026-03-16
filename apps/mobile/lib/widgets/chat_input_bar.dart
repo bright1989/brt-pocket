@@ -1,8 +1,8 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../l10n/app_localizations.dart';
+import '../utils/platform_helper.dart';
 import '../models/messages.dart';
 import '../utils/diff_parser.dart';
 import 'bubbles/image_preview.dart';
@@ -36,6 +36,11 @@ class ChatInputBar extends StatelessWidget {
   final VoidCallback? onTapDiffPreview;
   final String? hintText;
 
+  /// Callback to paste an image from clipboard (desktop only).
+  /// When set, Cmd/Ctrl+V will attempt image paste before text paste.
+  /// Returns true if an image was found and pasted.
+  final Future<bool> Function()? onPasteImage;
+
   const ChatInputBar({
     super.key,
     required this.inputController,
@@ -62,6 +67,7 @@ class ChatInputBar extends StatelessWidget {
     this.onClearDiffSelection,
     this.onTapDiffPreview,
     this.hintText,
+    this.onPasteImage,
   });
 
   @override
@@ -99,6 +105,9 @@ class ChatInputBar extends StatelessWidget {
             controller: inputController,
             status: status,
             hintText: hintText,
+            onSend: onSend,
+            hasInputText: hasInputText,
+            onPasteImage: onPasteImage,
           ),
           const SizedBox(height: 4),
           Row(
@@ -559,49 +568,117 @@ class _InputTextField extends StatelessWidget {
     required this.controller,
     required this.status,
     this.hintText,
+    required this.onSend,
+    required this.hasInputText,
+    this.onPasteImage,
   });
   final TextEditingController controller;
   final ProcessStatus status;
   final String? hintText;
+  final VoidCallback onSend;
+  final bool hasInputText;
+  /// Callback to paste an image from clipboard.
+  /// Called on Cmd/Ctrl+V; should check clipboard for images and fall back
+  /// to text paste if no image is found. Returns true if an image was pasted.
+  final Future<bool> Function()? onPasteImage;
+
+  /// On desktop: Enter sends, Shift+Enter inserts newline.
+  /// Cmd/Ctrl+V: attempt image paste, fall back to text paste.
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (!isDesktopPlatform) return KeyEventResult.ignored;
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+
+    // Cmd+V (macOS) or Ctrl+V (Windows/Linux): try image paste first
+    final isModifier = HardwareKeyboard.instance.isMetaPressed ||
+        HardwareKeyboard.instance.isControlPressed;
+    if (onPasteImage != null &&
+        event.logicalKey == LogicalKeyboardKey.keyV &&
+        isModifier &&
+        !HardwareKeyboard.instance.isShiftPressed) {
+      _handlePaste();
+      return KeyEventResult.handled;
+    }
+
+    if (event.logicalKey != LogicalKeyboardKey.enter) {
+      return KeyEventResult.ignored;
+    }
+    final isShiftPressed = HardwareKeyboard.instance.isShiftPressed;
+    if (isShiftPressed) {
+      // Shift+Enter: let TextField handle newline insertion
+      return KeyEventResult.ignored;
+    }
+    // Enter without Shift: send message
+    if (hasInputText) {
+      onSend();
+    }
+    return KeyEventResult.handled;
+  }
+
+  Future<void> _handlePaste() async {
+    // Try image paste first
+    final pasted = await onPasteImage!();
+    if (pasted) return;
+
+    // Fall back to text paste from system clipboard
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (data?.text != null && data!.text!.isNotEmpty) {
+      final text = controller.text;
+      final selection = controller.selection;
+      final start = selection.start < 0 ? text.length : selection.start;
+      final end = selection.end < 0 ? text.length : selection.end;
+      final newText =
+          text.substring(0, start) + data.text! + text.substring(end);
+      final newCursor = start + data.text!.length;
+      controller.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: newCursor),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final l = AppLocalizations.of(context);
-    return TextField(
-      key: const ValueKey('message_input'),
-      controller: controller,
-      decoration: InputDecoration(
-        hintText: hintText ?? l.messagePlaceholder,
-        filled: true,
-        fillColor: cs.surfaceContainerLow,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24),
-          borderSide: BorderSide(color: cs.outlineVariant, width: 0.5),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24),
-          borderSide: BorderSide(
-            color: cs.primary.withValues(alpha: 0.5),
-            width: 1.5,
+    return Focus(
+      onKeyEvent: _handleKeyEvent,
+      child: TextField(
+        key: const ValueKey('message_input'),
+        controller: controller,
+        decoration: InputDecoration(
+          hintText: hintText ?? l.messagePlaceholder,
+          filled: true,
+          fillColor: cs.surfaceContainerLow,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(24),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(24),
+            borderSide: BorderSide(color: cs.outlineVariant, width: 0.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(24),
+            borderSide: BorderSide(
+              color: cs.primary.withValues(alpha: 0.5),
+              width: 1.5,
+            ),
+          ),
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 10,
           ),
         ),
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 10,
-        ),
+        enabled: status != ProcessStatus.starting,
+        autofillHints: null,
+        maxLines: 6,
+        minLines: 1,
+        keyboardType: TextInputType.multiline,
+        textInputAction: TextInputAction.newline,
       ),
-      enabled: status != ProcessStatus.starting,
-      autofillHints: null,
-      maxLines: 6,
-      minLines: 1,
-      keyboardType: TextInputType.multiline,
-      textInputAction: TextInputAction.newline,
     );
   }
 }
