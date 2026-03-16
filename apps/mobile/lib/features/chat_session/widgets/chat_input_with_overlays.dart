@@ -288,8 +288,8 @@ class ChatInputWithOverlays extends HookWidget {
                 final mimeType =
                     format == Formats.png ? 'image/png' : 'image/jpeg';
                 addImageBytes(bytes, mimeType);
-              } catch (_) {
-                // Ignore failed reads
+              } catch (e) {
+                debugPrint('[drop] Failed to read dropped image: $e');
               }
             });
             break; // Only read one format per item
@@ -533,13 +533,16 @@ class ChatInputWithOverlays extends HookWidget {
                 final mimeType =
                     format == Formats.png ? 'image/png' : 'image/jpeg';
                 addImageBytes(bytes, mimeType);
-              } catch (_) {}
+              } catch (e) {
+                debugPrint('[paste] Failed to read clipboard image: $e');
+              }
             });
             return true;
           }
         }
         return false;
-      } catch (_) {
+      } catch (e) {
+        debugPrint('[paste] Failed to read clipboard: $e');
         return false;
       }
     }

@@ -590,10 +590,12 @@ class _InputTextField extends StatelessWidget {
       return KeyEventResult.ignored;
     }
 
-    // Cmd/Ctrl+V: try image paste, fall back to text paste
+    // Cmd+V (macOS) or Ctrl+V (Windows/Linux): try image paste first
+    final isModifier = HardwareKeyboard.instance.isMetaPressed ||
+        HardwareKeyboard.instance.isControlPressed;
     if (onPasteImage != null &&
         event.logicalKey == LogicalKeyboardKey.keyV &&
-        HardwareKeyboard.instance.isMetaPressed &&
+        isModifier &&
         !HardwareKeyboard.instance.isShiftPressed) {
       _handlePaste();
       return KeyEventResult.handled;
