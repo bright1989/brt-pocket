@@ -87,7 +87,7 @@ npx @ccpocket/bridge@latest
 
 macOS ネイティブアプリもあります。モバイル版の UI/UX を気に入ったユーザーから「同じ体験を Mac でも使いたい」という声があり、実験的に作ったのが始まりです。
 
-まだベータ版ですが、十分に実用可能です。最新の `.dmg` は [GitHub Releases](https://github.com/K9i-0/ccpocket/releases?q=macos) からダウンロードできます。
+まだベータ版ですが、十分に実用可能です。最新の `.dmg` は [GitHub Releases](https://github.com/K9i-0/ccpocket/releases) からダウンロードできます（`macos/v*` タグのリリースが対象です）。
 
 ### 3. 接続してコーディング開始
 
