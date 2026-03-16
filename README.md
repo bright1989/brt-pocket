@@ -87,7 +87,7 @@ Scan the QR code in the banner above, or download directly:
 
 A macOS native app is also available. It started as an experiment — some users liked the mobile-first UI so much that they asked for the same experience on their Mac.
 
-It's still in beta, but fully functional. Download the latest `.dmg` from [GitHub Releases](https://github.com/K9i-0/ccpocket/releases) (look for releases tagged `macos/v*`).
+It's still in beta, but fully functional. Download the latest `.dmg` from [GitHub Releases](https://github.com/K9i-0/ccpocket/releases?q=macos) (look for releases tagged `macos/v*`).
 
 ### 3. Connect and Start Coding
 
