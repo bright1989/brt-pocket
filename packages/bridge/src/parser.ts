@@ -459,6 +459,9 @@ export function parseClientMessage(data: string): ClientMessage | null {
         break;
       case "get_prompt_history_backup_info":
         break;
+      case "refresh_branch":
+        if (typeof msg.sessionId !== "string") return null;
+        break;
       case "archive_session":
         if (typeof msg.sessionId !== "string") return null;
         if (msg.provider !== "claude" && msg.provider !== "codex") return null;
