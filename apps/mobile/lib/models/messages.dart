@@ -598,6 +598,10 @@ sealed class ServerMessage {
         success: json['success'] as bool? ?? false,
         error: json['error'] as String?,
       ),
+      'branch_update' => BranchUpdateMessage(
+        sessionId: json['sessionId'] as String? ?? '',
+        branch: json['branch'] as String? ?? '',
+      ),
       _ => ErrorMessage(message: 'Unknown message type: ${json['type']}'),
     };
   }
@@ -1246,6 +1250,16 @@ class ArchiveResultMessage implements ServerMessage {
   });
 }
 
+/// Response to a `refresh_branch` request with the current git branch.
+class BranchUpdateMessage implements ServerMessage {
+  final String sessionId;
+  final String branch;
+  const BranchUpdateMessage({
+    required this.sessionId,
+    required this.branch,
+  });
+}
+
 class PromptHistoryBackupResultMessage implements ServerMessage {
   final bool success;
   final String? backedUpAt;
@@ -1797,6 +1811,9 @@ class ClientMessage {
 
   factory ClientMessage.getHistory(String sessionId) =>
       ClientMessage._({'type': 'get_history', 'sessionId': sessionId});
+
+  factory ClientMessage.refreshBranch(String sessionId) =>
+      ClientMessage._({'type': 'refresh_branch', 'sessionId': sessionId});
 
   factory ClientMessage.getDebugBundle(
     String sessionId, {

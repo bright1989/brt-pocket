@@ -1086,6 +1086,29 @@ export class BridgeWebSocketServer {
         break;
       }
 
+      case "refresh_branch": {
+        const session = this.sessionManager.get(msg.sessionId);
+        if (session) {
+          const cwd = session.worktreePath ?? session.projectPath;
+          let branch = "";
+          try {
+            branch = execFileSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
+              cwd, encoding: "utf-8",
+            }).trim();
+          } catch { /* not a git repo */ }
+          // Update stored branch so future session_list responses are also current
+          session.gitBranch = branch;
+          this.send(ws, {
+            type: "branch_update",
+            sessionId: msg.sessionId,
+            branch,
+          });
+        } else {
+          this.send(ws, { type: "error", message: `Session ${msg.sessionId} not found` });
+        }
+        break;
+      }
+
       case "get_debug_bundle": {
         const session = this.sessionManager.get(msg.sessionId);
         if (!session) {

@@ -223,6 +223,7 @@ class ServerMessageWidget extends StatelessWidget {
       PromptHistoryBackupInfoMessage() => const SizedBox.shrink(),
       RenameResultMessage() => const SizedBox.shrink(),
       ArchiveResultMessage() => const SizedBox.shrink(),
+      BranchUpdateMessage() => const SizedBox.shrink(),
     };
   }
 }

@@ -121,7 +121,8 @@ export type ClientMessage =
   | { type: "backup_prompt_history"; data: string; appVersion: string; dbVersion: number }
   | { type: "restore_prompt_history" }
   | { type: "get_prompt_history_backup_info" }
-  | { type: "archive_session"; sessionId: string; provider: Provider; projectPath: string };
+  | { type: "archive_session"; sessionId: string; provider: Provider; projectPath: string }
+  | { type: "refresh_branch"; sessionId: string };
 
 /** Image change detected in a git diff (binary image file). */
 export interface ImageChange {

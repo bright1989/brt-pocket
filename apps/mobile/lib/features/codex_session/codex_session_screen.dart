@@ -300,6 +300,9 @@ class _CodexChatBody extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final appColors = Theme.of(context).extension<AppColors>()!;
+    // Mutable branch state (refreshed from Bridge)
+    final currentBranch = useState(gitBranch);
+
     // Custom hooks
     final lifecycleState = useAppLifecycleState();
     final isBackground =
@@ -380,7 +383,18 @@ class _CodexChatBody extends HookWidget {
         bridge.requestFileList(projectPath!);
       }
       bridge.requestSessionList();
+      bridge.refreshBranch(sessionId);
       return null;
+    }, [sessionId]);
+
+    // --- Listen for branch updates ---
+    useEffect(() {
+      final sub = context.read<BridgeService>().messages.listen((msg) {
+        if (msg is BranchUpdateMessage && msg.sessionId == sessionId) {
+          currentBranch.value = msg.branch.isNotEmpty ? msg.branch : null;
+        }
+      });
+      return sub.cancel;
     }, [sessionId]);
 
     // --- App resume: verify WebSocket health + refresh history ---
@@ -557,9 +571,10 @@ class _CodexChatBody extends HookWidget {
                 // Branch chip
                 if (projectPath != null)
                   BranchChip(
-                    branchName: gitBranch,
+                    branchName: currentBranch.value,
                     isWorktree: worktreePath != null,
                     onTap: () {
+                      context.read<BridgeService>().refreshBranch(sessionId);
                       showWorktreeListSheet(
                         context: context,
                         bridge: context.read<BridgeService>(),
