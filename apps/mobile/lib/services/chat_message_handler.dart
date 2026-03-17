@@ -206,6 +206,16 @@ class ChatMessageHandler {
         if (errorCode == 'git_not_available' && _gitTipShown) {
           return const ChatStateUpdate();
         }
+        // Suppress "Invalid message format" — bridge is simply older than
+        // the app and doesn't recognise a newer message type.  No user
+        // impact, so just log it.
+        if (message == 'Invalid message format') {
+          logger.warning(
+            '[handler] bridge returned "Invalid message format" '
+            '(bridge may need updating)',
+          );
+          return const ChatStateUpdate();
+        }
         logger.error('[handler] error message: $message');
         return ChatStateUpdate(entriesToAdd: [ServerChatEntry(msg)]);
       default:
