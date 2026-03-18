@@ -117,9 +117,15 @@ struct DoctorPageView: View {
                         Divider()
                             .padding(.horizontal, 14)
                     }
-                    CheckResultRow(check: check, onAction: actionFor(check))
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
+                    CheckResultRow(
+                        check: check,
+                        onAction: actionFor(check),
+                        onProviderLogin: { providerName in
+                            viewModel.loginProvider(providerName)
+                        }
+                    )
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
                 }
             }
             .background(.white.opacity(0.06), in: .rect(cornerRadius: 12))

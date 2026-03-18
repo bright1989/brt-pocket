@@ -63,6 +63,12 @@ final class DoctorViewModel: ObservableObject {
         }
     }
 
+    func loginProvider(_ providerName: String) {
+        performAction("Opening browser for login…") {
+            try await self.processManager.loginProvider(providerName)
+        }
+    }
+
     private func performAction(_ label: String, action: @escaping () async throws -> Void) {
         actionInProgress = label
         actionError = nil

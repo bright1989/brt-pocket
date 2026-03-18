@@ -95,6 +95,23 @@ final class BridgeProcessManager: Sendable {
     func installClaudeCode() async throws {
         try await shell("npm install -g @anthropic-ai/claude-code", timeout: 120)
     }
+
+    /// Open browser-based OAuth login for a CLI provider.
+    /// This spawns `claude auth login` (or equivalent) which opens the user's
+    /// default browser for authentication. The process completes when the
+    /// browser callback is received.
+    func loginProvider(_ providerName: String) async throws {
+        switch providerName {
+        case "Claude Code CLI":
+            // claude auth login opens the browser and waits for OAuth callback
+            try await shell("claude auth login", timeout: 120)
+        case "Codex CLI":
+            // codex auth login (if available), otherwise guide user
+            try await shell("codex auth login", timeout: 120)
+        default:
+            throw ProcessError.nonZeroExit(status: 1, output: "Unknown provider: \(providerName)")
+        }
+    }
 }
 
 enum ProcessError: LocalizedError {

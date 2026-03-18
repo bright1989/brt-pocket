@@ -3,6 +3,7 @@ import SwiftUI
 struct CheckResultRow: View {
     let check: CheckResult
     let onAction: (() -> Void)?
+    var onProviderLogin: ((String) -> Void)?
 
     private var statusColor: Color {
         switch check.status {
@@ -44,6 +45,19 @@ struct CheckResultRow: View {
                             .font(.caption)
 
                         Spacer()
+
+                        // Login button for installed but unauthenticated providers
+                        if provider.installed && !provider.authenticated {
+                            Button {
+                                onProviderLogin?(provider.name)
+                            } label: {
+                                Label("Login", systemImage: "person.badge.key")
+                                    .font(.caption2)
+                            }
+                            .controlSize(.small)
+                            .buttonStyle(.borderedProminent)
+                            .tint(.orange)
+                        }
 
                         Text(providerStatus(provider))
                             .font(.caption2)
