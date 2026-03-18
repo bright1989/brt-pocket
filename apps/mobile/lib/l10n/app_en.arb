@@ -480,8 +480,8 @@
   "terminalSshUserHint": "Defaults to machine SSH user",
   "openInTerminal": "Open in Terminal",
   "terminalAppNotInstalled": "Could not open terminal app",
-  "terminalAppExperimental": "Experimental",
-  "terminalAppExperimentalNote": "This feature is experimental. Presets may not work with all apps or configurations. Contributions for new presets are welcome on GitHub!",
+  "terminalAppExperimental": "Preview",
+  "terminalAppExperimentalNote": "This feature is in preview. Presets may not work with all apps or configurations. Contributions for new presets are welcome on GitHub!",
 
   "sectionSpread": "ENJOYING CC POCKET?",
   "shareApp": "Share with Friends",

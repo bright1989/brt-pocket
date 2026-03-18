@@ -1212,11 +1212,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get terminalAppNotInstalled => 'ターミナルアプリを開けませんでした';
 
   @override
-  String get terminalAppExperimental => '実験的機能';
+  String get terminalAppExperimental => 'プレビュー';
 
   @override
   String get terminalAppExperimentalNote =>
-      'この機能は実験的です。プリセットはアプリや環境によって動作しない場合があります。新しいプリセットの追加は GitHub で歓迎しています！';
+      'この機能はプレビュー版です。プリセットはアプリや環境によって動作しない場合があります。新しいプリセットの追加は GitHub で歓迎しています！';
 
   @override
   String get sectionSpread => 'CC Pocket を広める';

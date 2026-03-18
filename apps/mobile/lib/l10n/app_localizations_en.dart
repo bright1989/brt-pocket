@@ -1229,11 +1229,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get terminalAppNotInstalled => 'Could not open terminal app';
 
   @override
-  String get terminalAppExperimental => 'Experimental';
+  String get terminalAppExperimental => 'Preview';
 
   @override
   String get terminalAppExperimentalNote =>
-      'This feature is experimental. Presets may not work with all apps or configurations. Contributions for new presets are welcome on GitHub!';
+      'This feature is in preview. Presets may not work with all apps or configurations. Contributions for new presets are welcome on GitHub!';
 
   @override
   String get sectionSpread => 'ENJOYING CC POCKET?';

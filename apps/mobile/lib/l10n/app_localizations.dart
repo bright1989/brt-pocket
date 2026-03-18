@@ -2363,13 +2363,13 @@ abstract class AppLocalizations {
   /// No description provided for @terminalAppExperimental.
   ///
   /// In ja, this message translates to:
-  /// **'実験的機能'**
+  /// **'プレビュー'**
   String get terminalAppExperimental;
 
   /// No description provided for @terminalAppExperimentalNote.
   ///
   /// In ja, this message translates to:
-  /// **'この機能は実験的です。プリセットはアプリや環境によって動作しない場合があります。新しいプリセットの追加は GitHub で歓迎しています！'**
+  /// **'この機能はプレビュー版です。プリセットはアプリや環境によって動作しない場合があります。新しいプリセットの追加は GitHub で歓迎しています！'**
   String get terminalAppExperimentalNote;
 
   /// No description provided for @sectionSpread.
