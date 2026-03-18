@@ -789,7 +789,7 @@ class PermissionRequestMessage implements ServerMessage {
     for (final key in ['command', 'file_path', 'path', 'pattern', 'url']) {
       if (input.containsKey(key)) {
         final val = input[key].toString();
-        parts.add(val.length > 60 ? '${val.substring(0, 60)}...' : val);
+        parts.add(val);
       }
     }
     return parts.isNotEmpty ? parts.join(' | ') : toolName;

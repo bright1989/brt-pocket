@@ -786,16 +786,15 @@ void main() {
       expect(perm.summary, 'ls -la');
     });
 
-    test('truncates long values', () {
+    test('returns full value without truncation (UI handles display)', () {
+      const longPath =
+          '/very/long/path/that/exceeds/sixty/characters/definitely/yes/indeed/it/does/wow.dart';
       const perm = PermissionRequestMessage(
         toolUseId: 'tu-1',
         toolName: 'Read',
-        input: {
-          'file_path':
-              '/very/long/path/that/exceeds/sixty/characters/definitely/yes/indeed/it/does/wow.dart',
-        },
+        input: {'file_path': longPath},
       );
-      expect(perm.summary.length, lessThanOrEqualTo(63)); // 60 + "..."
+      expect(perm.summary, longPath);
     });
 
     test('falls back to toolName when no recognized keys', () {

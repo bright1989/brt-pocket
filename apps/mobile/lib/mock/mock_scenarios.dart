@@ -48,6 +48,7 @@ class MockScenario {
 final List<MockScenario> mockScenarios = [
   // Chat session scenarios — Claude
   _longToolCommands,
+  _longCommandApproval,
   _approvalFlow,
   _multipleApprovalFlow,
   _askUserQuestion,
@@ -270,6 +271,59 @@ final _longToolCommands = MockScenario(
     MockStep(
       delay: const Duration(milliseconds: 3500),
       message: const StatusMessage(status: ProcessStatus.idle),
+    ),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// 0b. Long Command Approval (expandable summary in approval UI)
+// ---------------------------------------------------------------------------
+final _longCommandApproval = MockScenario(
+  name: 'Long Cmd Approval',
+  icon: Icons.unfold_more_double,
+  description: 'Approval with a very long command (expandable summary)',
+  steps: [
+    MockStep(
+      delay: const Duration(milliseconds: 300),
+      message: const StatusMessage(status: ProcessStatus.running),
+    ),
+    MockStep(
+      delay: const Duration(milliseconds: 600),
+      message: AssistantServerMessage(
+        message: AssistantMessage(
+          id: 'mock-long-approval-1',
+          role: 'assistant',
+          content: [
+            const TextContent(
+              text: 'I need to stage all the changed metadata files.',
+            ),
+            const ToolUseContent(
+              id: 'tool-long-approval-bash',
+              name: 'Bash',
+              input: {
+                'command':
+                    'git add README.md README.ja.md apps/mobile/fastlane/metadata/en-US/description.txt apps/mobile/fastlane/metadata/ja/description.txt apps/mobile/fastlane/metadata/android/en-US/full_description.txt apps/mobile/fastlane/metadata/android/ja-JP/full_description.txt',
+              },
+            ),
+          ],
+          model: 'claude-sonnet-4-20250514',
+        ),
+      ),
+    ),
+    MockStep(
+      delay: const Duration(milliseconds: 1000),
+      message: const PermissionRequestMessage(
+        toolUseId: 'tool-long-approval-bash',
+        toolName: 'Bash',
+        input: {
+          'command':
+              'git add README.md README.ja.md apps/mobile/fastlane/metadata/en-US/description.txt apps/mobile/fastlane/metadata/ja/description.txt apps/mobile/fastlane/metadata/android/en-US/full_description.txt apps/mobile/fastlane/metadata/android/ja-JP/full_description.txt',
+        },
+      ),
+    ),
+    MockStep(
+      delay: const Duration(milliseconds: 1200),
+      message: const StatusMessage(status: ProcessStatus.waitingApproval),
     ),
   ],
 );

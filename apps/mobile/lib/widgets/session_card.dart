@@ -8,6 +8,7 @@ import '../theme/provider_style.dart';
 import '../utils/command_parser.dart';
 import '../utils/request_user_input.dart';
 import 'plan_detail_sheet.dart';
+import 'expandable_summary_text.dart';
 import 'session_visual_status.dart';
 
 /// Shared layout constant for AskUserArea buttons.
@@ -552,8 +553,8 @@ class _ToolApprovalArea extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            permission.summary,
+          ExpandableSummaryText(
+            text: permission.summary,
             style: TextStyle(
               fontSize: 12,
               fontFamily: 'monospace',
@@ -561,8 +562,7 @@ class _ToolApprovalArea extends StatelessWidget {
                 context,
               ).colorScheme.onSurface.withValues(alpha: 0.8),
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            maxLines: 2,
           ),
           const SizedBox(height: 6),
           Row(

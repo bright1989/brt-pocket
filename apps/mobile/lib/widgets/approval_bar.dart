@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/messages.dart';
 import '../theme/app_theme.dart';
+import 'expandable_summary_text.dart';
 
 enum PlanApprovalUiMode { claude, codex }
 
@@ -149,11 +150,10 @@ class _ApprovalHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 2),
-              Text(
-                summary,
+              ExpandableSummaryText(
+                text: summary,
                 style: TextStyle(fontSize: 11, color: appColors.subtleText),
                 maxLines: isPlanApproval ? 2 : 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
