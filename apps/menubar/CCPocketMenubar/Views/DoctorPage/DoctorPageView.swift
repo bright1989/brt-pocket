@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DoctorPageView: View {
     @ObservedObject var viewModel: DoctorViewModel
+    @Binding var launchAtLogin: Bool
     var bridgeUpdateAvailable: String?
     var onUpdateBridge: (() -> Void)?
 
@@ -86,6 +87,16 @@ struct DoctorPageView: View {
                         if !viewModel.optionalChecks.isEmpty {
                             checkSection(title: String(localized: "OPTIONAL"), checks: viewModel.optionalChecks)
                         }
+
+                        // Settings
+                        Toggle(isOn: $launchAtLogin) {
+                            Label(String(localized: "Launch at Login"), systemImage: "sunrise")
+                                .font(.subheadline)
+                        }
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
+                        .padding(14)
+                        .background(.white.opacity(0.06), in: .rect(cornerRadius: 12))
 
                         // Action status
                         if let actionInProgress = viewModel.actionInProgress {

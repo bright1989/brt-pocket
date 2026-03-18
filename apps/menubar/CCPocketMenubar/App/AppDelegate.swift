@@ -43,6 +43,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.level = .statusBar
         panel.isMovableByWindowBackground = false
         panel.hidesOnDeactivate = false
+        panel.acceptsMouseMovedEvents = true
         panel.contentView = contentView
         panel.isReleasedWhenClosed = false
 

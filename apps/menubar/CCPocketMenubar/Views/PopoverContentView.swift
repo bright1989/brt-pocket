@@ -69,6 +69,7 @@ struct PopoverContentView: View {
                 case .doctor:
                     DoctorPageView(
                         viewModel: doctorVM,
+                        launchAtLogin: $viewModel.launchAtLogin,
                         bridgeUpdateAvailable: viewModel.bridgeUpdateAvailable,
                         onUpdateBridge: { doctorVM.updateBridge() }
                     )

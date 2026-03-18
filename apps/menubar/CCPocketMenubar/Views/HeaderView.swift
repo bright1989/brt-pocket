@@ -34,23 +34,6 @@ struct HeaderView: View {
 
             Spacer()
 
-            // Launch at Login toggle
-            Button {
-                viewModel.launchAtLogin.toggle()
-            } label: {
-                Image(systemName: viewModel.launchAtLogin
-                      ? "sunrise.fill" : "sunrise")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(viewModel.launchAtLogin ? .orange : .secondary)
-                    .frame(width: 28, height: 28)
-                    .contentTransition(.symbolEffect(.replace))
-            }
-            .buttonStyle(.borderless)
-            .glassEffect(.regular.interactive(), in: .circle)
-            .help(viewModel.launchAtLogin
-                  ? String(localized: "Disable Launch at Login")
-                  : String(localized: "Enable Launch at Login"))
-
             // Start/Stop button
             Button {
                 viewModel.toggleBridge()
