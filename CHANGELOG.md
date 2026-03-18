@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.42.0] - 2026-03-18
+
+### Added
+- Graceful degradation for unsupported Bridge messages (older Bridge versions show update hint instead of errors)
+
+### Changed
+- Simplified auth error troubleshooting — clearer guidance with `claude` / `/login` instead of raw CLI commands
+- Reframed remote login troubleshooting documentation
+- Updated store screenshots to light theme with iOS app icon
+- Updated feature graphic to light theme
+
+### Fixed
+- Store screenshots regenerated with correct bold font weight
+- Suppressed "Invalid message format" error from older Bridge versions
+
 ## [1.41.2] - 2026-03-17
 
 ### Fixed
