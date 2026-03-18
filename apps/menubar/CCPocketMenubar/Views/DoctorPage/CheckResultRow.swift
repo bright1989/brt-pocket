@@ -86,7 +86,12 @@ struct CheckResultRow: View {
             if !commands.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(Array(commands.enumerated()), id: \.offset) { _, entry in
-                        CommandRow(comment: entry.comment, command: entry.command)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(entry.comment)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                            CommandRow(command: entry.command)
+                        }
                     }
                 }
                 .padding(.leading, 24)
