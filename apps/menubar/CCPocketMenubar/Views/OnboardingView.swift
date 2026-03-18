@@ -124,16 +124,13 @@ struct OnboardingView: View {
     @ViewBuilder
     private func setupStepList(report: DoctorReport) -> some View {
         let allSteps = buildStepList(report: report)
+        var stepNumber = 0
 
-        ForEach(Array(allSteps.enumerated()), id: \.offset) { index, step in
-            switch step {
-            case .command(let comment, let command):
-                numberedCommandRow(number: index + 1, comment: comment, command: command)
-                    .padding(.vertical, 4)
-            case .passed(let name, let message):
-                passedRow(name: name, message: message)
-                    .padding(.vertical, 3)
-            }
+        ForEach(Array(allSteps.enumerated()), id: \.offset) { _, step in
+            let _ = { stepNumber += 1 }()
+            let number = stepNumber
+            stepRow(step: step, number: number)
+                .padding(.vertical, 4)
         }
 
         // Error / progress
@@ -158,43 +155,36 @@ struct OnboardingView: View {
 
     // MARK: - Row Components
 
-    private func numberedCommandRow(number: Int, comment: String, command: String) -> some View {
+    @ViewBuilder
+    private func stepRow(step: SetupStep, number: Int) -> some View {
         HStack(alignment: .top, spacing: 8) {
-            Text("\(number)")
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(.white)
-                .frame(width: 18, height: 18)
-                .background(Color.accentColor, in: .circle)
+            // Badge: green check if passed, numbered circle if pending
+            if step.isPassed {
+                Image(systemName: "checkmark")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 18, height: 18)
+                    .background(.green, in: .circle)
+            } else {
+                Text("\(number)")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 18, height: 18)
+                    .background(Color.accentColor, in: .circle)
+            }
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(comment)
+                Text(step.comment)
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(step.isPassed ? .tertiary : .secondary)
 
-                CommandRow(command: command) {
+                CommandRow(command: step.command) {
                     #if DEBUG
-                    doctorVM.markCommandCompleted(command)
+                    doctorVM.markCommandCompleted(step.command)
                     #endif
                 }
+                .opacity(step.isPassed ? 0.5 : 1)
             }
-        }
-    }
-
-    private func passedRow(name: String, message: String) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.green)
-                .font(.caption)
-
-            Text(name)
-                .font(.caption.weight(.medium))
-                .foregroundStyle(.secondary)
-
-            Spacer()
-
-            Text(message)
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
         }
     }
 
@@ -286,9 +276,10 @@ struct OnboardingView: View {
 
     // MARK: - Step Builder
 
-    private enum SetupStep {
-        case command(comment: String, command: String)
-        case passed(name: String, message: String)
+    private struct SetupStep {
+        let comment: String
+        let command: String
+        let isPassed: Bool
     }
 
     private func buildStepList(report: DoctorReport) -> [SetupStep] {
@@ -297,12 +288,16 @@ struct OnboardingView: View {
         for check in report.results {
             let commands = doctorVM.setupCommands(for: check)
             if commands.isEmpty {
-                // Pass or no action needed
-                steps.append(.passed(name: check.localizedName, message: check.message))
-            } else {
-                for entry in commands {
-                    steps.append(.command(comment: entry.comment, command: entry.command))
-                }
+                // Already passing — no commands needed, skip
+                continue
+            }
+            let checkPassed = check.status == "pass"
+            for entry in commands {
+                steps.append(SetupStep(
+                    comment: entry.comment,
+                    command: entry.command,
+                    isPassed: checkPassed
+                ))
             }
         }
 
