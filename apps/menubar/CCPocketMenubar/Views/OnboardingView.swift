@@ -124,12 +124,9 @@ struct OnboardingView: View {
     @ViewBuilder
     private func setupStepList(report: DoctorReport) -> some View {
         let allSteps = buildStepList(report: report)
-        var stepNumber = 0
 
-        ForEach(Array(allSteps.enumerated()), id: \.offset) { _, step in
-            let _ = { stepNumber += 1 }()
-            let number = stepNumber
-            stepRow(step: step, number: number)
+        ForEach(Array(allSteps.enumerated()), id: \.offset) { index, step in
+            stepRow(step: step, number: index + 1)
                 .padding(.vertical, 4)
         }
 
@@ -286,11 +283,9 @@ struct OnboardingView: View {
         var steps: [SetupStep] = []
 
         for check in report.results {
-            let commands = doctorVM.setupCommands(for: check)
-            if commands.isEmpty {
-                // Already passing — no commands needed, skip
-                continue
-            }
+            let commands = doctorVM.allSetupCommands(for: check)
+            guard !commands.isEmpty else { continue }
+
             let checkPassed = check.status == "pass"
             for entry in commands {
                 steps.append(SetupStep(

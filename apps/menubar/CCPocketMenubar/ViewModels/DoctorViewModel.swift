@@ -215,13 +215,13 @@ final class DoctorViewModel: ObservableObject {
 
     func setupCommands(for check: CheckResult) -> [(comment: String, command: String)] {
         switch check.name {
-        case "Node.js" where check.status == "fail":
+        case "Node.js" where check.status != "pass":
             return [
                 ("Install Homebrew (skip if already installed)", "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""),
                 ("Install Node.js", "brew install node"),
             ]
 
-        case "CLI providers":
+        case "CLI providers" where check.status != "pass":
             var commands: [(comment: String, command: String)] = []
             if let providers = check.providers {
                 for provider in providers {
@@ -248,15 +248,55 @@ final class DoctorViewModel: ObservableObject {
             }
             return commands
 
-        case "Bridge Server" where check.status == "fail":
+        case "Bridge Server" where check.status != "pass":
             return [
                 ("Install Bridge Server", "npm install -g @ccpocket/bridge"),
             ]
 
-        case "launchd service" where check.status == "skip" || check.status == "fail":
+        case "launchd service" where check.status != "pass":
             return [
                 ("Set up Bridge as a background service", "npx @ccpocket/bridge@latest setup"),
             ]
+
+        default:
+            return []
+        }
+    }
+
+    /// Return commands regardless of status (for onboarding step list).
+    func allSetupCommands(for check: CheckResult) -> [(comment: String, command: String)] {
+        switch check.name {
+        case "Node.js":
+            return [
+                ("Install Homebrew (skip if already installed)", "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""),
+                ("Install Node.js", "brew install node"),
+            ]
+
+        case "CLI providers":
+            var commands: [(comment: String, command: String)] = []
+            if let providers = check.providers {
+                for provider in providers {
+                    switch provider.name {
+                    case "Claude Code CLI":
+                        commands.append(provider.installed && !provider.authenticated
+                            ? ("Login to Claude Code", "claude login")
+                            : ("Install Claude Code CLI", "npm install -g @anthropic-ai/claude-code"))
+                    case "Codex CLI":
+                        commands.append(provider.installed && !provider.authenticated
+                            ? ("Login to Codex", "codex login")
+                            : ("Install Codex CLI", "npm install -g @openai/codex"))
+                    default:
+                        break
+                    }
+                }
+            }
+            return commands
+
+        case "Bridge Server":
+            return [("Install Bridge Server", "npm install -g @ccpocket/bridge")]
+
+        case "launchd service":
+            return [("Set up Bridge as a background service", "npx @ccpocket/bridge@latest setup")]
 
         default:
             return []
