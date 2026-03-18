@@ -2,6 +2,11 @@
 
 All notable changes to `@ccpocket/bridge` will be documented in this file.
 
+## [1.24.0] - 2026-03-19
+
+### Changed
+- Claude usage tracking is now opt-in (set `BRIDGE_ENABLE_USAGE=1` to enable). No direct Anthropic API calls by default
+
 ## [1.23.0] - 2026-03-18
 
 ### Added
