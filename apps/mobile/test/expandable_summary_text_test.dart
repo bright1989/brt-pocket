@@ -48,12 +48,22 @@ void main() {
       expect(find.text('more'), findsOneWidget);
     });
 
+    testWidgets('collapsed text uses clip overflow (no ellipsis)',
+        (tester) async {
+      await tester.pumpWidget(buildSubject(longText));
+      await tester.pumpAndSettle();
+
+      final richText = _findMainRichText(tester);
+      expect(richText.maxLines, 2);
+      expect(richText.overflow, TextOverflow.clip);
+    });
+
     testWidgets('expands on tap when text overflows', (tester) async {
       await tester.pumpWidget(buildSubject(longText));
       await tester.pumpAndSettle();
 
       // Initially has maxLines constraint (collapsed)
-      var richText = _findRichTextWithMaxLines(tester);
+      var richText = _findMainRichText(tester);
       expect(richText.maxLines, 2);
 
       // Tap to expand
@@ -61,7 +71,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // After tap, maxLines is removed (expanded)
-      richText = _findRichTextWithMaxLines(tester);
+      richText = _findMainRichText(tester);
       expect(richText.maxLines, isNull);
       // "more" disappears, "less" appears
       expect(find.text('more'), findsNothing);
@@ -81,7 +91,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Back to collapsed
-      final richText = _findRichTextWithMaxLines(tester);
+      final richText = _findMainRichText(tester);
       expect(richText.maxLines, 2);
       expect(find.text('more'), findsOneWidget);
     });
@@ -90,7 +100,7 @@ void main() {
       await tester.pumpWidget(buildSubject(longText, maxLines: 1));
       await tester.pumpAndSettle();
 
-      final richText = _findRichTextWithMaxLines(tester);
+      final richText = _findMainRichText(tester);
       expect(richText.maxLines, 1);
     });
 
@@ -99,11 +109,35 @@ void main() {
 
       expect(find.text('more'), findsNothing);
     });
+
+    testWidgets('"more" is positioned at bottom-right via Stack',
+        (tester) async {
+      await tester.pumpWidget(buildSubject(longText));
+      await tester.pumpAndSettle();
+
+      // Stack is used for the collapsed-overflow layout
+      expect(
+        find.descendant(
+          of: find.byType(ExpandableSummaryText),
+          matching: find.byType(Stack),
+        ),
+        findsOneWidget,
+      );
+
+      // "more" is inside a Positioned widget (bottom-right)
+      expect(
+        find.descendant(
+          of: find.byType(Stack),
+          matching: find.byType(Positioned),
+        ),
+        findsOneWidget,
+      );
+    });
   });
 }
 
-/// Find the RichText inside ExpandableSummaryText to inspect maxLines.
-RichText _findRichTextWithMaxLines(WidgetTester tester) {
+/// Find the first (main) RichText inside ExpandableSummaryText.
+RichText _findMainRichText(WidgetTester tester) {
   return tester.widget<RichText>(
     find.descendant(
       of: find.byType(ExpandableSummaryText),

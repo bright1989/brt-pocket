@@ -153,7 +153,8 @@ class _ApprovalHeader extends StatelessWidget {
               ExpandableSummaryText(
                 text: summary,
                 style: TextStyle(fontSize: 11, color: appColors.subtleText),
-                maxLines: isPlanApproval ? 2 : 1,
+                maxLines: 2,
+                backgroundColor: appColors.approvalBar,
               ),
             ],
           ),
