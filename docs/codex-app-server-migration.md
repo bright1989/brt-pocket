@@ -91,13 +91,13 @@ Result: one unrelated existing failure in `src/version.test.ts` (expected versio
 - Remaining gaps:
   - `item/tool/call` / `dynamicToolCall` is normalized into tool history, but there is still no dedicated mobile affordance beyond generic tool-use/result rendering.
   - Permission UI now surfaces amendment summaries, but still does not offer dedicated controls for choosing among protocol-level policy amendment variants.
-  - Recent sessions still come from rollout scanning rather than `thread/list`, so app-server-native pagination/filter semantics are not yet used.
+  - Codex-only recent sessions now prefer `thread/list`, but mixed/all-provider recent session loading still depends on rollout scanning instead of a unified app-server-backed index.
 
 ### Recommended next implementation slice
 
 1. Decide whether dynamic tools need dedicated mobile UI instead of the current generic tool history rendering.
 2. Decide whether ccpocket wants interactive controls for granular approval policy amendments instead of summary-only display.
-3. Decide whether recent-session fetching should switch from rollout scanning to `thread/list`.
+3. Decide whether all-provider recent-session fetching should move off rollout scanning.
 4. Add real Codex E2E coverage for permissions + elicitation flows on mobile.
 
 ## Follow-ups

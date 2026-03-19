@@ -7,7 +7,7 @@ import { promisify } from "node:util";
 import { WebSocketServer, WebSocket } from "ws";
 import { SessionManager, type SessionInfo } from "./session.js";
 import { SdkProcess } from "./sdk-process.js";
-import type { CodexProcess, CodexThreadSummary } from "./codex-process.js";
+import { CodexProcess, type CodexThreadSummary } from "./codex-process.js";
 import { parseClientMessage, type ClientMessage, type DebugTraceEvent, type ImageChange, type ServerMessage } from "./parser.js";
 import { getAllRecentSessions, getCodexSessionHistory, getSessionHistory, findSessionsByClaudeIds, extractMessageImages, getClaudeSessionName, loadCodexSessionNames, renameClaudeSession, renameCodexSession } from "./sessions-index.js";
 import type { ImageStore } from "./image-store.js";
@@ -2016,26 +2016,9 @@ export class BridgeWebSocketServer {
   private async listRecentSessions(
     msg: Extract<ClientMessage, { type: "list_recent_sessions" }>,
   ): Promise<{ sessions: unknown[]; hasMore: boolean }> {
-    const activeCodex = this.getActiveCodexProcess();
-    if (msg.provider === "codex" && activeCodex) {
+    if (msg.provider === "codex") {
       try {
-        const limit = msg.limit ?? 20;
-        const offset = msg.offset ?? 0;
-        const result = await activeCodex.listThreads({
-          limit: limit + offset,
-          cwd: msg.projectPath,
-          searchTerm: msg.searchQuery,
-        });
-        const archivedIds = this.archiveStore.archivedIds();
-        const sessions = result.data
-          .filter((thread) => !archivedIds.has(thread.id))
-          .filter((thread) => !msg.namedOnly || !!thread.name)
-          .slice(offset, offset + limit)
-          .map((thread) => codexThreadToRecentSession(thread));
-        return {
-          sessions,
-          hasMore: result.nextCursor != null,
-        };
+        return await this.listRecentCodexThreads(msg);
       } catch (err) {
         console.warn(`[ws] Codex thread/list failed, falling back to rollout scan: ${err}`);
       }
@@ -2057,6 +2040,43 @@ export class BridgeWebSocketServer {
     if (!summary) return null;
     const session = this.sessionManager.get(summary.id);
     return session?.provider === "codex" ? session.process as CodexProcess : null;
+  }
+
+  private async listRecentCodexThreads(
+    msg: Extract<ClientMessage, { type: "list_recent_sessions" }>,
+  ): Promise<{ sessions: unknown[]; hasMore: boolean }> {
+    const limit = msg.limit ?? 20;
+    const offset = msg.offset ?? 0;
+    const process = this.getActiveCodexProcess() ?? await this.createStandaloneCodexProcess(msg.projectPath);
+    const isStandalone = process !== this.getActiveCodexProcess();
+
+    try {
+      const result = await process.listThreads({
+        limit: limit + offset,
+        cwd: msg.projectPath,
+        searchTerm: msg.searchQuery,
+      });
+      const archivedIds = this.archiveStore.archivedIds();
+      const sessions = result.data
+        .filter((thread) => !archivedIds.has(thread.id))
+        .filter((thread) => !msg.namedOnly || !!thread.name)
+        .slice(offset, offset + limit)
+        .map((thread) => codexThreadToRecentSession(thread));
+      return {
+        sessions,
+        hasMore: result.nextCursor != null,
+      };
+    } finally {
+      if (isStandalone) {
+        process.stop();
+      }
+    }
+  }
+
+  private async createStandaloneCodexProcess(projectPath?: string): Promise<CodexProcess> {
+    const proc = new CodexProcess();
+    await proc.initializeOnly(projectPath ?? process.cwd());
+    return proc;
   }
 
   /** Extract a short project label from the full projectPath (last directory name). */

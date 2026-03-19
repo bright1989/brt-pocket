@@ -1005,7 +1005,7 @@ describe("BridgeWebSocketServer resume/get_history flow", () => {
     });
 
     ws.send.mockClear();
-    (bridge as any).handleClientMessage(
+    await (bridge as any).handleClientMessage(
       {
         type: "list_recent_sessions",
         provider: "codex",
@@ -1013,7 +1013,6 @@ describe("BridgeWebSocketServer resume/get_history flow", () => {
       },
       ws,
     );
-
     await Promise.resolve();
     await Promise.resolve();
 
@@ -1036,6 +1035,66 @@ describe("BridgeWebSocketServer resume/get_history flow", () => {
       agentNickname: "Atlas",
       agentRole: "explorer",
       gitBranch: "feat/protocol",
+      projectPath: "/tmp/project-codex",
+    });
+
+    bridge.close();
+  });
+
+  it("uses standalone codex app-server for codex recent sessions when no active session exists", async () => {
+    const bridge = new BridgeWebSocketServer({ server: httpServer });
+    const ws = {
+      readyState: OPEN_STATE,
+      send: vi.fn(),
+    } as any;
+    const stop = vi.fn();
+
+    (bridge as any).createStandaloneCodexProcess = vi.fn(async () => ({
+      listThreads: vi.fn(async () => ({
+        data: [
+          {
+            id: "thr_codex_2",
+            preview: "Review failing tests",
+            createdAt: 1771492643,
+            updatedAt: 1771496243,
+            cwd: "/tmp/project-codex",
+            agentNickname: null,
+            agentRole: null,
+            gitBranch: "fix/tests",
+            name: "Test failures",
+          },
+        ],
+        nextCursor: null,
+      })),
+      stop,
+    }));
+
+    await (bridge as any).handleClientMessage(
+      {
+        type: "list_recent_sessions",
+        provider: "codex",
+        projectPath: "/tmp/project-codex",
+      },
+      ws,
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect((bridge as any).createStandaloneCodexProcess).toHaveBeenCalledWith(
+      "/tmp/project-codex",
+    );
+    expect(stop).toHaveBeenCalledTimes(1);
+    expect(getAllRecentSessionsMock).not.toHaveBeenCalled();
+
+    const payload = ws.send.mock.calls
+      .map((c: unknown[]) => JSON.parse(c[0] as string))
+      .find((m: any) => m.type === "recent_sessions");
+    expect(payload.sessions[0]).toMatchObject({
+      provider: "codex",
+      sessionId: "thr_codex_2",
+      name: "Test failures",
+      gitBranch: "fix/tests",
       projectPath: "/tmp/project-codex",
     });
 

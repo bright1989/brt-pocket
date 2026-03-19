@@ -259,6 +259,44 @@ export class CodexProcess extends EventEmitter<CodexProcessEvents> {
       this.stop();
     }
 
+    this.prepareLaunch(projectPath, options);
+    this.launchAppServer(projectPath, options);
+
+    void this.bootstrap(projectPath, options);
+  }
+
+  async initializeOnly(projectPath: string): Promise<void> {
+    if (this.child) {
+      this.stop();
+    }
+    this.prepareLaunch(projectPath);
+    this.launchAppServer(projectPath);
+    await this.initializeRpcConnection();
+    this.setStatus("idle");
+  }
+
+  stop(): void {
+    this.stopped = true;
+
+    if (this.inputResolve) {
+      this.inputResolve({ text: "" });
+      this.inputResolve = null;
+    }
+
+    this.pendingApprovals.clear();
+    this.pendingUserInputs.clear();
+    this.rejectAllPending(new Error("stopped"));
+
+    if (this.child) {
+      this.child.kill("SIGTERM");
+      this.child = null;
+    }
+
+    this.setStatus("idle");
+    console.log("[codex-process] Stopped");
+  }
+
+  private prepareLaunch(projectPath: string, options?: CodexStartOptions): void {
     this.stopped = false;
     this._threadId = null;
     this._agentNickname = null;
@@ -274,7 +312,10 @@ export class CodexProcess extends EventEmitter<CodexProcessEvents> {
     this.lastPlanItemText = null;
     this.pendingPlanCompletion = null;
     this._pendingPlanInput = null;
+    this._projectPath = projectPath;
+  }
 
+  private launchAppServer(projectPath: string, options?: CodexStartOptions): void {
     console.log(
       `[codex-process] Starting app-server (cwd: ${projectPath}, sandbox: ${options?.sandboxMode ?? "workspace-write"}, approval: ${options?.approvalPolicy ?? "never"}, model: ${options?.model ?? "default"}, collaboration: ${this._collaborationMode})`,
     );
@@ -317,29 +358,6 @@ export class CodexProcess extends EventEmitter<CodexProcessEvents> {
       this.setStatus("idle");
       this.emit("exit", code);
     });
-
-    void this.bootstrap(projectPath, options);
-  }
-
-  stop(): void {
-    this.stopped = true;
-
-    if (this.inputResolve) {
-      this.inputResolve({ text: "" });
-      this.inputResolve = null;
-    }
-
-    this.pendingApprovals.clear();
-    this.pendingUserInputs.clear();
-    this.rejectAllPending(new Error("stopped"));
-
-    if (this.child) {
-      this.child.kill("SIGTERM");
-      this.child = null;
-    }
-
-    this.setStatus("idle");
-    console.log("[codex-process] Stopped");
   }
 
   interrupt(): void {
@@ -580,17 +598,7 @@ export class CodexProcess extends EventEmitter<CodexProcessEvents> {
 
   private async bootstrap(projectPath: string, options?: CodexStartOptions): Promise<void> {
     try {
-      await this.request("initialize", {
-        clientInfo: {
-          name: "ccpocket_bridge",
-          version: "1.0.0",
-          title: "ccpocket bridge",
-        },
-        capabilities: {
-          experimentalApi: true,
-        },
-      });
-      this.notify("initialized", {});
+      await this.initializeRpcConnection();
 
       const threadParams: Record<string, unknown> = {
         cwd: projectPath,
@@ -661,6 +669,20 @@ export class CodexProcess extends EventEmitter<CodexProcessEvents> {
       this.setStatus("idle");
       this.emit("exit", 1);
     }
+  }
+
+  private async initializeRpcConnection(): Promise<void> {
+    await this.request("initialize", {
+      clientInfo: {
+        name: "ccpocket_bridge",
+        version: "1.0.0",
+        title: "ccpocket bridge",
+      },
+      capabilities: {
+        experimentalApi: true,
+      },
+    });
+    this.notify("initialized", {});
   }
 
   /**

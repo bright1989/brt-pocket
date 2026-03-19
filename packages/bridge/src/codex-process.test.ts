@@ -105,6 +105,34 @@ describe("CodexProcess (app-server)", () => {
     proc.stop();
   });
 
+  it("can initialize app-server without starting a thread", async () => {
+    const proc = new CodexProcess();
+
+    const initializePromise = proc.initializeOnly("/tmp/project-init-only");
+
+    expect(spawnMock).toHaveBeenCalledTimes(1);
+    expect(spawnMock).toHaveBeenCalledWith(
+      "codex",
+      ["app-server", "--listen", "stdio://"],
+      expect.objectContaining({ cwd: "/tmp/project-init-only" }),
+    );
+
+    const child = fakeChildren[0];
+    await tick();
+
+    const initReq = nextOutgoingRequest(child);
+    expect(initReq.method).toBe("initialize");
+    child.stdout.emit("data", `${JSON.stringify({ id: initReq.id, result: {} })}\n`);
+
+    await initializePromise;
+
+    const initialized = nextOutgoingNotification(child);
+    expect(initialized.method).toBe("initialized");
+    expect(() => nextOutgoingRequest(child)).toThrow();
+
+    proc.stop();
+  });
+
   it("emits permission_request and responds on approve", async () => {
     const proc = new CodexProcess();
     const messages: unknown[] = [];
