@@ -9,7 +9,9 @@ import '../../../theme/app_theme.dart';
 import '../state/chat_session_cubit.dart';
 
 class SessionModeBar extends StatelessWidget {
-  const SessionModeBar({super.key});
+  final Future<void> Function()? onBeforeRestart;
+
+  const SessionModeBar({super.key, this.onBeforeRestart});
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +55,11 @@ class SessionModeBar extends StatelessWidget {
                   children: [
                     PermissionModeChip(
                       currentMode: permissionMode,
-                      onTap: () => showPermissionModeMenu(context, chatCubit),
+                      onTap: () => showPermissionModeMenu(
+                        context,
+                        chatCubit,
+                        onBeforeRestart: onBeforeRestart,
+                      ),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -66,7 +72,11 @@ class SessionModeBar extends StatelessWidget {
                     SandboxModeChip(
                       currentMode: sandboxMode,
                       provider: chatCubit.provider,
-                      onTap: () => showSandboxModeMenu(context, chatCubit),
+                      onTap: () => showSandboxModeMenu(
+                        context,
+                        chatCubit,
+                        onBeforeRestart: onBeforeRestart,
+                      ),
                     ),
                   ],
                 ),
@@ -243,7 +253,11 @@ class _RotatingBorderPainter extends CustomPainter {
       oldDelegate.progress != progress;
 }
 
-void showPermissionModeMenu(BuildContext context, ChatSessionCubit chatCubit) {
+void showPermissionModeMenu(
+  BuildContext context,
+  ChatSessionCubit chatCubit, {
+  Future<void> Function()? onBeforeRestart,
+}) {
   final currentMode = chatCubit.state.permissionMode;
   final appColors = Theme.of(context).extension<AppColors>()!;
 
@@ -320,7 +334,12 @@ void showPermissionModeMenu(BuildContext context, ChatSessionCubit chatCubit) {
                   if (mode == currentMode) return;
                   HapticFeedback.lightImpact();
                   if (chatCubit.isCodex) {
-                    _confirmPermissionModeChange(context, chatCubit, mode);
+                    _confirmPermissionModeChange(
+                      context,
+                      chatCubit,
+                      mode,
+                      onBeforeRestart: onBeforeRestart,
+                    );
                   } else {
                     chatCubit.setPermissionMode(mode);
                   }
@@ -339,8 +358,9 @@ void showPermissionModeMenu(BuildContext context, ChatSessionCubit chatCubit) {
 Future<void> _confirmPermissionModeChange(
   BuildContext context,
   ChatSessionCubit chatCubit,
-  PermissionMode mode,
-) async {
+  PermissionMode mode, {
+  Future<void> Function()? onBeforeRestart,
+}) async {
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (dialogContext) {
@@ -368,11 +388,16 @@ Future<void> _confirmPermissionModeChange(
     },
   );
   if (confirmed == true) {
+    await onBeforeRestart?.call();
     chatCubit.setPermissionMode(mode);
   }
 }
 
-void showSandboxModeMenu(BuildContext context, ChatSessionCubit chatCubit) {
+void showSandboxModeMenu(
+  BuildContext context,
+  ChatSessionCubit chatCubit, {
+  Future<void> Function()? onBeforeRestart,
+}) {
   final currentMode = chatCubit.state.sandboxMode;
   final isClaude = chatCubit.provider != Provider.codex;
 
@@ -434,6 +459,7 @@ void showSandboxModeMenu(BuildContext context, ChatSessionCubit chatCubit) {
                     chatCubit,
                     mode,
                     isClaude: isClaude,
+                    onBeforeRestart: onBeforeRestart,
                   );
                 },
               ),
@@ -480,6 +506,7 @@ Future<void> _confirmSandboxModeChange(
   ChatSessionCubit chatCubit,
   SandboxMode mode, {
   bool isClaude = false,
+  Future<void> Function()? onBeforeRestart,
 }) async {
   final modeLabel = isClaude
       ? (mode == SandboxMode.on ? 'Sandbox (Safe Mode)' : 'Standard')
@@ -514,6 +541,7 @@ Future<void> _confirmSandboxModeChange(
     },
   );
   if (confirmed == true) {
+    await onBeforeRestart?.call();
     chatCubit.setSandboxMode(mode);
   }
 }

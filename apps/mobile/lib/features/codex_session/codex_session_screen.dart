@@ -161,8 +161,13 @@ class _CodexSessionScreenState extends State<CodexSessionScreen> {
 
   /// Switch to a new session (e.g. after sandbox mode change).
   void _switchSession(SystemMessage msg) {
+    final oldId = _sessionId;
+    final newId = msg.sessionId!;
+    final draftService = context.read<DraftService>();
+    draftService.migrateDraft(oldId, newId);
+    draftService.migrateImageDraft(oldId, newId);
     setState(() {
-      _sessionId = msg.sessionId!;
+      _sessionId = newId;
       _projectPath = msg.projectPath ?? _projectPath;
       _worktreePath = msg.worktreePath ?? _worktreePath;
       _gitBranch = msg.worktreeBranch ?? _gitBranch;
@@ -314,10 +319,10 @@ class _CodexChatBody extends HookWidget {
     // Chat input controller
     final chatInputController = useTextEditingController();
     final planFeedbackController = useTextEditingController();
+    final draftService = context.read<DraftService>();
 
     // --- Draft persistence: restore on mount, auto-save on change ---
     useEffect(() {
-      final draftService = context.read<DraftService>();
       final draft = draftService.getDraft(sessionId);
       if (draft != null && draft.isNotEmpty) {
         chatInputController.text = draft;
@@ -782,11 +787,20 @@ class _CodexChatBody extends HookWidget {
                               ),
                             ),
                           ),
-                    topOverlay: const Positioned(
+                    topOverlay: Positioned(
                       top: 0,
                       left: 0,
                       right: 0,
-                      child: Center(child: SessionModeBar()),
+                      child: Center(
+                        child: SessionModeBar(
+                          onBeforeRestart: () async {
+                            draftService.saveDraft(
+                              sessionId,
+                              chatInputController.text,
+                            );
+                          },
+                        ),
+                      ),
                     ),
                     floatingButtonBuilder: (overlayHeight) {
                       if (!scroll.isScrolledUp) return const SizedBox.shrink();
