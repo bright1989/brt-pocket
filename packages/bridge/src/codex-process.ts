@@ -1223,6 +1223,27 @@ export class CodexProcess extends EventEmitter<CodexProcessEvents> {
         break;
       }
 
+      case "dynamictoolcall": {
+        const tool = typeof item.tool === "string" ? item.tool : "DynamicTool";
+        this.emitMessage({
+          type: "assistant",
+          message: {
+            id: itemId,
+            role: "assistant",
+            content: [
+              {
+                type: "tool_use",
+                id: itemId,
+                name: tool,
+                input: toToolUseInput(item.arguments),
+              },
+            ],
+            model: "codex",
+          },
+        });
+        break;
+      }
+
       case "collabagenttoolcall": {
         const tool = typeof item.tool === "string" ? item.tool : "subagent";
         const toolName = "SubAgent";
@@ -1341,6 +1362,18 @@ export class CodexProcess extends EventEmitter<CodexProcessEvents> {
           toolUseId: itemId,
           content: typeof result === "string" ? result : JSON.stringify(result),
           toolName,
+        });
+        break;
+      }
+
+      case "dynamictoolcall": {
+        const tool = typeof item.tool === "string" ? item.tool : "DynamicTool";
+        const content = formatDynamicToolResult(item);
+        this.emitMessage({
+          type: "tool_result",
+          toolUseId: itemId,
+          content,
+          toolName: tool,
         });
         break;
       }
@@ -1640,6 +1673,48 @@ function summarizeFileChanges(changes: unknown): string {
       return `${kind}: ${path}`;
     })
     .join("\n");
+}
+
+function toToolUseInput(value: unknown): Record<string, unknown> {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  if (Array.isArray(value)) {
+    return { items: value };
+  }
+  if (value === undefined || value === null) {
+    return {};
+  }
+  return { value };
+}
+
+function formatDynamicToolResult(item: Record<string, unknown>): string {
+  const status = typeof item.status === "string" ? item.status : "completed";
+  const success = typeof item.success === "boolean" ? item.success : null;
+  const contentItems = Array.isArray(item.contentItems) ? item.contentItems : null;
+  const parts = [
+    `status: ${status}`,
+    ...(success != null ? [`success: ${success}`] : []),
+  ];
+
+  if (contentItems && contentItems.length > 0) {
+    for (const entry of contentItems) {
+      if (!entry || typeof entry !== "object") continue;
+      const record = entry as Record<string, unknown>;
+      const type = typeof record.type === "string" ? record.type : "item";
+      if (type === "inputText" && typeof record.text === "string") {
+        parts.push(record.text);
+        continue;
+      }
+      if (type === "inputImage" && typeof record.imageUrl === "string") {
+        parts.push(`image: ${record.imageUrl}`);
+        continue;
+      }
+      parts.push(JSON.stringify(record));
+    }
+  }
+
+  return parts.join("\n");
 }
 
 /**

@@ -494,6 +494,106 @@ describe("CodexProcess (app-server)", () => {
     proc.stop();
   });
 
+  it("maps dynamic tool calls into tool_use and tool_result messages", async () => {
+    const proc = new CodexProcess();
+    const messages: unknown[] = [];
+    proc.on("message", (msg) => messages.push(msg));
+
+    proc.start("/tmp/project-dynamic-tool");
+    const child = fakeChildren[0];
+
+    await tick();
+    const initReq = nextOutgoingRequest(child);
+    child.stdout.emit("data", `${JSON.stringify({ id: initReq.id, result: {} })}\n`);
+    await tick();
+    nextOutgoingNotification(child);
+    const threadReq = nextOutgoingRequest(child);
+    child.stdout.emit("data", `${JSON.stringify({ id: threadReq.id, result: { thread: { id: "thr_dynamic" } } })}\n`);
+
+    await tick();
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({
+        method: "item/started",
+        params: {
+          item: {
+            type: "dynamicToolCall",
+            id: "dyn_tool_1",
+            tool: "open_pr",
+            arguments: {
+              repo: "openai/codex",
+              title: "Add protocol support",
+            },
+            status: "inProgress",
+          },
+        },
+      })}\n`,
+    );
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({
+        method: "item/completed",
+        params: {
+          item: {
+            type: "dynamicToolCall",
+            id: "dyn_tool_1",
+            tool: "open_pr",
+            arguments: {
+              repo: "openai/codex",
+              title: "Add protocol support",
+            },
+            status: "completed",
+            success: true,
+            contentItems: [
+              {
+                type: "inputText",
+                text: "Created PR #42",
+              },
+            ],
+          },
+        },
+      })}\n`,
+    );
+
+    await tick();
+
+    expect(messages).toContainEqual(
+      expect.objectContaining({
+        type: "assistant",
+        message: expect.objectContaining({
+          content: expect.arrayContaining([
+            expect.objectContaining({
+              type: "tool_use",
+              id: "dyn_tool_1",
+              name: "open_pr",
+              input: {
+                repo: "openai/codex",
+                title: "Add protocol support",
+              },
+            }),
+          ]),
+        }),
+      }),
+    );
+    expect(messages).toContainEqual(
+      expect.objectContaining({
+        type: "tool_result",
+        toolUseId: "dyn_tool_1",
+        toolName: "open_pr",
+        content: expect.stringContaining("Created PR #42"),
+      }),
+    );
+    expect(messages).toContainEqual(
+      expect.objectContaining({
+        type: "tool_result",
+        toolUseId: "dyn_tool_1",
+        content: expect.stringContaining("success: true"),
+      }),
+    );
+
+    proc.stop();
+  });
+
   it("emits plan notifications as regular stream messages", async () => {
     const proc = new CodexProcess();
     const messages: unknown[] = [];

@@ -89,13 +89,13 @@ Result: one unrelated existing failure in `src/version.test.ts` (expected versio
 - `approveAlways()` now emits latest `decision: "acceptForSession"` for command/file approvals.
 - Thread bootstrap now opts into `persistExtendedHistory`.
 - Remaining gaps:
-  - `item/tool/call` (dynamic tool calls, experimental) is still not mapped into mobile WS/UI.
+  - `item/tool/call` / `dynamicToolCall` is normalized into tool history, but there is still no dedicated mobile affordance beyond generic tool-use/result rendering.
   - Permission UI still projects latest protocol onto the existing mobile affordances, so granular policy amendments are not yet user-selectable.
   - Recent sessions still come from rollout scanning rather than `thread/list`, so app-server-native pagination/filter semantics are not yet used.
 
 ### Recommended next implementation slice
 
-1. Add bridge/mobile handling for `item/tool/call` if dynamic tools need to work in ccpocket.
+1. Decide whether dynamic tools need dedicated mobile UI instead of the current generic tool history rendering.
 2. Decide whether ccpocket wants to expose granular approval policy or continue projecting onto the existing mobile permission modes.
 3. Decide whether recent-session fetching should switch from rollout scanning to `thread/list`.
 4. Add real Codex E2E coverage for permissions + elicitation flows on mobile.
