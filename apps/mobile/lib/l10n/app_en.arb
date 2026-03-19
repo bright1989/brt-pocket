@@ -463,6 +463,10 @@
   "authErrorPrimaryCommandLabel": "Step 1",
   "authErrorSecondaryCommandLabel": "Step 2",
   "authErrorAlternativeLabel": "Shell alternative",
+  "apiKeyRequiredTitle": "API key required",
+  "apiKeyRequiredBody": "Subscription-based authentication is currently restricted due to Anthropic policy concerns. Please use an API key instead.",
+  "apiKeyRequiredHint": "Get your API key at:",
+
   "authHelpTitle": "Auth Troubleshooting",
   "authHelpFetchError": "Failed to load the troubleshooting guide",
   "authHelpButton": "View steps",

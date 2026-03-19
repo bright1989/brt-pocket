@@ -1164,6 +1164,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get authErrorAlternativeLabel => 'シェルから実行する場合';
 
   @override
+  String get apiKeyRequiredTitle => 'APIキーが必要です';
+
+  @override
+  String get apiKeyRequiredBody =>
+      'サブスクリプション認証は規約上の懸念から現在制限されています。APIキーをご利用ください。';
+
+  @override
+  String get apiKeyRequiredHint => 'APIキーの取得:';
+
+  @override
   String get authHelpTitle => '認証トラブルシューティング';
 
   @override

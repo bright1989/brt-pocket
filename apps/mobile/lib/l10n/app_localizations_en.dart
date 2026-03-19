@@ -1180,6 +1180,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authErrorAlternativeLabel => 'Shell alternative';
 
   @override
+  String get apiKeyRequiredTitle => 'API key required';
+
+  @override
+  String get apiKeyRequiredBody =>
+      'Subscription-based authentication is currently restricted due to Anthropic policy concerns. Please use an API key instead.';
+
+  @override
+  String get apiKeyRequiredHint => 'Get your API key at:';
+
+  @override
   String get authHelpTitle => 'Auth Troubleshooting';
 
   @override

@@ -27,8 +27,8 @@ String? _errorTitle(String? errorCode) {
 String? _errorHint(String? errorCode) {
   return switch (errorCode) {
     'auth_login_required' ||
-    'auth_token_expired' ||
-    'auth_api_error' => 'Run "claude auth login" on the Bridge machine',
+    'auth_token_expired' => 'Run "claude auth login" on the Bridge machine',
+    'auth_api_error' => 'Set ANTHROPIC_API_KEY on the Bridge machine',
     'codex_auth_required' => 'Check OPENAI_API_KEY on the Bridge machine',
     'path_not_allowed' => 'Update BRIDGE_ALLOWED_DIRS on the Bridge server',
     'git_not_available' =>
@@ -42,8 +42,7 @@ String? _errorHint(String? errorCode) {
 String? _copyableCommand(String? errorCode) {
   return switch (errorCode) {
     'auth_login_required' ||
-    'auth_token_expired' ||
-    'auth_api_error' => 'claude auth login',
+    'auth_token_expired' => 'claude auth login',
     'bridge_update_required' => 'npm update -g @ccpocket/bridge',
     _ => null,
   };
@@ -51,8 +50,11 @@ String? _copyableCommand(String? errorCode) {
 
 bool _isClaudeAuthError(String? errorCode) {
   return errorCode == 'auth_login_required' ||
-      errorCode == 'auth_token_expired' ||
-      errorCode == 'auth_api_error';
+      errorCode == 'auth_token_expired';
+}
+
+bool _isApiKeyRequired(String? errorCode) {
+  return errorCode == 'auth_api_error';
 }
 
 /// Whether the errorCode represents a non-critical warning (amber style).
@@ -111,6 +113,8 @@ class ErrorBubble extends StatelessWidget {
                     alternativeCommand: 'claude auth login',
                     helpLabel: l.authHelpButton,
                   )
+              : _isApiKeyRequired(resolvedErrorCode)
+                ? _ApiKeyRequiredCard(textColor: textColor)
                 : _buildStructured(context, title, hint, textColor, isWarn)
           : _buildSimple(textColor),
     );
@@ -328,6 +332,87 @@ class _ClaudeAuthErrorCard extends StatelessWidget {
           },
           icon: const Icon(Icons.help_outline, size: 16),
           label: Text(helpLabel),
+        ),
+      ],
+    );
+  }
+}
+
+class _ApiKeyRequiredCard extends StatelessWidget {
+  final Color textColor;
+
+  const _ApiKeyRequiredCard({required this.textColor});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _AuthIcon(textColor: textColor),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                l.apiKeyRequiredTitle,
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          l.apiKeyRequiredBody,
+          style: TextStyle(
+            color: textColor.withValues(alpha: 0.92),
+            fontSize: 12,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 10),
+        _CommandChip(
+          textColor: textColor,
+          command: 'ANTHROPIC_API_KEY=sk-ant-...',
+          copyValue: 'ANTHROPIC_API_KEY=',
+        ),
+        const SizedBox(height: 10),
+        Text(
+          l.apiKeyRequiredHint,
+          style: TextStyle(
+            color: textColor.withValues(alpha: 0.7),
+            fontSize: 11,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 6),
+        GestureDetector(
+          onTap: () {
+            Clipboard.setData(
+              const ClipboardData(
+                text: 'https://console.anthropic.com/settings/keys',
+              ),
+            );
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Copied URL'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          },
+          child: Text(
+            'console.anthropic.com/settings/keys',
+            style: TextStyle(
+              color: textColor,
+              fontSize: 12,
+              decoration: TextDecoration.underline,
+              decorationColor: textColor.withValues(alpha: 0.5),
+            ),
+          ),
         ),
       ],
     );

@@ -2264,6 +2264,24 @@ abstract class AppLocalizations {
   /// **'シェルから実行する場合'**
   String get authErrorAlternativeLabel;
 
+  /// No description provided for @apiKeyRequiredTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'APIキーが必要です'**
+  String get apiKeyRequiredTitle;
+
+  /// No description provided for @apiKeyRequiredBody.
+  ///
+  /// In ja, this message translates to:
+  /// **'サブスクリプション認証は規約上の懸念から現在制限されています。APIキーをご利用ください。'**
+  String get apiKeyRequiredBody;
+
+  /// No description provided for @apiKeyRequiredHint.
+  ///
+  /// In ja, this message translates to:
+  /// **'APIキーの取得:'**
+  String get apiKeyRequiredHint;
+
   /// No description provided for @authHelpTitle.
   ///
   /// In ja, this message translates to:
