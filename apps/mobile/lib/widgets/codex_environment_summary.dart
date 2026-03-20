@@ -8,6 +8,7 @@ class CodexEnvironmentSummary extends StatelessWidget {
   final String? reasoningEffort;
   final String? approvalPolicy;
   final String? permissionMode;
+  final String? executionMode;
   final String? sandboxMode;
   final bool showDefaultReasoning;
   final bool compact;
@@ -19,6 +20,7 @@ class CodexEnvironmentSummary extends StatelessWidget {
     this.reasoningEffort,
     this.approvalPolicy,
     this.permissionMode,
+    this.executionMode,
     this.sandboxMode,
     this.showDefaultReasoning = false,
     this.compact = false,
@@ -37,22 +39,31 @@ class CodexEnvironmentSummary extends StatelessWidget {
 
     final children = <Widget>[
       if (leadingLabel != null) Text(leadingLabel!, style: textStyle),
-      if (_displayModel(model) case final modelText?)
-        Text(modelText, style: textStyle, overflow: TextOverflow.ellipsis),
-      if (_displayReasoning(
+      if (_displayModelSummary(
+            model,
             reasoningEffort,
             showDefaultWhenUnset: showDefaultReasoning,
           )
-          case final reasoningText?)
-        Text(reasoningText, style: textStyle, overflow: TextOverflow.ellipsis),
-      _EnvironmentIcon(
-        icon: _permissionIcon(permissionMode, approvalPolicy),
-        tooltip: _permissionLabel(permissionMode, approvalPolicy),
-        compact: compact,
-      ),
-      _EnvironmentIcon(
+          case final modelText?)
+        Text(modelText, style: textStyle, overflow: TextOverflow.ellipsis),
+      if (_executionLabel(
+            executionMode: executionMode,
+            permissionMode: permissionMode,
+            approvalPolicy: approvalPolicy,
+          )
+          case final executionLabel?)
+        _EnvironmentMeta(
+          icon: _executionIcon(
+            executionMode: executionMode,
+            permissionMode: permissionMode,
+            approvalPolicy: approvalPolicy,
+          ),
+          label: executionLabel,
+          compact: compact,
+        ),
+      _EnvironmentMeta(
         icon: _sandboxIcon(sandboxMode),
-        tooltip: _sandboxLabel(sandboxMode),
+        label: _sandboxLabel(sandboxMode),
         compact: compact,
       ),
     ];
@@ -66,55 +77,52 @@ class CodexEnvironmentSummary extends StatelessWidget {
   }
 }
 
-class _EnvironmentIcon extends StatelessWidget {
+class _EnvironmentMeta extends StatelessWidget {
   final IconData icon;
-  final String tooltip;
+  final String label;
   final bool compact;
 
-  const _EnvironmentIcon({
+  const _EnvironmentMeta({
     required this.icon,
-    required this.tooltip,
+    required this.label,
     required this.compact,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final appColors = theme.extension<AppColors>()!;
+    final textStyle = theme.textTheme.bodySmall?.copyWith(
+      fontSize: compact ? 11 : 12,
+      color: appColors.subtleText,
+      height: 1.2,
+    );
 
     return Tooltip(
-      message: tooltip,
+      message: label,
       child: Semantics(
-        label: tooltip,
-        child: Container(
-          padding: EdgeInsets.all(compact ? 3 : 4),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainer,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.7),
-            ),
-          ),
-          child: Icon(
-            icon,
-            size: compact ? 12 : 14,
-            color: appColors.subtleText,
-          ),
+        label: label,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: compact ? 12 : 14, color: appColors.subtleText),
+            const SizedBox(width: 3),
+            Text(label, style: textStyle, overflow: TextOverflow.ellipsis),
+          ],
         ),
       ),
     );
   }
 }
 
-String? _displayModel(String? raw) {
-  if (raw == null || raw.isEmpty) return null;
-  return raw;
-}
-
-String? _displayReasoning(String? raw, {required bool showDefaultWhenUnset}) {
+String? _displayModelSummary(
+  String? model,
+  String? raw, {
+  required bool showDefaultWhenUnset,
+}) {
+  if (model == null || model.isEmpty) return null;
   if (raw == null || raw.isEmpty) {
-    return showDefaultWhenUnset ? 'Reasoning Default' : null;
+    return showDefaultWhenUnset ? '$model Default' : model;
   }
   ReasoningEffort? effort;
   for (final value in ReasoningEffort.values) {
@@ -123,38 +131,68 @@ String? _displayReasoning(String? raw, {required bool showDefaultWhenUnset}) {
       break;
     }
   }
-  return effort == null ? raw : 'Reasoning ${effort.label}';
+  final effortLabel = effort == null ? raw : effort.label;
+  return '$model $effortLabel';
 }
 
-IconData _permissionIcon(String? permissionMode, String? approvalPolicy) {
-  final effective =
-      permissionMode ?? _permissionModeFromApprovalPolicy(approvalPolicy);
+IconData _executionIcon({
+  String? executionMode,
+  String? permissionMode,
+  String? approvalPolicy,
+}) {
+  final effective = _effectiveExecutionMode(
+    executionMode: executionMode,
+    permissionMode: permissionMode,
+    approvalPolicy: approvalPolicy,
+  );
   return switch (effective) {
-    'plan' => Icons.assignment_outlined,
-    'bypassPermissions' => Icons.flash_on,
+    'fullAccess' => Icons.flash_on,
     'acceptEdits' => Icons.edit_note,
     'default' || null => Icons.tune,
     _ => Icons.tune,
   };
 }
 
-String _permissionLabel(String? permissionMode, String? approvalPolicy) {
-  final effective =
-      permissionMode ?? _permissionModeFromApprovalPolicy(approvalPolicy);
+String? _executionLabel({
+  String? executionMode,
+  String? permissionMode,
+  String? approvalPolicy,
+}) {
+  final effective = _effectiveExecutionMode(
+    executionMode: executionMode,
+    permissionMode: permissionMode,
+    approvalPolicy: approvalPolicy,
+  );
   return switch (effective) {
-    'plan' => PermissionMode.plan.label,
-    'bypassPermissions' => PermissionMode.bypassPermissions.label,
-    'acceptEdits' => PermissionMode.acceptEdits.label,
-    'default' => PermissionMode.defaultMode.label,
-    null => approvalPolicy ?? PermissionMode.defaultMode.label,
+    'fullAccess' => 'Full Access',
+    'acceptEdits' => 'Edits',
+    'default' => 'Default',
+    null => null,
     final other => other,
   };
 }
 
-String? _permissionModeFromApprovalPolicy(String? approvalPolicy) {
+String? _effectiveExecutionMode({
+  String? executionMode,
+  String? permissionMode,
+  String? approvalPolicy,
+}) {
+  if (executionMode != null && executionMode.isNotEmpty) {
+    return executionMode;
+  }
+  if (permissionMode == PermissionMode.bypassPermissions.value) {
+    return ExecutionMode.fullAccess.value;
+  }
+  if (permissionMode == PermissionMode.acceptEdits.value) {
+    return ExecutionMode.acceptEdits.value;
+  }
+  if (permissionMode == PermissionMode.defaultMode.value ||
+      permissionMode == PermissionMode.plan.value) {
+    return ExecutionMode.defaultMode.value;
+  }
   return switch (approvalPolicy) {
-    'never' => PermissionMode.bypassPermissions.value,
-    'on-request' || 'unless-allow-listed' => PermissionMode.acceptEdits.value,
+    'never' => ExecutionMode.fullAccess.value,
+    'on-request' || 'unless-allow-listed' => ExecutionMode.defaultMode.value,
     null || '' => null,
     _ => null,
   };
@@ -169,12 +207,8 @@ IconData _sandboxIcon(String? sandboxMode) {
 
 String _sandboxLabel(String? sandboxMode) {
   return switch (sandboxMode) {
-    'off' || 'danger-full-access' => SandboxMode.off.label,
-    'on' ||
-    'workspace-write' ||
-    'read-only' ||
-    null ||
-    '' => SandboxMode.on.label,
+    'off' || 'danger-full-access' => 'Sandbox Off',
+    'on' || 'workspace-write' || 'read-only' || null || '' => 'Sandbox',
     final other => other,
   };
 }

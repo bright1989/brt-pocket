@@ -449,10 +449,15 @@ class _RunningSessionCardState extends State<RunningSessionCard> {
                   const SizedBox(height: 4),
                   if (isCodexSession)
                     CodexEnvironmentSummary(
+                      leadingLabel:
+                          (session.status == 'running' ||
+                                  session.status == 'starting') &&
+                              session.resolvedPlanMode
+                          ? 'Planning'
+                          : null,
                       model: session.codexModel,
                       reasoningEffort: session.codexModelReasoningEffort,
-                      approvalPolicy: session.codexApprovalPolicy,
-                      permissionMode: session.effectivePermissionMode,
+                      executionMode: session.resolvedExecutionMode.value,
                       sandboxMode: session.codexSandboxMode,
                       showDefaultReasoning: true,
                       compact: true,
@@ -2424,7 +2429,7 @@ class RecentSessionCard extends StatelessWidget {
                     CodexEnvironmentSummary(
                       model: session.codexModel,
                       reasoningEffort: session.codexModelReasoningEffort,
-                      approvalPolicy: session.codexApprovalPolicy,
+                      executionMode: session.resolvedExecutionMode.value,
                       sandboxMode: session.codexSandboxMode,
                       showDefaultReasoning: true,
                       compact: true,

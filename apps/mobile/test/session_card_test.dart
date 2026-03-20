@@ -238,9 +238,34 @@ void main() {
         _wrap(RunningSessionCard(session: session, onTap: () {})),
       );
 
-      expect(find.text('gpt-5.3-codex'), findsOneWidget);
-      expect(find.byIcon(Icons.edit_note), findsOneWidget);
+      expect(find.text('gpt-5.3-codex Default'), findsOneWidget);
+      expect(find.text('Default'), findsOneWidget);
+      expect(find.text('Sandbox'), findsOneWidget);
+      expect(find.byIcon(Icons.tune), findsOneWidget);
       expect(find.byIcon(Icons.shield_outlined), findsOneWidget);
+    });
+
+    testWidgets('shows Planning label for running codex plan session', (
+      tester,
+    ) async {
+      final session = SessionInfo(
+        id: 'codex-planning',
+        provider: 'codex',
+        projectPath: '/home/user/my-app',
+        status: 'running',
+        planMode: true,
+        executionMode: ExecutionMode.defaultMode.value,
+        createdAt: DateTime.now().toIso8601String(),
+        lastActivityAt: DateTime.now().toIso8601String(),
+        codexModel: 'gpt-5.4',
+      );
+
+      await tester.pumpWidget(
+        _wrap(RunningSessionCard(session: session, onTap: () {})),
+      );
+
+      expect(find.text('Planning'), findsOneWidget);
+      expect(find.text('gpt-5.4 Default'), findsOneWidget);
     });
 
     testWidgets('shows agent metadata for codex sub-agent sessions', (
@@ -682,8 +707,10 @@ void main() {
         _wrap(RecentSessionCard(session: session, onTap: () {})),
       );
 
-      expect(find.text('gpt-5-codex'), findsOneWidget);
+      expect(find.text('gpt-5-codex Default'), findsOneWidget);
       expect(find.byIcon(Icons.tune), findsOneWidget);
+      expect(find.text('Default'), findsOneWidget);
+      expect(find.text('Sandbox Off'), findsOneWidget);
       expect(find.byIcon(Icons.warning_amber), findsOneWidget);
     });
 

@@ -26,8 +26,8 @@ void main() {
     await tester.pumpWidget(_wrap(const SystemChip(message: message)));
 
     expect(find.text('Session started'), findsOneWidget);
-    expect(find.text('gpt-5.4'), findsOneWidget);
-    expect(find.text('Reasoning Default'), findsOneWidget);
+    expect(find.text('gpt-5.4 Default'), findsOneWidget);
+    expect(find.text('Sandbox'), findsOneWidget);
     expect(find.text('System: init'), findsNothing);
     expect(tester.takeException(), isNull);
   });
