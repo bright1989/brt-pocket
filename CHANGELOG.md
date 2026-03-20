@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.45.0] - 2026-03-20
+
+### Added
+- Redesigned session modes around Codex-style Execution and Plan controls
+- Clarified approval dialog labels with explicit "Allow Once" and session-scoped approval wording
+
+### Fixed
+- Rolled back session mode changes locally when a Bridge mode update fails
+
 ## [1.44.1] - 2026-03-20
 
 ### Added
