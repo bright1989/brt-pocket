@@ -108,6 +108,7 @@
   "projectPathHint": "/path/to/your/project",
   "permission": "Permission",
   "approval": "Approval",
+  "restart": "Restart",
   "worktree": "Worktree",
   "advanced": "Advanced",
   "modelOptional": "Model (optional)",
@@ -149,6 +150,48 @@
   "always": "Always",
   "approveOnce": "Allow Once",
   "approveForSession": "Allow for This Session",
+  "permissionDefaultDescription": "Standard permission prompts",
+  "permissionAcceptEditsDescription": "Auto-approve file edits",
+  "permissionPlanDescription": "Analyze and plan before executing changes",
+  "permissionBypassDescription": "Run without most approval prompts",
+  "executionDefaultDescription": "Standard permission prompts",
+  "executionAcceptEditsDescription": "Auto-approve file edits",
+  "executionFullAccessDescription": "Run without most approval prompts",
+  "codexPlanModeDescription": "Draft a plan first, then wait for approval before executing",
+  "sandboxRestrictedDescription": "Run commands in restricted environment",
+  "sandboxNativeDescription": "Run commands natively",
+  "sandboxNativeCautionDescription": "Run commands natively (CAUTION)",
+  "changePermissionModeTitle": "Change Permission Mode",
+  "changePermissionModeBody": "Switching to {mode} will restart the session. Your conversation will be preserved.",
+  "@changePermissionModeBody": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "changeExecutionModeTitle": "Change Execution Mode",
+  "changeExecutionModeBody": "Switching to {mode} will restart the session. Your conversation will be preserved.",
+  "@changeExecutionModeBody": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "enablePlanModeTitle": "Enable Plan Mode",
+  "disablePlanModeTitle": "Disable Plan Mode",
+  "enablePlanModeBody": "Enabling Plan Mode will restart the session. Your conversation will be preserved.",
+  "disablePlanModeBody": "Disabling Plan Mode will restart the session. Your conversation will be preserved.",
+  "changeSandboxModeTitle": "Change Sandbox Mode",
+  "changeSandboxModeBody": "Switching to {mode} will restart the session. Your conversation will be preserved.",
+  "@changeSandboxModeBody": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
 
   "messagePlaceholder": "Message Claude...",
   "filesMentioned": "{count} file(s) @mentioned",

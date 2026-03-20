@@ -412,6 +412,78 @@ class AppLocalizationsZh extends AppLocalizations {
   String get approveForSession => '本次会话期间允许';
 
   @override
+  String get permissionDefaultDescription => '标准权限提示';
+
+  @override
+  String get permissionAcceptEditsDescription => '自动批准文件编辑';
+
+  @override
+  String get permissionPlanDescription => '执行变更前先分析并制定计划';
+
+  @override
+  String get permissionBypassDescription => '跳过大多数审批提示';
+
+  @override
+  String get executionDefaultDescription => '标准权限提示';
+
+  @override
+  String get executionAcceptEditsDescription => '自动批准文件编辑';
+
+  @override
+  String get executionFullAccessDescription => '跳过大多数审批提示';
+
+  @override
+  String get codexPlanModeDescription => '先起草计划，再等待批准后执行';
+
+  @override
+  String get sandboxRestrictedDescription => '在受限环境中运行命令';
+
+  @override
+  String get sandboxNativeDescription => '在原生命令环境中运行';
+
+  @override
+  String get sandboxNativeCautionDescription => '在原生命令环境中运行（注意）';
+
+  @override
+  String get changePermissionModeTitle => '更改 Permission Mode';
+
+  @override
+  String changePermissionModeBody(String mode) {
+    return '切换到 $mode 会重启当前会话。你的对话会被保留。';
+  }
+
+  @override
+  String get changeExecutionModeTitle => '更改 Execution Mode';
+
+  @override
+  String changeExecutionModeBody(String mode) {
+    return '切换到 $mode 会重启当前会话。你的对话会被保留。';
+  }
+
+  @override
+  String get enablePlanModeTitle => '启用 Plan Mode';
+
+  @override
+  String get disablePlanModeTitle => '关闭 Plan Mode';
+
+  @override
+  String get enablePlanModeBody => '启用 Plan Mode 会重启当前会话。你的对话会被保留。';
+
+  @override
+  String get disablePlanModeBody => '关闭 Plan Mode 会重启当前会话。你的对话会被保留。';
+
+  @override
+  String get changeSandboxModeTitle => '更改 Sandbox Mode';
+
+  @override
+  String changeSandboxModeBody(String mode) {
+    return '切换到 $mode 会重启当前会话。你的对话会被保留。';
+  }
+
+  @override
+  String get restart => '重启';
+
+  @override
   String get messagePlaceholder => '给 Claude 发消息...';
 
   @override

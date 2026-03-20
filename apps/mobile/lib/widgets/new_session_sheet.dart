@@ -1377,59 +1377,126 @@ class _OptionsSection extends StatelessWidget {
               ),
             ),
           ),
-          DropdownButtonFormField<ExecutionMode>(
-            key: ValueKey(
-              'dialog_${provider == Provider.codex ? "codex_" : ""}execution_mode',
-            ),
-            initialValue: executionMode,
-            isExpanded: true,
-            decoration: buildInputDecoration(l.approval),
-            items:
-                (provider == Provider.codex
-                        ? const [
-                            ExecutionMode.defaultMode,
-                            ExecutionMode.fullAccess,
-                          ]
-                        : ExecutionMode.values)
-                    .map(
-                      (mode) => DropdownMenuItem(
-                        value: mode,
-                        child: Row(
-                          children: [
-                            Icon(switch (mode) {
-                              ExecutionMode.defaultMode => Icons.tune,
-                              ExecutionMode.acceptEdits => Icons.edit_note,
-                              ExecutionMode.fullAccess => Icons.flash_on,
-                            }, size: 16),
-                            const SizedBox(width: 8),
-                            Text(switch (mode) {
-                              ExecutionMode.fullAccess => 'Full Access',
-                              _ => mode.label,
-                            }, style: const TextStyle(fontSize: 13)),
-                          ],
-                        ),
+          provider == Provider.codex
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    DropdownButtonFormField<ExecutionMode>(
+                      key: const ValueKey('dialog_codex_execution_mode'),
+                      initialValue: executionMode,
+                      isExpanded: true,
+                      decoration: buildInputDecoration(l.approval),
+                      items:
+                          const [
+                                ExecutionMode.defaultMode,
+                                ExecutionMode.fullAccess,
+                              ]
+                              .map(
+                                (mode) => DropdownMenuItem(
+                                  value: mode,
+                                  child: Row(
+                                    children: [
+                                      Icon(switch (mode) {
+                                        ExecutionMode.defaultMode => Icons.tune,
+                                        ExecutionMode.acceptEdits =>
+                                          Icons.edit_note,
+                                        ExecutionMode.fullAccess =>
+                                          Icons.flash_on,
+                                      }, size: 16),
+                                      const SizedBox(width: 8),
+                                      Text(switch (mode) {
+                                        ExecutionMode.fullAccess =>
+                                          'Full Access',
+                                        _ => mode.label,
+                                      }, style: const TextStyle(fontSize: 13)),
+                                    ],
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          onExecutionModeChanged(value);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Plan Mode'),
+                      subtitle: Text(
+                        l.codexPlanModeDescription,
+                        style: const TextStyle(fontSize: 12),
                       ),
-                    )
-                    .toList(),
-            onChanged: (value) {
-              if (value != null) {
-                onExecutionModeChanged(value);
-              }
-            },
-          ),
-          const SizedBox(height: 8),
-          SwitchListTile.adaptive(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Plan Mode'),
-            subtitle: Text(
-              provider == Provider.codex
-                  ? 'Draft a plan first, then wait for approval before executing'
-                  : 'Analyze and plan before executing changes',
-              style: const TextStyle(fontSize: 12),
-            ),
-            value: planMode,
-            onChanged: onPlanModeChanged,
-          ),
+                      value: planMode,
+                      onChanged: onPlanModeChanged,
+                    ),
+                  ],
+                )
+              : DropdownButtonFormField<PermissionMode>(
+                  key: const ValueKey('dialog_permission_mode'),
+                  initialValue: legacyPermissionModeFromModes(
+                    provider,
+                    executionMode: executionMode,
+                    planMode: planMode,
+                  ),
+                  isExpanded: true,
+                  decoration: buildInputDecoration(l.approval),
+                  items: PermissionMode.values.map((mode) {
+                    final description = switch (mode) {
+                      PermissionMode.defaultMode =>
+                        l.permissionDefaultDescription,
+                      PermissionMode.acceptEdits =>
+                        l.permissionAcceptEditsDescription,
+                      PermissionMode.plan => l.permissionPlanDescription,
+                      PermissionMode.bypassPermissions =>
+                        l.permissionBypassDescription,
+                    };
+                    return DropdownMenuItem(
+                      value: mode,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            mode.label,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                          Text(
+                            description,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    switch (value) {
+                      case PermissionMode.defaultMode:
+                        onExecutionModeChanged(ExecutionMode.defaultMode);
+                        onPlanModeChanged(false);
+                        return;
+                      case PermissionMode.acceptEdits:
+                        onExecutionModeChanged(ExecutionMode.acceptEdits);
+                        onPlanModeChanged(false);
+                        return;
+                      case PermissionMode.plan:
+                        onExecutionModeChanged(ExecutionMode.defaultMode);
+                        onPlanModeChanged(true);
+                        return;
+                      case PermissionMode.bypassPermissions:
+                        onExecutionModeChanged(ExecutionMode.fullAccess);
+                        onPlanModeChanged(false);
+                        return;
+                    }
+                  },
+                ),
           const SizedBox(height: 8),
           DropdownButtonFormField<SandboxMode>(
             key: const ValueKey('dialog_sandbox'),

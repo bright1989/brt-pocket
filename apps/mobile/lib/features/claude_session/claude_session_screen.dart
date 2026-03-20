@@ -538,7 +538,7 @@ class _ChatScreenBody extends HookWidget {
             shift: true,
           ): () {
             final cubit = context.read<ChatSessionCubit>();
-            showExecutionModeMenu(context, cubit);
+            showPermissionModeMenu(context, cubit);
           },
           // Cmd+Enter: approve pending tool use
           const SingleActivator(LogicalKeyboardKey.enter, meta: true): () {

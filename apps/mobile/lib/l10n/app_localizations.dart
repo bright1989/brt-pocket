@@ -874,6 +874,138 @@ abstract class AppLocalizations {
   /// **'このセッション中は許可'**
   String get approveForSession;
 
+  /// No description provided for @permissionDefaultDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'標準の承認フローです'**
+  String get permissionDefaultDescription;
+
+  /// No description provided for @permissionAcceptEditsDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'ファイル編集を自動で承認します'**
+  String get permissionAcceptEditsDescription;
+
+  /// No description provided for @permissionPlanDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'変更を実行する前に分析と計画を行います'**
+  String get permissionPlanDescription;
+
+  /// No description provided for @permissionBypassDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'ほとんどの承認確認なしで実行します'**
+  String get permissionBypassDescription;
+
+  /// No description provided for @executionDefaultDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'標準の承認フローです'**
+  String get executionDefaultDescription;
+
+  /// No description provided for @executionAcceptEditsDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'ファイル編集を自動で承認します'**
+  String get executionAcceptEditsDescription;
+
+  /// No description provided for @executionFullAccessDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'ほとんどの承認確認なしで実行します'**
+  String get executionFullAccessDescription;
+
+  /// No description provided for @codexPlanModeDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'先にプランを作成し、承認後に実行を開始します'**
+  String get codexPlanModeDescription;
+
+  /// No description provided for @sandboxRestrictedDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'制限された環境でコマンドを実行します'**
+  String get sandboxRestrictedDescription;
+
+  /// No description provided for @sandboxNativeDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'ネイティブ環境でコマンドを実行します'**
+  String get sandboxNativeDescription;
+
+  /// No description provided for @sandboxNativeCautionDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'ネイティブ環境でコマンドを実行します（注意）'**
+  String get sandboxNativeCautionDescription;
+
+  /// No description provided for @changePermissionModeTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'Permission Mode を変更'**
+  String get changePermissionModeTitle;
+
+  /// No description provided for @changePermissionModeBody.
+  ///
+  /// In ja, this message translates to:
+  /// **'{mode} に切り替えるとセッションが再起動します。会話は保持されます。'**
+  String changePermissionModeBody(String mode);
+
+  /// No description provided for @changeExecutionModeTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'Execution Mode を変更'**
+  String get changeExecutionModeTitle;
+
+  /// No description provided for @changeExecutionModeBody.
+  ///
+  /// In ja, this message translates to:
+  /// **'{mode} に切り替えるとセッションが再起動します。会話は保持されます。'**
+  String changeExecutionModeBody(String mode);
+
+  /// No description provided for @enablePlanModeTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'Plan Mode を有効化'**
+  String get enablePlanModeTitle;
+
+  /// No description provided for @disablePlanModeTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'Plan Mode を無効化'**
+  String get disablePlanModeTitle;
+
+  /// No description provided for @enablePlanModeBody.
+  ///
+  /// In ja, this message translates to:
+  /// **'Plan Mode を有効化するとセッションが再起動します。会話は保持されます。'**
+  String get enablePlanModeBody;
+
+  /// No description provided for @disablePlanModeBody.
+  ///
+  /// In ja, this message translates to:
+  /// **'Plan Mode を無効化するとセッションが再起動します。会話は保持されます。'**
+  String get disablePlanModeBody;
+
+  /// No description provided for @changeSandboxModeTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'Sandbox Mode を変更'**
+  String get changeSandboxModeTitle;
+
+  /// No description provided for @changeSandboxModeBody.
+  ///
+  /// In ja, this message translates to:
+  /// **'{mode} に切り替えるとセッションが再起動します。会話は保持されます。'**
+  String changeSandboxModeBody(String mode);
+
+  /// No description provided for @restart.
+  ///
+  /// In ja, this message translates to:
+  /// **'再起動'**
+  String get restart;
+
   /// No description provided for @messagePlaceholder.
   ///
   /// In ja, this message translates to:

@@ -131,6 +131,7 @@
   "projectPathHint": "/path/to/your/project",
   "permission": "パーミッション",
   "approval": "承認",
+  "restart": "再起動",
   "worktree": "Worktree",
   "advanced": "詳細設定",
   "modelOptional": "モデル（任意）",
@@ -177,6 +178,48 @@
   "always": "常に許可",
   "approveOnce": "今回だけ許可",
   "approveForSession": "このセッション中は許可",
+  "permissionDefaultDescription": "標準の承認フローです",
+  "permissionAcceptEditsDescription": "ファイル編集を自動で承認します",
+  "permissionPlanDescription": "変更を実行する前に分析と計画を行います",
+  "permissionBypassDescription": "ほとんどの承認確認なしで実行します",
+  "executionDefaultDescription": "標準の承認フローです",
+  "executionAcceptEditsDescription": "ファイル編集を自動で承認します",
+  "executionFullAccessDescription": "ほとんどの承認確認なしで実行します",
+  "codexPlanModeDescription": "先にプランを作成し、承認後に実行を開始します",
+  "sandboxRestrictedDescription": "制限された環境でコマンドを実行します",
+  "sandboxNativeDescription": "ネイティブ環境でコマンドを実行します",
+  "sandboxNativeCautionDescription": "ネイティブ環境でコマンドを実行します（注意）",
+  "changePermissionModeTitle": "Permission Mode を変更",
+  "changePermissionModeBody": "{mode} に切り替えるとセッションが再起動します。会話は保持されます。",
+  "@changePermissionModeBody": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "changeExecutionModeTitle": "Execution Mode を変更",
+  "changeExecutionModeBody": "{mode} に切り替えるとセッションが再起動します。会話は保持されます。",
+  "@changeExecutionModeBody": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "enablePlanModeTitle": "Plan Mode を有効化",
+  "disablePlanModeTitle": "Plan Mode を無効化",
+  "enablePlanModeBody": "Plan Mode を有効化するとセッションが再起動します。会話は保持されます。",
+  "disablePlanModeBody": "Plan Mode を無効化するとセッションが再起動します。会話は保持されます。",
+  "changeSandboxModeTitle": "Sandbox Mode を変更",
+  "changeSandboxModeBody": "{mode} に切り替えるとセッションが再起動します。会話は保持されます。",
+  "@changeSandboxModeBody": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
 
   "messagePlaceholder": "Claude にメッセージ...",
   "filesMentioned": "{count} ファイルを @メンション中",

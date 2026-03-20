@@ -98,6 +98,38 @@ void main() {
     bridge.dispose();
   });
 
+  testWidgets('claude keeps permission and sandbox grouped', (tester) async {
+    final claudeCubit = ChatSessionCubit(
+      sessionId: 'claude-session',
+      provider: Provider.claude,
+      bridge: bridge,
+      streamingCubit: streamingCubit,
+    );
+    addTearDown(claudeCubit.close);
+
+    bridge.emitMessage(
+      const SystemMessage(
+        subtype: 'set_permission_mode',
+        provider: 'claude',
+        permissionMode: 'plan',
+      ),
+      sessionId: 'claude-session',
+    );
+    bridge.emitMessage(
+      const StatusMessage(status: ProcessStatus.running),
+      sessionId: 'claude-session',
+    );
+
+    await tester.pumpWidget(_wrap(claudeCubit));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Plan Off'), findsNothing);
+    expect(find.text('Plan On'), findsNothing);
+    expect(find.text('Plan'), findsOneWidget);
+    expect(find.byType(PermissionModeChip), findsOneWidget);
+    expect(find.byKey(const ValueKey('plan_mode_chip_glow')), findsNothing);
+  });
+
   testWidgets('renders chips in Plan, Execution, Sandbox order', (
     tester,
   ) async {

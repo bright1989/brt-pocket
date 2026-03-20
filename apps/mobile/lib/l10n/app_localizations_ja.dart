@@ -414,6 +414,78 @@ class AppLocalizationsJa extends AppLocalizations {
   String get approveForSession => 'このセッション中は許可';
 
   @override
+  String get permissionDefaultDescription => '標準の承認フローです';
+
+  @override
+  String get permissionAcceptEditsDescription => 'ファイル編集を自動で承認します';
+
+  @override
+  String get permissionPlanDescription => '変更を実行する前に分析と計画を行います';
+
+  @override
+  String get permissionBypassDescription => 'ほとんどの承認確認なしで実行します';
+
+  @override
+  String get executionDefaultDescription => '標準の承認フローです';
+
+  @override
+  String get executionAcceptEditsDescription => 'ファイル編集を自動で承認します';
+
+  @override
+  String get executionFullAccessDescription => 'ほとんどの承認確認なしで実行します';
+
+  @override
+  String get codexPlanModeDescription => '先にプランを作成し、承認後に実行を開始します';
+
+  @override
+  String get sandboxRestrictedDescription => '制限された環境でコマンドを実行します';
+
+  @override
+  String get sandboxNativeDescription => 'ネイティブ環境でコマンドを実行します';
+
+  @override
+  String get sandboxNativeCautionDescription => 'ネイティブ環境でコマンドを実行します（注意）';
+
+  @override
+  String get changePermissionModeTitle => 'Permission Mode を変更';
+
+  @override
+  String changePermissionModeBody(String mode) {
+    return '$mode に切り替えるとセッションが再起動します。会話は保持されます。';
+  }
+
+  @override
+  String get changeExecutionModeTitle => 'Execution Mode を変更';
+
+  @override
+  String changeExecutionModeBody(String mode) {
+    return '$mode に切り替えるとセッションが再起動します。会話は保持されます。';
+  }
+
+  @override
+  String get enablePlanModeTitle => 'Plan Mode を有効化';
+
+  @override
+  String get disablePlanModeTitle => 'Plan Mode を無効化';
+
+  @override
+  String get enablePlanModeBody => 'Plan Mode を有効化するとセッションが再起動します。会話は保持されます。';
+
+  @override
+  String get disablePlanModeBody => 'Plan Mode を無効化するとセッションが再起動します。会話は保持されます。';
+
+  @override
+  String get changeSandboxModeTitle => 'Sandbox Mode を変更';
+
+  @override
+  String changeSandboxModeBody(String mode) {
+    return '$mode に切り替えるとセッションが再起動します。会話は保持されます。';
+  }
+
+  @override
+  String get restart => '再起動';
+
+  @override
   String get messagePlaceholder => 'Claude にメッセージ...';
 
   @override

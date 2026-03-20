@@ -417,6 +417,85 @@ class AppLocalizationsEn extends AppLocalizations {
   String get approveForSession => 'Allow for This Session';
 
   @override
+  String get permissionDefaultDescription => 'Standard permission prompts';
+
+  @override
+  String get permissionAcceptEditsDescription => 'Auto-approve file edits';
+
+  @override
+  String get permissionPlanDescription =>
+      'Analyze and plan before executing changes';
+
+  @override
+  String get permissionBypassDescription => 'Run without most approval prompts';
+
+  @override
+  String get executionDefaultDescription => 'Standard permission prompts';
+
+  @override
+  String get executionAcceptEditsDescription => 'Auto-approve file edits';
+
+  @override
+  String get executionFullAccessDescription =>
+      'Run without most approval prompts';
+
+  @override
+  String get codexPlanModeDescription =>
+      'Draft a plan first, then wait for approval before executing';
+
+  @override
+  String get sandboxRestrictedDescription =>
+      'Run commands in restricted environment';
+
+  @override
+  String get sandboxNativeDescription => 'Run commands natively';
+
+  @override
+  String get sandboxNativeCautionDescription =>
+      'Run commands natively (CAUTION)';
+
+  @override
+  String get changePermissionModeTitle => 'Change Permission Mode';
+
+  @override
+  String changePermissionModeBody(String mode) {
+    return 'Switching to $mode will restart the session. Your conversation will be preserved.';
+  }
+
+  @override
+  String get changeExecutionModeTitle => 'Change Execution Mode';
+
+  @override
+  String changeExecutionModeBody(String mode) {
+    return 'Switching to $mode will restart the session. Your conversation will be preserved.';
+  }
+
+  @override
+  String get enablePlanModeTitle => 'Enable Plan Mode';
+
+  @override
+  String get disablePlanModeTitle => 'Disable Plan Mode';
+
+  @override
+  String get enablePlanModeBody =>
+      'Enabling Plan Mode will restart the session. Your conversation will be preserved.';
+
+  @override
+  String get disablePlanModeBody =>
+      'Disabling Plan Mode will restart the session. Your conversation will be preserved.';
+
+  @override
+  String get changeSandboxModeTitle => 'Change Sandbox Mode';
+
+  @override
+  String changeSandboxModeBody(String mode) {
+    return 'Switching to $mode will restart the session. Your conversation will be preserved.';
+  }
+
+  @override
+  String get restart => 'Restart';
+
+  @override
   String get messagePlaceholder => 'Message Claude...';
 
   @override
