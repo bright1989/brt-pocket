@@ -828,6 +828,37 @@ export class BridgeWebSocketServer {
           if (newApproval === currentApproval && newCollaboration === currentCollaboration) {
             break; // No change needed
           }
+          const canApplyModeInPlace = session.status === "idle";
+
+          if (canApplyModeInPlace) {
+            const process = session.process as CodexProcess;
+            if (newApproval !== currentApproval) {
+              process.setApprovalPolicy(newApproval);
+            }
+            if (newCollaboration !== currentCollaboration) {
+              process.setCollaborationMode(newCollaboration);
+            }
+            session.lastActivityAt = new Date();
+            this.broadcast({
+              type: "system",
+              subtype: "set_permission_mode",
+              sessionId: session.id,
+              permissionMode: legacyPermissionMode,
+              executionMode,
+              planMode,
+            });
+            this.broadcastSessionList();
+            this.recordDebugEvent(session.id, {
+              direction: "internal" as const,
+              channel: "bridge" as const,
+              type: "permission_mode_changed",
+              detail: `mode=${msg.mode} approval=${newApproval} collaboration=${newCollaboration} applied=in-place`,
+            });
+            console.log(
+              `[ws] set_permission_mode(codex): execution=${executionMode} plan=${planMode} → approval=${newApproval}, collaboration=${newCollaboration} (in-place)`,
+            );
+            break;
+          }
           console.log(`[ws] set_permission_mode(codex): execution=${executionMode} plan=${planMode} → approval=${newApproval}, collaboration=${newCollaboration} (restart)`);
 
           const oldSessionId = session.id;

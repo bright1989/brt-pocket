@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../models/messages.dart';
 import '../../../theme/app_theme.dart';
+import '../state/chat_session_state.dart';
 import '../state/chat_session_cubit.dart';
 
 class SessionModeBar extends StatelessWidget {
@@ -413,6 +414,18 @@ Future<void> togglePlanMode(
   Future<void> Function()? onBeforeRestart,
 }) async {
   final nextPlanMode = !chatCubit.state.planMode;
+  final hasPendingApproval = chatCubit.state.approval is! ApprovalNone;
+  final canToggleInPlace =
+      chatCubit.isCodex &&
+      chatCubit.state.status == ProcessStatus.idle &&
+      !hasPendingApproval;
+
+  if (canToggleInPlace) {
+    HapticFeedback.lightImpact();
+    chatCubit.setSessionModes(planMode: nextPlanMode);
+    return;
+  }
+
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (dialogContext) {
