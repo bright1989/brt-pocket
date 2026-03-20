@@ -407,7 +407,7 @@ void main() {
                   result = await showNewSessionSheet(
                     context: context,
                     recentProjects: [(path: '/test/proj', name: 'proj')],
-                    initialParams: const NewSessionParams(
+                    initialParams: NewSessionParams(
                       projectPath: '/test/proj',
                       provider: Provider.codex,
                       permissionMode: PermissionMode.acceptEdits,
@@ -468,7 +468,7 @@ void main() {
                       showNewSessionSheet(
                         context: context,
                         recentProjects: [(path: '/test/proj', name: 'proj')],
-                        initialParams: const NewSessionParams(
+                        initialParams: NewSessionParams(
                           projectPath: '/test/proj',
                           provider: Provider.claude,
                           permissionMode: PermissionMode.acceptEdits,

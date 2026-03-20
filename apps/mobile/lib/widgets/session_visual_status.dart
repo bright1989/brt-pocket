@@ -21,9 +21,10 @@ class SessionVisualStatus {
 SessionVisualStatus sessionVisualStatusFor({
   required String rawStatus,
   String? permissionMode,
+  bool planMode = false,
   PermissionRequestMessage? pendingPermission,
 }) {
-  final showPlanBadge = permissionMode == PermissionMode.plan.value;
+  final showPlanBadge = planMode || permissionMode == PermissionMode.plan.value;
 
   if (pendingPermission != null) {
     final detail = switch (pendingPermission.toolName) {

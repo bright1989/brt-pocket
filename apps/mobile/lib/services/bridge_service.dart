@@ -457,6 +457,8 @@ class BridgeService implements BridgeServiceBase {
     String sessionId,
     String projectPath, {
     String? permissionMode,
+    String? executionMode,
+    bool? planMode,
     String? effort,
     int? maxTurns,
     double? maxBudgetUsd,
@@ -475,6 +477,8 @@ class BridgeService implements BridgeServiceBase {
         sessionId,
         projectPath,
         permissionMode: permissionMode,
+        executionMode: executionMode,
+        planMode: planMode,
         effort: effort,
         maxTurns: maxTurns,
         maxBudgetUsd: maxBudgetUsd,
@@ -662,12 +666,48 @@ class BridgeService implements BridgeServiceBase {
   }
 
   void _patchSessionPermissionMode(String sessionId, String permissionMode) {
+    _patchSessionModes(
+      sessionId,
+      permissionMode: permissionMode,
+      executionMode: deriveExecutionMode(permissionMode: permissionMode).value,
+      planMode: derivePlanMode(permissionMode: permissionMode),
+    );
+  }
+
+  void patchSessionModes(
+    String sessionId, {
+    required String permissionMode,
+    required String executionMode,
+    required bool planMode,
+  }) {
+    _patchSessionModes(
+      sessionId,
+      permissionMode: permissionMode,
+      executionMode: executionMode,
+      planMode: planMode,
+    );
+  }
+
+  void _patchSessionModes(
+    String sessionId, {
+    required String permissionMode,
+    required String executionMode,
+    required bool planMode,
+  }) {
     final idx = _sessions.indexWhere((s) => s.id == sessionId);
     if (idx < 0) return;
     final current = _sessions[idx];
-    if (current.permissionMode == permissionMode) return;
+    if (current.permissionMode == permissionMode &&
+        current.executionMode == executionMode &&
+        current.planMode == planMode) {
+      return;
+    }
     _sessions = List.of(_sessions)
-      ..[idx] = current.copyWith(permissionMode: permissionMode);
+      ..[idx] = current.copyWith(
+        permissionMode: permissionMode,
+        executionMode: executionMode,
+        planMode: planMode,
+      );
     _sessionListController.add(_sessions);
   }
 
@@ -678,6 +718,8 @@ class BridgeService implements BridgeServiceBase {
     _sessions = List.of(_sessions)
       ..[idx] = current.copyWith(
         permissionMode: message.permissionMode,
+        executionMode: message.executionMode,
+        planMode: message.planMode,
         model: message.provider == Provider.claude.value ? message.model : null,
         codexApprovalPolicy: message.approvalPolicy,
         codexSandboxMode: message.provider == Provider.codex.value

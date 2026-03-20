@@ -43,6 +43,8 @@ export type PermissionMode =
   | "bypassPermissions"
   | "plan";
 
+export type ExecutionMode = "default" | "acceptEdits" | "fullAccess";
+
 export type Provider = "claude" | "codex";
 
 export type ClientMessage =
@@ -53,6 +55,8 @@ export type ClientMessage =
       sessionId?: string;
       continue?: boolean;
       permissionMode?: PermissionMode;
+      executionMode?: ExecutionMode;
+      planMode?: boolean;
       sandboxMode?: string;
       model?: string;
       effort?: "low" | "medium" | "high" | "max";
@@ -71,7 +75,13 @@ export type ClientMessage =
   | { type: "input"; text: string; sessionId?: string; images?: Array<{base64: string; mimeType: string}>; imageId?: string; imageBase64?: string; mimeType?: string; skill?: { name: string; path: string } }
   | { type: "push_register"; token: string; platform: "ios" | "android" | "web"; locale?: string; privacyMode?: boolean }
   | { type: "push_unregister"; token: string }
-  | { type: "set_permission_mode"; mode: PermissionMode; sessionId?: string }
+  | {
+      type: "set_permission_mode";
+      mode: PermissionMode;
+      executionMode?: ExecutionMode;
+      planMode?: boolean;
+      sessionId?: string;
+    }
   | { type: "set_sandbox_mode"; sandboxMode: string; sessionId?: string }
   | { type: "approve"; id: string; updatedInput?: Record<string, unknown>; clearContext?: boolean; sessionId?: string }
   | { type: "approve_always"; id: string; sessionId?: string }
@@ -87,6 +97,8 @@ export type ClientMessage =
       sessionId: string;
       projectPath: string;
       permissionMode?: PermissionMode;
+      executionMode?: ExecutionMode;
+      planMode?: boolean;
       provider?: Provider;
       sandboxMode?: string;
       model?: string;
@@ -162,6 +174,8 @@ export type ServerMessage =
       provider?: Provider;
       projectPath?: string;
       approvalPolicy?: string;
+      executionMode?: ExecutionMode;
+      planMode?: boolean;
       slashCommands?: string[];
       skills?: string[];
       skillMetadata?: Array<{
@@ -317,6 +331,11 @@ export function parseClientMessage(data: string): ClientMessage | null {
           && !["minimal", "low", "medium", "high", "xhigh"].includes(String(msg.modelReasoningEffort))
         ) return null;
         if (
+          msg.executionMode !== undefined
+          && !["default", "acceptEdits", "fullAccess"].includes(String(msg.executionMode))
+        ) return null;
+        if (msg.planMode !== undefined && typeof msg.planMode !== "boolean") return null;
+        if (
           msg.webSearchMode !== undefined
           && !["disabled", "cached", "live"].includes(String(msg.webSearchMode))
         ) return null;
@@ -345,6 +364,11 @@ export function parseClientMessage(data: string): ClientMessage | null {
           typeof msg.mode !== "string"
           || !["default", "acceptEdits", "bypassPermissions", "plan"].includes(msg.mode)
         ) return null;
+        if (
+          msg.executionMode !== undefined
+          && !["default", "acceptEdits", "fullAccess"].includes(String(msg.executionMode))
+        ) return null;
+        if (msg.planMode !== undefined && typeof msg.planMode !== "boolean") return null;
         break;
       case "set_sandbox_mode":
         if (typeof msg.sandboxMode !== "string") return null;
@@ -395,6 +419,11 @@ export function parseClientMessage(data: string): ClientMessage | null {
           msg.modelReasoningEffort !== undefined
           && !["minimal", "low", "medium", "high", "xhigh"].includes(String(msg.modelReasoningEffort))
         ) return null;
+        if (
+          msg.executionMode !== undefined
+          && !["default", "acceptEdits", "fullAccess"].includes(String(msg.executionMode))
+        ) return null;
+        if (msg.planMode !== undefined && typeof msg.planMode !== "boolean") return null;
         if (
           msg.webSearchMode !== undefined
           && !["disabled", "cached", "live"].includes(String(msg.webSearchMode))

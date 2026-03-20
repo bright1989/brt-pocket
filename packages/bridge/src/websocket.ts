@@ -55,6 +55,54 @@ function permissionModeToApprovalPolicy(
   return mode === "bypassPermissions" ? "never" : "on-request";
 }
 
+function deriveExecutionMode(params: {
+  permissionMode?: string;
+  executionMode?: string;
+  approvalPolicy?: string;
+  provider?: Provider;
+}): "default" | "acceptEdits" | "fullAccess" {
+  if (params.executionMode === "default" ||
+      params.executionMode === "acceptEdits" ||
+      params.executionMode === "fullAccess") {
+    return params.executionMode;
+  }
+  if (params.permissionMode === "bypassPermissions" ||
+      params.approvalPolicy === "never") {
+    return "fullAccess";
+  }
+  if (params.permissionMode === "acceptEdits") {
+    return params.provider === "codex" ? "default" : "acceptEdits";
+  }
+  return "default";
+}
+
+function derivePlanMode(params: {
+  permissionMode?: string;
+  planMode?: boolean;
+  collaborationMode?: "plan" | "default";
+}): boolean {
+  return params.planMode ??
+      ((params.permissionMode === "plan") ||
+          (params.collaborationMode === "plan"));
+}
+
+function modesToLegacyPermissionMode(
+  provider: Provider,
+  executionMode: "default" | "acceptEdits" | "fullAccess",
+  planMode: boolean,
+): "default" | "acceptEdits" | "bypassPermissions" | "plan" {
+  if (planMode) return "plan";
+  switch (executionMode) {
+    case "fullAccess":
+      return "bypassPermissions";
+    case "acceptEdits":
+      return "acceptEdits";
+    case "default":
+    default:
+      return provider === "codex" ? "acceptEdits" : "default";
+  }
+}
+
 /** Map simplified SandboxMode (on/off) to Codex internal sandbox mode. */
 function sandboxModeToInternal(
   mode?: string,
@@ -249,6 +297,8 @@ export class BridgeWebSocketServer {
     projectPath: string;
     session?: SessionInfo;
     permissionMode?: string;
+    executionMode?: string;
+    planMode?: boolean;
     sandboxMode?: string;
     slashCommands?: string[];
     skills?: string[];
@@ -261,6 +311,8 @@ export class BridgeWebSocketServer {
       projectPath,
       session,
       permissionMode,
+      executionMode,
+      planMode,
       sandboxMode,
       slashCommands,
       skills,
@@ -275,6 +327,48 @@ export class BridgeWebSocketServer {
       provider,
       projectPath,
       ...(permissionMode ? { permissionMode: permissionMode as "default" | "acceptEdits" | "bypassPermissions" | "plan" } : {}),
+      ...((executionMode ?? (session?.process instanceof SdkProcess
+              ? session.process.permissionMode === "bypassPermissions"
+                ? "fullAccess"
+                : session.process.permissionMode === "acceptEdits"
+                  ? "acceptEdits"
+                  : "default"
+              : session?.process instanceof CodexProcess
+                ? session.process.approvalPolicy === "never"
+                  ? "fullAccess"
+                  : "default"
+                : undefined))
+          ? {
+              executionMode: (executionMode ?? (session?.process instanceof SdkProcess
+                      ? session.process.permissionMode === "bypassPermissions"
+                        ? "fullAccess"
+                        : session.process.permissionMode === "acceptEdits"
+                          ? "acceptEdits"
+                          : "default"
+                      : session?.process instanceof CodexProcess
+                        ? session.process.approvalPolicy === "never"
+                          ? "fullAccess"
+                          : "default"
+                        : undefined)) as "default" | "acceptEdits" | "fullAccess",
+            }
+          : {}),
+      ...((planMode ??
+              (session?.process instanceof SdkProcess
+                  ? session.process.permissionMode === "plan"
+                  : session?.process instanceof CodexProcess
+                    ? session.process.collaborationMode === "plan"
+                    : undefined)) !=
+          null
+          ? {
+              planMode:
+                  planMode ??
+                  (session?.process instanceof SdkProcess
+                      ? session.process.permissionMode === "plan"
+                      : session?.process instanceof CodexProcess
+                        ? session.process.collaborationMode === "plan"
+                        : false),
+            }
+          : {}),
       ...(sandboxMode ? { sandboxMode } : {}),
       ...(slashCommands ? { slashCommands } : {}),
       ...(skills ? { skills } : {}),
@@ -390,8 +484,22 @@ export class BridgeWebSocketServer {
         }
         try {
           const provider = msg.provider ?? "claude";
+          const executionMode = deriveExecutionMode({
+            provider,
+            permissionMode: msg.permissionMode,
+            executionMode: msg.executionMode,
+          });
+          const planMode = derivePlanMode({
+            permissionMode: msg.permissionMode,
+            planMode: msg.planMode,
+          });
+          const legacyPermissionMode = modesToLegacyPermissionMode(
+            provider,
+            executionMode,
+            planMode,
+          );
           if (provider === "codex") {
-            console.log(`[ws] start(codex): permissionMode=${msg.permissionMode} → collaboration=${msg.permissionMode === "plan" ? "plan" : "default"}`);
+            console.log(`[ws] start(codex): execution=${executionMode} plan=${planMode}`);
           }
           const cached = provider === "claude" ? this.sessionManager.getCachedCommands(msg.projectPath) : undefined;
           const sessionId = this.sessionManager.create(
@@ -399,7 +507,7 @@ export class BridgeWebSocketServer {
             {
               sessionId: msg.sessionId,
               continueMode: msg.continue,
-              permissionMode: msg.permissionMode,
+              permissionMode: legacyPermissionMode,
               model: msg.model,
               effort: msg.effort,
               maxTurns: msg.maxTurns,
@@ -421,14 +529,14 @@ export class BridgeWebSocketServer {
             provider,
             provider === "codex"
               ? {
-                  approvalPolicy: permissionModeToApprovalPolicy(msg.permissionMode),
+                  approvalPolicy: executionMode === "fullAccess" ? "never" : "on-request",
                   sandboxMode: sandboxModeToInternal(msg.sandboxMode),
                   model: msg.model,
                   modelReasoningEffort: (msg.modelReasoningEffort as "minimal" | "low" | "medium" | "high" | "xhigh") ?? undefined,
                   networkAccessEnabled: msg.networkAccessEnabled,
                   webSearchMode: (msg.webSearchMode as "disabled" | "cached" | "live") ?? undefined,
                   threadId: msg.sessionId,
-                  collaborationMode: msg.permissionMode === "plan" ? "plan" as const : "default" as const,
+                  collaborationMode: planMode ? "plan" as const : "default" as const,
                 }
               : undefined,
           );
@@ -443,7 +551,9 @@ export class BridgeWebSocketServer {
                 provider,
                 projectPath: msg.projectPath,
                 session: createdSession,
-                permissionMode: msg.permissionMode,
+                permissionMode: legacyPermissionMode,
+                executionMode,
+                planMode,
                 sandboxMode: msg.sandboxMode,
                 ...(cached
                   ? {
@@ -696,14 +806,29 @@ export class BridgeWebSocketServer {
           // Permission mode for Codex requires a session restart (like sandbox mode).
           // approvalPolicy and collaborationMode are thread-level settings that
           // only take effect reliably at thread/start or thread/resume time.
-          const newApproval = permissionModeToApprovalPolicy(msg.mode);
-          const newCollaboration: "plan" | "default" = msg.mode === "plan" ? "plan" : "default";
+          const executionMode = deriveExecutionMode({
+            provider: "codex",
+            permissionMode: msg.mode,
+            executionMode: msg.executionMode,
+          });
+          const planMode = derivePlanMode({
+            permissionMode: msg.mode,
+            planMode: msg.planMode,
+          });
+          const legacyPermissionMode = modesToLegacyPermissionMode(
+            "codex",
+            executionMode,
+            planMode,
+          );
+          const newApproval: "never" | "on-request" =
+            executionMode === "fullAccess" ? "never" : "on-request";
+          const newCollaboration: "plan" | "default" = planMode ? "plan" : "default";
           const currentApproval = (session.process as CodexProcess).approvalPolicy;
           const currentCollaboration = (session.process as CodexProcess).collaborationMode;
           if (newApproval === currentApproval && newCollaboration === currentCollaboration) {
             break; // No change needed
           }
-          console.log(`[ws] set_permission_mode(codex): mode=${msg.mode} → approval=${newApproval}, collaboration=${newCollaboration} (restart)`);
+          console.log(`[ws] set_permission_mode(codex): execution=${executionMode} plan=${planMode} → approval=${newApproval}, collaboration=${newCollaboration} (restart)`);
 
           const oldSessionId = session.id;
           const threadId = session.claudeSessionId;
@@ -744,7 +869,9 @@ export class BridgeWebSocketServer {
                 provider: "codex",
                 projectPath,
                 session: newSession,
-                permissionMode: msg.mode,
+                permissionMode: legacyPermissionMode,
+                executionMode,
+                planMode,
                 sandboxMode: oldSettings.sandboxMode
                   ? sandboxModeToExternal(oldSettings.sandboxMode)
                   : undefined,
@@ -801,7 +928,9 @@ export class BridgeWebSocketServer {
                   provider: "codex",
                   projectPath: effectiveProjectPath,
                   session: newSession,
-                  permissionMode: msg.mode,
+                  permissionMode: legacyPermissionMode,
+                  executionMode,
+                  planMode,
                   sandboxMode: oldSettings.sandboxMode
                     ? sandboxModeToExternal(oldSettings.sandboxMode)
                     : undefined,
@@ -1371,6 +1500,20 @@ export class BridgeWebSocketServer {
           break;
         }
         const provider = msg.provider ?? "claude";
+        const executionMode = deriveExecutionMode({
+          provider,
+          permissionMode: msg.permissionMode,
+          executionMode: msg.executionMode,
+        });
+        const planMode = derivePlanMode({
+          permissionMode: msg.permissionMode,
+          planMode: msg.planMode,
+        });
+        const legacyPermissionMode = modesToLegacyPermissionMode(
+          provider,
+          executionMode,
+          planMode,
+        );
         const sessionRefId = msg.sessionId;
         // Resume flow: keep past history in SessionInfo and deliver it only
         // via get_history(sessionId) to avoid duplicate/missed replay races.
@@ -1401,13 +1544,13 @@ export class BridgeWebSocketServer {
               "codex",
               {
                 threadId: sessionRefId,
-                approvalPolicy: permissionModeToApprovalPolicy(msg.permissionMode),
+                approvalPolicy: executionMode === "fullAccess" ? "never" : "on-request",
                 sandboxMode: sandboxModeToInternal(msg.sandboxMode),
                 model: msg.model,
                 modelReasoningEffort: (msg.modelReasoningEffort as "minimal" | "low" | "medium" | "high" | "xhigh") ?? undefined,
                 networkAccessEnabled: msg.networkAccessEnabled,
                 webSearchMode: (msg.webSearchMode as "disabled" | "cached" | "live") ?? undefined,
-                collaborationMode: msg.permissionMode === "plan" ? "plan" as const : "default" as const,
+                collaborationMode: planMode ? "plan" as const : "default" as const,
               },
             );
             const createdSession = this.sessionManager.get(sessionId);
@@ -1422,7 +1565,9 @@ export class BridgeWebSocketServer {
                   sandboxMode: createdSession?.codexSettings?.sandboxMode
                     ? sandboxModeToExternal(createdSession.codexSettings.sandboxMode)
                     : undefined,
-                  permissionMode: msg.permissionMode,
+                  permissionMode: legacyPermissionMode,
+                  executionMode,
+                  planMode,
                 }),
               );
               this.broadcastSessionList();
@@ -1465,7 +1610,7 @@ export class BridgeWebSocketServer {
             msg.projectPath,
             {
               sessionId: claudeSessionId,
-              permissionMode: msg.permissionMode,
+              permissionMode: legacyPermissionMode,
               model: msg.model,
               effort: msg.effort,
               maxTurns: msg.maxTurns,
@@ -1486,7 +1631,9 @@ export class BridgeWebSocketServer {
                 provider: "claude",
                 projectPath: msg.projectPath,
                 session: createdSession,
-                permissionMode: msg.permissionMode,
+                permissionMode: legacyPermissionMode,
+                executionMode,
+                planMode,
                 sandboxMode: msg.sandboxMode,
                 ...(cached
                   ? {

@@ -258,7 +258,10 @@ void main() {
         _wrap(RunningSessionCard(session: session, onTap: () {})),
       );
 
-      expect(find.text('claude-sonnet-4-20250514  plan'), findsOneWidget);
+      expect(
+        find.text('claude-sonnet-4-20250514  default  plan-on'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('shows bypass-all for claude bypassPermissions mode', (
@@ -278,7 +281,7 @@ void main() {
         _wrap(RunningSessionCard(session: session, onTap: () {})),
       );
 
-      expect(find.text('bypass-all'), findsOneWidget);
+      expect(find.text('full-access'), findsOneWidget);
     });
 
     testWidgets('shows only mode when claude model is null', (tester) async {
@@ -296,7 +299,7 @@ void main() {
         _wrap(RunningSessionCard(session: session, onTap: () {})),
       );
 
-      expect(find.text('plan'), findsOneWidget);
+      expect(find.text('default  plan-on'), findsOneWidget);
     });
 
     testWidgets('hides lastMessage row when empty', (tester) async {

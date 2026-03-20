@@ -97,7 +97,8 @@ class _RunningSessionCardState extends State<RunningSessionCard> {
     final appColors = Theme.of(context).extension<AppColors>()!;
     final visualStatus = sessionVisualStatusFor(
       rawStatus: session.status,
-      permissionMode: session.permissionMode,
+      permissionMode: session.effectivePermissionMode,
+      planMode: session.resolvedPlanMode,
       pendingPermission: session.pendingPermission,
     );
     final isReadyUnseen =
@@ -451,7 +452,7 @@ class _RunningSessionCardState extends State<RunningSessionCard> {
                       model: session.codexModel,
                       reasoningEffort: session.codexModelReasoningEffort,
                       approvalPolicy: session.codexApprovalPolicy,
-                      permissionMode: session.permissionMode,
+                      permissionMode: session.effectivePermissionMode,
                       sandboxMode: session.codexSandboxMode,
                       showDefaultReasoning: true,
                       compact: true,
@@ -461,7 +462,8 @@ class _RunningSessionCardState extends State<RunningSessionCard> {
                       _buildSettingsSummary(
                         isCodex: false,
                         model: session.model,
-                        permissionMode: session.permissionMode,
+                        executionMode: session.resolvedExecutionMode.value,
+                        planMode: session.resolvedPlanMode,
                       ),
                       style: TextStyle(
                         fontSize: 11,
@@ -2576,19 +2578,21 @@ class RecentSessionCard extends StatelessWidget {
 String _buildSettingsSummary({
   required bool isCodex,
   String? model,
-  String? permissionMode,
+  String? executionMode,
+  bool planMode = false,
 }) {
   if (isCodex) return model ?? '';
-  // Claude Code: show model + permissionMode label
-  final modeLabel = switch (permissionMode) {
-    null || '' || 'default' => 'default',
-    'acceptEdits' => 'accept-edits',
-    'plan' => 'plan',
-    'bypassPermissions' => 'bypass-all',
-    final v => v,
-  };
+  final parts = <String>[
+    if (executionMode == 'fullAccess')
+      'full-access'
+    else if (executionMode == 'acceptEdits')
+      'accept-edits'
+    else
+      'default',
+    if (planMode) 'plan-on',
+  ];
   if (model != null && model.isNotEmpty) {
-    return '$model  $modeLabel';
+    return '$model  ${parts.join("  ")}';
   }
-  return modeLabel;
+  return parts.join('  ');
 }

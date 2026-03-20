@@ -524,7 +524,7 @@ class _CodexChatBody extends HookWidget {
             shift: true,
           ): () {
             final cubit = context.read<ChatSessionCubit>();
-            showPermissionModeMenu(context, cubit);
+            showExecutionModeMenu(context, cubit);
           },
           // Cmd+Enter: approve pending tool use
           const SingleActivator(LogicalKeyboardKey.enter, meta: true): () {

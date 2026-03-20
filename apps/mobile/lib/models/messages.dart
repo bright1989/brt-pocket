@@ -124,6 +124,67 @@ enum PermissionMode {
   const PermissionMode(this.value, this.label);
 }
 
+enum ExecutionMode {
+  defaultMode('default', 'Default'),
+  acceptEdits('acceptEdits', 'Accept Edits'),
+  fullAccess('fullAccess', 'Full Access');
+
+  final String value;
+  final String label;
+  const ExecutionMode(this.value, this.label);
+}
+
+ExecutionMode? executionModeFromRaw(String? raw) {
+  if (raw == null || raw.isEmpty) return null;
+  for (final value in ExecutionMode.values) {
+    if (value.value == raw) return value;
+  }
+  return null;
+}
+
+bool derivePlanMode({bool? planMode, String? permissionMode}) {
+  return planMode ?? (permissionMode == PermissionMode.plan.value);
+}
+
+ExecutionMode deriveExecutionMode({
+  String? provider,
+  String? executionMode,
+  String? permissionMode,
+  String? approvalPolicy,
+}) {
+  final explicit = executionModeFromRaw(executionMode);
+  if (explicit != null) return explicit;
+
+  if (permissionMode == PermissionMode.bypassPermissions.value) {
+    return ExecutionMode.fullAccess;
+  }
+  if (permissionMode == PermissionMode.acceptEdits.value) {
+    return provider == Provider.codex.value
+        ? ExecutionMode.defaultMode
+        : ExecutionMode.acceptEdits;
+  }
+  if (approvalPolicy == 'never') return ExecutionMode.fullAccess;
+  return ExecutionMode.defaultMode;
+}
+
+PermissionMode legacyPermissionModeFromModes(
+  Provider provider, {
+  required ExecutionMode executionMode,
+  required bool planMode,
+}) {
+  if (planMode) return PermissionMode.plan;
+  switch (executionMode) {
+    case ExecutionMode.defaultMode:
+      return provider == Provider.codex
+          ? PermissionMode.acceptEdits
+          : PermissionMode.defaultMode;
+    case ExecutionMode.acceptEdits:
+      return PermissionMode.acceptEdits;
+    case ExecutionMode.fullAccess:
+      return PermissionMode.bypassPermissions;
+  }
+}
+
 enum ClaudeEffort {
   low('low', 'Low'),
   medium('medium', 'Medium'),
@@ -326,6 +387,8 @@ sealed class ServerMessage {
         provider: json['provider'] as String?,
         projectPath: json['projectPath'] as String?,
         permissionMode: json['permissionMode'] as String?,
+        executionMode: json['executionMode'] as String?,
+        planMode: json['planMode'] as bool?,
         sandboxMode: json['sandboxMode'] as String?,
         modelReasoningEffort: json['modelReasoningEffort'] as String?,
         networkAccessEnabled: json['networkAccessEnabled'] as bool?,
@@ -673,6 +736,8 @@ class SystemMessage implements ServerMessage {
   final String? provider;
   final String? projectPath;
   final String? permissionMode;
+  final String? executionMode;
+  final bool? planMode;
   final String? sandboxMode;
   final String? modelReasoningEffort;
   final bool? networkAccessEnabled;
@@ -694,6 +759,8 @@ class SystemMessage implements ServerMessage {
     this.provider,
     this.projectPath,
     this.permissionMode,
+    this.executionMode,
+    this.planMode,
     this.sandboxMode,
     this.modelReasoningEffort,
     this.networkAccessEnabled,
@@ -1588,6 +1655,8 @@ class RecentSession {
   final String? resumeCwd;
   final bool isSidechain;
   final String? codexApprovalPolicy;
+  final String? executionMode;
+  final bool planMode;
   final String? codexSandboxMode;
   final String? codexModel;
   final String? codexModelReasoningEffort;
@@ -1610,12 +1679,28 @@ class RecentSession {
     this.resumeCwd,
     required this.isSidechain,
     this.codexApprovalPolicy,
+    this.executionMode,
+    this.planMode = false,
     this.codexSandboxMode,
     this.codexModel,
     this.codexModelReasoningEffort,
     this.codexNetworkAccessEnabled,
     this.codexWebSearchMode,
   });
+
+  ExecutionMode get resolvedExecutionMode => deriveExecutionMode(
+    provider: provider,
+    executionMode: executionMode,
+    approvalPolicy: codexApprovalPolicy,
+  );
+
+  bool get resolvedPlanMode => planMode;
+
+  String get permissionMode => legacyPermissionModeFromModes(
+    provider == Provider.codex.value ? Provider.codex : Provider.claude,
+    executionMode: resolvedExecutionMode,
+    planMode: resolvedPlanMode,
+  ).value;
 
   factory RecentSession.fromJson(Map<String, dynamic> json) {
     final codexSettings = json['codexSettings'] as Map<String, dynamic>?;
@@ -1635,6 +1720,17 @@ class RecentSession {
       resumeCwd: json['resumeCwd'] as String?,
       isSidechain: json['isSidechain'] as bool? ?? false,
       codexApprovalPolicy: codexSettings?['approvalPolicy'] as String?,
+      executionMode:
+          json['executionMode'] as String? ??
+          deriveExecutionMode(
+            provider: json['provider'] as String?,
+            permissionMode: json['permissionMode'] as String?,
+            approvalPolicy: codexSettings?['approvalPolicy'] as String?,
+          ).value,
+      planMode: derivePlanMode(
+        planMode: json['planMode'] as bool?,
+        permissionMode: json['permissionMode'] as String?,
+      ),
       codexSandboxMode: codexSettings?['sandboxMode'] as String?,
       codexModel: codexSettings?['model'] as String?,
       codexModelReasoningEffort:
@@ -1676,6 +1772,8 @@ class RecentSession {
       resumeCwd: resumeCwd,
       isSidechain: isSidechain,
       codexApprovalPolicy: codexApprovalPolicy,
+      executionMode: executionMode,
+      planMode: planMode,
       codexSandboxMode: codexSandboxMode,
       codexModel: codexModel,
       codexModelReasoningEffort: codexModelReasoningEffort,
@@ -1705,6 +1803,8 @@ class SessionInfo {
   final String? worktreePath;
   final String? worktreeBranch;
   final String? permissionMode;
+  final String? executionMode;
+  final bool planMode;
   final String? model;
   final String? codexApprovalPolicy;
   final String? codexSandboxMode;
@@ -1730,6 +1830,8 @@ class SessionInfo {
     this.worktreePath,
     this.worktreeBranch,
     this.permissionMode,
+    this.executionMode,
+    this.planMode = false,
     this.model,
     this.codexApprovalPolicy,
     this.codexSandboxMode,
@@ -1740,12 +1842,32 @@ class SessionInfo {
     this.pendingPermission,
   });
 
+  ExecutionMode get resolvedExecutionMode => deriveExecutionMode(
+    provider: provider,
+    executionMode: executionMode,
+    permissionMode: permissionMode,
+    approvalPolicy: codexApprovalPolicy,
+  );
+
+  bool get resolvedPlanMode =>
+      planMode || permissionMode == PermissionMode.plan.value;
+
+  String get effectivePermissionMode =>
+      permissionMode ??
+      legacyPermissionModeFromModes(
+        provider == Provider.codex.value ? Provider.codex : Provider.claude,
+        executionMode: resolvedExecutionMode,
+        planMode: resolvedPlanMode,
+      ).value;
+
   SessionInfo copyWith({
     String? status,
     String? name,
     bool clearName = false,
     String? lastMessage,
     String? permissionMode,
+    String? executionMode,
+    bool? planMode,
     String? model,
     String? codexApprovalPolicy,
     String? codexSandboxMode,
@@ -1772,6 +1894,8 @@ class SessionInfo {
       worktreePath: worktreePath,
       worktreeBranch: worktreeBranch,
       permissionMode: permissionMode ?? this.permissionMode,
+      executionMode: executionMode ?? this.executionMode,
+      planMode: planMode ?? this.planMode,
       model: model ?? this.model,
       codexApprovalPolicy: codexApprovalPolicy ?? this.codexApprovalPolicy,
       codexSandboxMode: codexSandboxMode ?? this.codexSandboxMode,
@@ -1806,6 +1930,17 @@ class SessionInfo {
       worktreePath: json['worktreePath'] as String?,
       worktreeBranch: json['worktreeBranch'] as String?,
       permissionMode: json['permissionMode'] as String?,
+      executionMode:
+          json['executionMode'] as String? ??
+          deriveExecutionMode(
+            provider: json['provider'] as String?,
+            permissionMode: json['permissionMode'] as String?,
+            approvalPolicy: codexSettings?['approvalPolicy'] as String?,
+          ).value,
+      planMode: derivePlanMode(
+        planMode: json['planMode'] as bool?,
+        permissionMode: json['permissionMode'] as String?,
+      ),
       model: json['model'] as String?,
       codexApprovalPolicy: codexSettings?['approvalPolicy'] as String?,
       codexSandboxMode: codexSettings?['sandboxMode'] as String?,
@@ -1839,6 +1974,8 @@ class ClientMessage {
     String? sessionId,
     bool? continueMode,
     String? permissionMode,
+    String? executionMode,
+    bool? planMode,
     String? effort,
     int? maxTurns,
     double? maxBudgetUsd,
@@ -1861,6 +1998,8 @@ class ClientMessage {
       'sessionId': ?sessionId,
       if (continueMode == true) 'continue': true,
       'permissionMode': ?permissionMode,
+      'executionMode': ?executionMode,
+      'planMode': ?planMode,
       'effort': ?effort,
       'maxTurns': ?maxTurns,
       'maxBudgetUsd': ?maxBudgetUsd,
@@ -1916,6 +2055,21 @@ class ClientMessage {
     return ClientMessage._(<String, dynamic>{
       'type': 'set_permission_mode',
       'mode': mode,
+      'sessionId': ?sessionId,
+    });
+  }
+
+  factory ClientMessage.setSessionMode({
+    required String legacyMode,
+    String? executionMode,
+    bool? planMode,
+    String? sessionId,
+  }) {
+    return ClientMessage._(<String, dynamic>{
+      'type': 'set_permission_mode',
+      'mode': legacyMode,
+      'executionMode': ?executionMode,
+      'planMode': ?planMode,
       'sessionId': ?sessionId,
     });
   }
@@ -2044,6 +2198,8 @@ class ClientMessage {
     String sessionId,
     String projectPath, {
     String? permissionMode,
+    String? executionMode,
+    bool? planMode,
     String? effort,
     int? maxTurns,
     double? maxBudgetUsd,
@@ -2062,6 +2218,8 @@ class ClientMessage {
       'sessionId': sessionId,
       'projectPath': projectPath,
       'permissionMode': ?permissionMode,
+      'executionMode': ?executionMode,
+      'planMode': ?planMode,
       'effort': ?effort,
       'maxTurns': ?maxTurns,
       'maxBudgetUsd': ?maxBudgetUsd,

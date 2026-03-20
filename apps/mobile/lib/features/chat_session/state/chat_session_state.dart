@@ -29,8 +29,12 @@ abstract class ChatSessionState with _$ChatSessionState {
     @Default(false) bool inPlanMode,
     @Default(false) bool collapseToolResults,
 
-    // Permission mode selected by the user
+    // Legacy permission mode kept for compatibility with older bridge/app flows.
     @Default(PermissionMode.defaultMode) PermissionMode permissionMode,
+
+    // Canonical session modes
+    @Default(ExecutionMode.defaultMode) ExecutionMode executionMode,
+    @Default(false) bool planMode,
 
     // Sandbox mode — Freezed default is .on but Cubit constructor overrides
     // based on provider (Claude=off, Codex=on).

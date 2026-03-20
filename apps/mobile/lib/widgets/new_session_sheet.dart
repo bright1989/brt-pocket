@@ -16,7 +16,8 @@ import '../theme/provider_style.dart';
 class NewSessionParams {
   final String projectPath;
   final Provider provider;
-  final PermissionMode permissionMode;
+  final ExecutionMode executionMode;
+  final bool planMode;
   final bool useWorktree;
   final String? worktreeBranch;
   final String? existingWorktreePath;
@@ -33,10 +34,12 @@ class NewSessionParams {
   final bool? claudeForkSession;
   final bool? claudePersistSession;
 
-  const NewSessionParams({
+  NewSessionParams({
     required this.projectPath,
     this.provider = Provider.codex,
-    required this.permissionMode,
+    ExecutionMode? executionMode,
+    bool? planMode,
+    PermissionMode? permissionMode,
     this.useWorktree = false,
     this.worktreeBranch,
     this.existingWorktreePath,
@@ -52,7 +55,19 @@ class NewSessionParams {
     this.claudeFallbackModel,
     this.claudeForkSession,
     this.claudePersistSession,
-  });
+  }) : executionMode =
+           executionMode ??
+           deriveExecutionMode(
+             provider: provider.value,
+             permissionMode: permissionMode?.value,
+           ),
+       planMode = planMode ?? (permissionMode == PermissionMode.plan);
+
+  PermissionMode get permissionMode => legacyPermissionModeFromModes(
+    provider,
+    executionMode: executionMode,
+    planMode: planMode,
+  );
 }
 
 // ---- Serialization helpers for SharedPreferences ----
@@ -85,8 +100,17 @@ Provider _providerFromRaw(String? raw) =>
 PermissionMode? permissionModeFromRaw(String? raw) =>
     enumByValue(PermissionMode.values, raw, (v) => v.value);
 
-PermissionMode _permissionModeFromRawWithDefault(String? raw) =>
-    permissionModeFromRaw(raw) ?? PermissionMode.acceptEdits;
+ExecutionMode _executionModeFromRawWithDefault(
+  String? raw, {
+  String? provider,
+  String? permissionMode,
+  String? approvalPolicy,
+}) => deriveExecutionMode(
+  provider: provider,
+  executionMode: raw,
+  permissionMode: permissionMode,
+  approvalPolicy: approvalPolicy,
+);
 
 ClaudeEffort? claudeEffortFromRaw(String? raw) =>
     enumByValue(ClaudeEffort.values, raw, (v) => v.value);
@@ -100,6 +124,8 @@ Map<String, dynamic> sessionStartDefaultsToJson(NewSessionParams params) {
   return {
     'projectPath': params.projectPath,
     'provider': params.provider.value,
+    'executionMode': params.executionMode.value,
+    'planMode': params.planMode,
     'permissionMode': params.permissionMode.value,
     // NOTE: useWorktree, worktreeBranch, existingWorktreePath are
     // session-specific and intentionally NOT persisted.
@@ -125,8 +151,14 @@ NewSessionParams? sessionStartDefaultsFromJson(Map<String, dynamic> json) {
   return NewSessionParams(
     projectPath: projectPath,
     provider: _providerFromRaw(json['provider'] as String?),
-    permissionMode: _permissionModeFromRawWithDefault(
-      json['permissionMode'] as String?,
+    executionMode: _executionModeFromRawWithDefault(
+      json['executionMode'] as String?,
+      provider: json['provider'] as String?,
+      permissionMode: json['permissionMode'] as String?,
+    ),
+    planMode: derivePlanMode(
+      planMode: json['planMode'] as bool?,
+      permissionMode: json['permissionMode'] as String?,
     ),
     // useWorktree, worktreeBranch, existingWorktreePath default to off/null
     model: json['model'] as String?,
@@ -241,7 +273,8 @@ class _NewSessionSheetContentState extends State<_NewSessionSheetContent> {
   final _claudeMaxBudgetController = TextEditingController();
   late final PageController _pageController;
   var _provider = Provider.codex;
-  var _permissionMode = PermissionMode.acceptEdits;
+  var _executionMode = ExecutionMode.defaultMode;
+  var _planMode = false;
   var _useWorktree = false;
   var _worktreeMode = _WorktreeMode.createNew;
   WorktreeInfo? _selectedWorktree;
@@ -431,7 +464,8 @@ class _NewSessionSheetContentState extends State<_NewSessionSheetContent> {
 
     _pathController.text = p.projectPath;
     _provider = p.provider;
-    _permissionMode = p.permissionMode;
+    _executionMode = p.executionMode;
+    _planMode = p.planMode;
     _useWorktree = p.useWorktree || p.existingWorktreePath != null;
     _branchController.text = p.worktreeBranch ?? "";
     _selectedModel = _codexModelList.contains(p.model) ? p.model : null;
@@ -566,7 +600,8 @@ class _NewSessionSheetContentState extends State<_NewSessionSheetContent> {
     return NewSessionParams(
       projectPath: path,
       provider: _provider,
-      permissionMode: _permissionMode,
+      executionMode: _executionMode,
+      planMode: _planMode,
       useWorktree: useExisting ? false : _useWorktree,
       worktreeBranch: useExisting
           ? _selectedWorktree?.branch
@@ -682,9 +717,13 @@ class _NewSessionSheetContentState extends State<_NewSessionSheetContent> {
           _OptionsSection(
             appColors: appColors,
             provider: pageProvider,
-            permissionMode: _permissionMode,
-            onPermissionModeChanged: (value) {
-              setState(() => _permissionMode = value);
+            executionMode: _executionMode,
+            onExecutionModeChanged: (value) {
+              setState(() => _executionMode = value);
+            },
+            planMode: _planMode,
+            onPlanModeChanged: (value) {
+              setState(() => _planMode = value);
             },
             useWorktree: _useWorktree,
             onWorktreeToggle: _onWorktreeToggle,
@@ -1220,8 +1259,10 @@ class _PathInput extends StatelessWidget {
 class _OptionsSection extends StatelessWidget {
   final AppColors appColors;
   final Provider provider;
-  final PermissionMode permissionMode;
-  final ValueChanged<PermissionMode> onPermissionModeChanged;
+  final ExecutionMode executionMode;
+  final ValueChanged<ExecutionMode> onExecutionModeChanged;
+  final bool planMode;
+  final ValueChanged<bool> onPlanModeChanged;
   final bool useWorktree;
   final ValueChanged<bool> onWorktreeToggle;
   final _WorktreeMode worktreeMode;
@@ -1273,8 +1314,10 @@ class _OptionsSection extends StatelessWidget {
   const _OptionsSection({
     required this.appColors,
     required this.provider,
-    required this.permissionMode,
-    required this.onPermissionModeChanged,
+    required this.executionMode,
+    required this.onExecutionModeChanged,
+    required this.planMode,
+    required this.onPlanModeChanged,
     required this.useWorktree,
     required this.onWorktreeToggle,
     required this.worktreeMode,
@@ -1334,38 +1377,58 @@ class _OptionsSection extends StatelessWidget {
               ),
             ),
           ),
-          // Primary controls: Permission + Sandbox (shared for both providers)
-          DropdownButtonFormField<PermissionMode>(
+          DropdownButtonFormField<ExecutionMode>(
             key: ValueKey(
-              'dialog_${provider == Provider.codex ? "codex_" : ""}permission_mode',
+              'dialog_${provider == Provider.codex ? "codex_" : ""}execution_mode',
             ),
-            initialValue: permissionMode,
+            initialValue: executionMode,
             isExpanded: true,
-            decoration: buildInputDecoration(l.permission),
-            items: PermissionMode.values
-                .map(
-                  (m) => DropdownMenuItem(
-                    value: m,
-                    child: Row(
-                      children: [
-                        Icon(switch (m) {
-                          PermissionMode.defaultMode => Icons.tune,
-                          PermissionMode.plan => Icons.assignment,
-                          PermissionMode.acceptEdits => Icons.edit_note,
-                          PermissionMode.bypassPermissions => Icons.flash_on,
-                        }, size: 16),
-                        const SizedBox(width: 8),
-                        Text(m.label, style: const TextStyle(fontSize: 13)),
-                      ],
-                    ),
-                  ),
-                )
-                .toList(),
+            decoration: buildInputDecoration(l.approval),
+            items:
+                (provider == Provider.codex
+                        ? const [
+                            ExecutionMode.defaultMode,
+                            ExecutionMode.fullAccess,
+                          ]
+                        : ExecutionMode.values)
+                    .map(
+                      (mode) => DropdownMenuItem(
+                        value: mode,
+                        child: Row(
+                          children: [
+                            Icon(switch (mode) {
+                              ExecutionMode.defaultMode => Icons.tune,
+                              ExecutionMode.acceptEdits => Icons.edit_note,
+                              ExecutionMode.fullAccess => Icons.flash_on,
+                            }, size: 16),
+                            const SizedBox(width: 8),
+                            Text(switch (mode) {
+                              ExecutionMode.fullAccess => 'Full Access',
+                              _ => mode.label,
+                            }, style: const TextStyle(fontSize: 13)),
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(),
             onChanged: (value) {
               if (value != null) {
-                onPermissionModeChanged(value);
+                onExecutionModeChanged(value);
               }
             },
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Plan Mode'),
+            subtitle: Text(
+              provider == Provider.codex
+                  ? 'Draft a plan first, then wait for approval before executing'
+                  : 'Analyze and plan before executing changes',
+              style: const TextStyle(fontSize: 12),
+            ),
+            value: planMode,
+            onChanged: onPlanModeChanged,
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<SandboxMode>(
@@ -1505,8 +1568,7 @@ class _WorktreeToggleTile extends StatelessWidget {
                 : BorderRadius.circular(12),
             onTap: () => onChanged(!useWorktree),
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Row(
                 children: [
                   Icon(
@@ -2111,14 +2173,19 @@ class _WorktreeOptions extends StatelessWidget {
           TextField(
             key: const ValueKey('dialog_worktree_branch'),
             controller: branchController,
-            decoration: buildInputDecoration(
-              l.branchOptional,
-              hintText: l.branchHint,
-              prefixIcon: const Icon(Icons.merge_outlined, size: 18),
-            ).copyWith(
-              filled: true,
-              fillColor: Color.lerp(cs.surfaceContainerHigh, cs.onSurface, 0.05),
-            ),
+            decoration:
+                buildInputDecoration(
+                  l.branchOptional,
+                  hintText: l.branchHint,
+                  prefixIcon: const Icon(Icons.merge_outlined, size: 18),
+                ).copyWith(
+                  filled: true,
+                  fillColor: Color.lerp(
+                    cs.surfaceContainerHigh,
+                    cs.onSurface,
+                    0.05,
+                  ),
+                ),
             style: const TextStyle(fontSize: 13),
           ),
         // Existing worktree selection

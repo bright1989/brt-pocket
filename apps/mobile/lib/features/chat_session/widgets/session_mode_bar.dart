@@ -16,7 +16,8 @@ class SessionModeBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chatCubit = context.watch<ChatSessionCubit>();
-    final permissionMode = chatCubit.state.permissionMode;
+    final executionMode = chatCubit.state.executionMode;
+    final planMode = chatCubit.state.planMode;
     final inPlanMode = chatCubit.state.inPlanMode;
     final status = chatCubit.state.status;
     final isActive =
@@ -53,9 +54,26 @@ class SessionModeBar extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    PermissionModeChip(
-                      currentMode: permissionMode,
-                      onTap: () => showPermissionModeMenu(
+                    ExecutionModeChip(
+                      currentMode: executionMode,
+                      provider: chatCubit.provider,
+                      onTap: () => showExecutionModeMenu(
+                        context,
+                        chatCubit,
+                        onBeforeRestart: onBeforeRestart,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: VerticalDivider(
+                        width: 1,
+                        thickness: 1,
+                        color: cs.outlineVariant.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    PlanModeChip(
+                      enabled: planMode,
+                      onTap: () => togglePlanMode(
                         context,
                         chatCubit,
                         onBeforeRestart: onBeforeRestart,
@@ -253,36 +271,30 @@ class _RotatingBorderPainter extends CustomPainter {
       oldDelegate.progress != progress;
 }
 
-void showPermissionModeMenu(
+void showExecutionModeMenu(
   BuildContext context,
   ChatSessionCubit chatCubit, {
   Future<void> Function()? onBeforeRestart,
 }) {
-  final currentMode = chatCubit.state.permissionMode;
-  final appColors = Theme.of(context).extension<AppColors>()!;
+  final currentMode = chatCubit.state.executionMode;
 
   const purple = Color(0xFFBB86FC);
 
   final modeDetails =
-      <PermissionMode, ({IconData icon, String description, Color color})>{
-        PermissionMode.defaultMode: (
+      <ExecutionMode, ({IconData icon, String description, Color color})>{
+        ExecutionMode.defaultMode: (
           icon: Icons.tune,
           description: 'Standard permission prompts',
           color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
-        PermissionMode.acceptEdits: (
+        ExecutionMode.acceptEdits: (
           icon: Icons.edit_note,
           description: 'Auto-approve file edits',
           color: purple,
         ),
-        PermissionMode.plan: (
-          icon: Icons.assignment,
-          description: 'Analyze & plan without executing',
-          color: appColors.statusPlan,
-        ),
-        PermissionMode.bypassPermissions: (
+        ExecutionMode.fullAccess: (
           icon: Icons.flash_on,
-          description: 'Skip all permission prompts',
+          description: 'Run without most approval prompts',
           color: Theme.of(context).colorScheme.error,
         ),
       };
@@ -300,7 +312,7 @@ void showPermissionModeMenu(
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Permission Mode',
+                  'Execution',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -309,7 +321,13 @@ void showPermissionModeMenu(
                 ),
               ),
             ),
-            for (final mode in PermissionMode.values)
+            for (final mode
+                in chatCubit.isCodex
+                    ? const [
+                        ExecutionMode.defaultMode,
+                        ExecutionMode.fullAccess,
+                      ]
+                    : ExecutionMode.values)
               ListTile(
                 leading: Icon(
                   modeDetails[mode]!.icon,
@@ -333,16 +351,12 @@ void showPermissionModeMenu(
                   Navigator.pop(sheetContext);
                   if (mode == currentMode) return;
                   HapticFeedback.lightImpact();
-                  if (chatCubit.isCodex) {
-                    _confirmPermissionModeChange(
-                      context,
-                      chatCubit,
-                      mode,
-                      onBeforeRestart: onBeforeRestart,
-                    );
-                  } else {
-                    chatCubit.setPermissionMode(mode);
-                  }
+                  _confirmExecutionModeChange(
+                    context,
+                    chatCubit,
+                    mode,
+                    onBeforeRestart: onBeforeRestart,
+                  );
                 },
               ),
             const SizedBox(height: 8),
@@ -355,10 +369,10 @@ void showPermissionModeMenu(
 
 /// Show confirmation dialog before changing permission mode for Codex sessions,
 /// because the change requires a session restart (like sandbox mode).
-Future<void> _confirmPermissionModeChange(
+Future<void> _confirmExecutionModeChange(
   BuildContext context,
   ChatSessionCubit chatCubit,
-  PermissionMode mode, {
+  ExecutionMode mode, {
   Future<void> Function()? onBeforeRestart,
 }) async {
   final confirmed = await showDialog<bool>(
@@ -366,7 +380,7 @@ Future<void> _confirmPermissionModeChange(
     builder: (dialogContext) {
       final cs = Theme.of(dialogContext).colorScheme;
       return AlertDialog(
-        title: const Text('Change Permission Mode'),
+        title: const Text('Change Execution Mode'),
         content: Text(
           'Switching to ${mode.label} will restart the session. '
           'Your conversation will be preserved.',
@@ -378,7 +392,7 @@ Future<void> _confirmPermissionModeChange(
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            style: mode == PermissionMode.bypassPermissions
+            style: mode == ExecutionMode.fullAccess
                 ? FilledButton.styleFrom(backgroundColor: cs.error)
                 : null,
             child: const Text('Restart'),
@@ -389,7 +403,41 @@ Future<void> _confirmPermissionModeChange(
   );
   if (confirmed == true) {
     await onBeforeRestart?.call();
-    chatCubit.setPermissionMode(mode);
+    chatCubit.setSessionModes(executionMode: mode);
+  }
+}
+
+Future<void> togglePlanMode(
+  BuildContext context,
+  ChatSessionCubit chatCubit, {
+  Future<void> Function()? onBeforeRestart,
+}) async {
+  final nextPlanMode = !chatCubit.state.planMode;
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: Text(nextPlanMode ? 'Enable Plan Mode' : 'Disable Plan Mode'),
+        content: Text(
+          '${nextPlanMode ? "Enabling" : "Disabling"} Plan Mode will restart '
+          'the session. Your conversation will be preserved.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Restart'),
+          ),
+        ],
+      );
+    },
+  );
+  if (confirmed == true) {
+    await onBeforeRestart?.call();
+    chatCubit.setSessionModes(planMode: nextPlanMode);
   }
 }
 
@@ -546,33 +594,29 @@ Future<void> _confirmSandboxModeChange(
   }
 }
 
-class PermissionModeChip extends StatelessWidget {
-  final PermissionMode currentMode;
+class ExecutionModeChip extends StatelessWidget {
+  final ExecutionMode currentMode;
+  final Provider? provider;
   final VoidCallback onTap;
 
-  const PermissionModeChip({
+  const ExecutionModeChip({
     super.key,
     required this.currentMode,
+    this.provider,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final appColors = Theme.of(context).extension<AppColors>()!;
 
     // Colors aligned with Claude Code CLI
     const purple = Color(0xFFBB86FC);
 
     final (IconData icon, String label, Color fg) = switch (currentMode) {
-      PermissionMode.defaultMode => (
-        Icons.tune,
-        'Default',
-        cs.onSurfaceVariant,
-      ),
-      PermissionMode.acceptEdits => (Icons.edit_note, 'Edits', purple),
-      PermissionMode.plan => (Icons.assignment, 'Plan', appColors.statusPlan),
-      PermissionMode.bypassPermissions => (Icons.flash_on, 'Bypass', cs.error),
+      ExecutionMode.defaultMode => (Icons.tune, 'Default', cs.onSurfaceVariant),
+      ExecutionMode.acceptEdits => (Icons.edit_note, 'Edits', purple),
+      ExecutionMode.fullAccess => (Icons.flash_on, 'Full', cs.error),
     };
 
     return Material(
@@ -600,6 +644,47 @@ class PermissionModeChip extends StatelessWidget {
                 Icons.arrow_drop_down,
                 size: 14,
                 color: fg.withValues(alpha: 0.5),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PlanModeChip extends StatelessWidget {
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const PlanModeChip({super.key, required this.enabled, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final appColors = Theme.of(context).extension<AppColors>()!;
+    final cs = Theme.of(context).colorScheme;
+    final fg = enabled ? appColors.statusPlan : cs.onSurfaceVariant;
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(10),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.assignment_outlined, size: 13, color: fg),
+              const SizedBox(width: 3),
+              Text(
+                enabled ? 'Plan On' : 'Plan Off',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: fg,
+                ),
               ),
             ],
           ),

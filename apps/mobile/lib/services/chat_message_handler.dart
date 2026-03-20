@@ -20,6 +20,8 @@ enum ChatSideEffect {
 class ChatStateUpdate {
   final ProcessStatus? status;
   final PermissionMode? permissionMode;
+  final ExecutionMode? executionMode;
+  final bool? planMode;
   final List<ChatEntry> entriesToAdd;
   final List<ChatEntry> entriesToPrepend;
   final String? pendingToolUseId;
@@ -59,6 +61,8 @@ class ChatStateUpdate {
   const ChatStateUpdate({
     this.status,
     this.permissionMode,
+    this.executionMode,
+    this.planMode,
     this.entriesToAdd = const [],
     this.entriesToPrepend = const [],
     this.pendingToolUseId,
@@ -564,7 +568,9 @@ class ChatMessageHandler {
   ) {
     List<SlashCommand>? commands;
     PermissionMode? permissionMode;
+    ExecutionMode? executionMode;
     bool? inPlanMode;
+    bool? planMode;
     if ((subtype == 'init' ||
             subtype == 'session_created' ||
             subtype == 'supported_commands') &&
@@ -576,8 +582,32 @@ class ChatMessageHandler {
         (mode) => mode?.value == msg.permissionMode,
         orElse: () => null,
       );
+      executionMode = deriveExecutionMode(
+        provider: msg.provider,
+        executionMode: msg.executionMode,
+        permissionMode: msg.permissionMode,
+        approvalPolicy: msg.approvalPolicy,
+      );
+      planMode = derivePlanMode(
+        planMode: msg.planMode,
+        permissionMode: msg.permissionMode,
+      );
       if (subtype == 'set_permission_mode' && permissionMode != null) {
-        inPlanMode = permissionMode == PermissionMode.plan;
+        inPlanMode = planMode;
+      }
+    } else if (msg is SystemMessage) {
+      executionMode = deriveExecutionMode(
+        provider: msg.provider,
+        executionMode: msg.executionMode,
+        permissionMode: msg.permissionMode,
+        approvalPolicy: msg.approvalPolicy,
+      );
+      planMode = derivePlanMode(
+        planMode: msg.planMode,
+        permissionMode: msg.permissionMode,
+      );
+      if (subtype == 'set_permission_mode') {
+        inPlanMode = planMode;
       }
     }
     // Extract claudeSessionId from session_created or init messages.
@@ -598,6 +628,8 @@ class ChatMessageHandler {
     return ChatStateUpdate(
       entriesToAdd: addEntry ? [ServerChatEntry(msg)] : [],
       permissionMode: permissionMode,
+      executionMode: executionMode,
+      planMode: planMode,
       inPlanMode: inPlanMode,
       slashCommands: commands,
       claudeSessionId: sessionId,

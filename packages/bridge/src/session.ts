@@ -79,6 +79,8 @@ export interface SessionSummary {
   worktreePath?: string;
   worktreeBranch?: string;
   permissionMode?: string;
+  executionMode?: string;
+  planMode?: boolean;
   model?: string;
   codexSettings?: {
     approvalPolicy?: string;
@@ -550,6 +552,24 @@ export class SessionManager {
         s.status === "waiting_approval"
           ? processWithPending.getPendingPermission?.()
           : undefined;
+      const executionMode =
+        s.process instanceof SdkProcess
+          ? s.process.permissionMode === "bypassPermissions"
+            ? "fullAccess"
+            : s.process.permissionMode === "acceptEdits"
+              ? "acceptEdits"
+              : "default"
+          : s.process instanceof CodexProcess
+            ? s.process.approvalPolicy === "never"
+              ? "fullAccess"
+              : "default"
+            : undefined;
+      const planMode =
+        s.process instanceof SdkProcess
+          ? s.process.permissionMode === "plan"
+          : s.process instanceof CodexProcess
+            ? s.process.collaborationMode === "plan"
+            : undefined;
       return {
         id: s.id,
         provider: s.provider,
@@ -573,6 +593,8 @@ export class SessionManager {
                   ? "bypassPermissions"
                   : "acceptEdits"
               : undefined,
+        executionMode,
+        planMode,
         model: s.process instanceof SdkProcess ? s.process.model : undefined,
         codexSettings: s.codexSettings,
         agentNickname:
