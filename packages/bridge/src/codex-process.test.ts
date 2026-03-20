@@ -80,7 +80,10 @@ describe("CodexProcess (app-server)", () => {
 
     const initReq = nextOutgoingRequest(child);
     expect(initReq.method).toBe("initialize");
-    child.stdout.emit("data", `${JSON.stringify({ id: initReq.id, result: {} })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: initReq.id, result: {} })}\n`,
+    );
 
     await tick();
     const initialized = nextOutgoingNotification(child);
@@ -95,11 +98,34 @@ describe("CodexProcess (app-server)", () => {
       model: "gpt-5.3-codex",
     });
 
-    child.stdout.emit("data", `${JSON.stringify({ id: startReq.id, result: { thread: { id: "thr_1" } } })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({
+        id: startReq.id,
+        result: {
+          thread: { id: "thr_1" },
+          model: "gpt-5.3-codex",
+          approvalPolicy: "on-request",
+          sandbox: {
+            type: "workspaceWrite",
+            networkAccess: false,
+          },
+        },
+      })}\n`,
+    );
     await tick();
 
     expect(messages).toContainEqual(
-      expect.objectContaining({ type: "system", subtype: "init", sessionId: "thr_1" }),
+      expect.objectContaining({
+        type: "system",
+        subtype: "init",
+        provider: "codex",
+        sessionId: "thr_1",
+        model: "gpt-5.3-codex",
+        approvalPolicy: "on-request",
+        sandboxMode: "workspace-write",
+        networkAccessEnabled: false,
+      }),
     );
 
     proc.stop();
@@ -122,7 +148,10 @@ describe("CodexProcess (app-server)", () => {
 
     const initReq = nextOutgoingRequest(child);
     expect(initReq.method).toBe("initialize");
-    child.stdout.emit("data", `${JSON.stringify({ id: initReq.id, result: {} })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: initReq.id, result: {} })}\n`,
+    );
 
     await initializePromise;
 
@@ -143,11 +172,17 @@ describe("CodexProcess (app-server)", () => {
 
     await tick();
     const initReq = nextOutgoingRequest(child);
-    child.stdout.emit("data", `${JSON.stringify({ id: initReq.id, result: {} })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: initReq.id, result: {} })}\n`,
+    );
     await tick();
     nextOutgoingNotification(child); // initialized
     const threadReq = nextOutgoingRequest(child);
-    child.stdout.emit("data", `${JSON.stringify({ id: threadReq.id, result: { thread: { id: "thr_2" } } })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: threadReq.id, result: { thread: { id: "thr_2" } } })}\n`,
+    );
 
     await tick();
     drainSkillsList(child);
@@ -156,8 +191,14 @@ describe("CodexProcess (app-server)", () => {
     const turnReq = nextOutgoingRequest(child);
     expect(turnReq.method).toBe("turn/start");
 
-    child.stdout.emit("data", `${JSON.stringify({ id: turnReq.id, result: { turn: { id: "turn_1" } } })}\n`);
-    child.stdout.emit("data", `${JSON.stringify({ method: "turn/started", params: { turn: { id: "turn_1" } } })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: turnReq.id, result: { turn: { id: "turn_1" } } })}\n`,
+    );
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ method: "turn/started", params: { turn: { id: "turn_1" } } })}\n`,
+    );
     child.stdout.emit(
       "data",
       `${JSON.stringify({
@@ -200,7 +241,11 @@ describe("CodexProcess (app-server)", () => {
     await tick();
 
     expect(messages).toContainEqual(
-      expect.objectContaining({ type: "result", subtype: "success", sessionId: "thr_2" }),
+      expect.objectContaining({
+        type: "result",
+        subtype: "success",
+        sessionId: "thr_2",
+      }),
     );
 
     proc.stop();
@@ -216,11 +261,17 @@ describe("CodexProcess (app-server)", () => {
 
     await tick();
     const initReq = nextOutgoingRequest(child);
-    child.stdout.emit("data", `${JSON.stringify({ id: initReq.id, result: {} })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: initReq.id, result: {} })}\n`,
+    );
     await tick();
     nextOutgoingNotification(child); // initialized
     const threadReq = nextOutgoingRequest(child);
-    child.stdout.emit("data", `${JSON.stringify({ id: threadReq.id, result: { thread: { id: "thr_3" } } })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: threadReq.id, result: { thread: { id: "thr_3" } } })}\n`,
+    );
 
     await tick();
     drainSkillsList(child);
@@ -228,8 +279,14 @@ describe("CodexProcess (app-server)", () => {
     await tick();
     const turnReq = nextOutgoingRequest(child);
     expect(turnReq.method).toBe("turn/start");
-    child.stdout.emit("data", `${JSON.stringify({ id: turnReq.id, result: { turn: { id: "turn_2" } } })}\n`);
-    child.stdout.emit("data", `${JSON.stringify({ method: "turn/started", params: { turn: { id: "turn_2" } } })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: turnReq.id, result: { turn: { id: "turn_2" } } })}\n`,
+    );
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ method: "turn/started", params: { turn: { id: "turn_2" } } })}\n`,
+    );
 
     child.stdout.emit(
       "data",
@@ -287,7 +344,11 @@ describe("CodexProcess (app-server)", () => {
     await tick();
 
     expect(messages).toContainEqual(
-      expect.objectContaining({ type: "result", subtype: "success", sessionId: "thr_3" }),
+      expect.objectContaining({
+        type: "result",
+        subtype: "success",
+        sessionId: "thr_3",
+      }),
     );
 
     proc.stop();
@@ -303,11 +364,17 @@ describe("CodexProcess (app-server)", () => {
 
     await tick();
     const initReq = nextOutgoingRequest(child);
-    child.stdout.emit("data", `${JSON.stringify({ id: initReq.id, result: {} })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: initReq.id, result: {} })}\n`,
+    );
     await tick();
     nextOutgoingNotification(child);
     const threadReq = nextOutgoingRequest(child);
-    child.stdout.emit("data", `${JSON.stringify({ id: threadReq.id, result: { thread: { id: "thr_perms" } } })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: threadReq.id, result: { thread: { id: "thr_perms" } } })}\n`,
+    );
 
     await tick();
     child.stdout.emit(
@@ -368,11 +435,17 @@ describe("CodexProcess (app-server)", () => {
 
     await tick();
     const initReq = nextOutgoingRequest(child);
-    child.stdout.emit("data", `${JSON.stringify({ id: initReq.id, result: {} })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: initReq.id, result: {} })}\n`,
+    );
     await tick();
     nextOutgoingNotification(child);
     const threadReq = nextOutgoingRequest(child);
-    child.stdout.emit("data", `${JSON.stringify({ id: threadReq.id, result: { thread: { id: "thr_elicit" } } })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: threadReq.id, result: { thread: { id: "thr_elicit" } } })}\n`,
+    );
 
     await tick();
     child.stdout.emit(
@@ -438,11 +511,17 @@ describe("CodexProcess (app-server)", () => {
 
     await tick();
     const initReq = nextOutgoingRequest(child);
-    child.stdout.emit("data", `${JSON.stringify({ id: initReq.id, result: {} })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: initReq.id, result: {} })}\n`,
+    );
     await tick();
     nextOutgoingNotification(child);
     const threadReq = nextOutgoingRequest(child);
-    child.stdout.emit("data", `${JSON.stringify({ id: threadReq.id, result: { thread: { id: "thr_resolved" } } })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: threadReq.id, result: { thread: { id: "thr_resolved" } } })}\n`,
+    );
 
     await tick();
     child.stdout.emit(
@@ -489,11 +568,17 @@ describe("CodexProcess (app-server)", () => {
 
     await tick();
     const initReq = nextOutgoingRequest(child);
-    child.stdout.emit("data", `${JSON.stringify({ id: initReq.id, result: {} })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: initReq.id, result: {} })}\n`,
+    );
     await tick();
     nextOutgoingNotification(child);
     const threadReq = nextOutgoingRequest(child);
-    child.stdout.emit("data", `${JSON.stringify({ id: threadReq.id, result: { thread: { id: "thr_always" } } })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: threadReq.id, result: { thread: { id: "thr_always" } } })}\n`,
+    );
 
     await tick();
     child.stdout.emit(
@@ -532,11 +617,17 @@ describe("CodexProcess (app-server)", () => {
 
     await tick();
     const initReq = nextOutgoingRequest(child);
-    child.stdout.emit("data", `${JSON.stringify({ id: initReq.id, result: {} })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: initReq.id, result: {} })}\n`,
+    );
     await tick();
     nextOutgoingNotification(child);
     const threadReq = nextOutgoingRequest(child);
-    child.stdout.emit("data", `${JSON.stringify({ id: threadReq.id, result: { thread: { id: "thr_dynamic" } } })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: threadReq.id, result: { thread: { id: "thr_dynamic" } } })}\n`,
+    );
 
     await tick();
     child.stdout.emit(
@@ -632,11 +723,17 @@ describe("CodexProcess (app-server)", () => {
 
     await tick();
     const initReq = nextOutgoingRequest(child);
-    child.stdout.emit("data", `${JSON.stringify({ id: initReq.id, result: {} })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: initReq.id, result: {} })}\n`,
+    );
     await tick();
     nextOutgoingNotification(child);
     const threadReq = nextOutgoingRequest(child);
-    child.stdout.emit("data", `${JSON.stringify({ id: threadReq.id, result: { thread: { id: "thr_mcp" } } })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: threadReq.id, result: { thread: { id: "thr_mcp" } } })}\n`,
+    );
 
     await tick();
     child.stdout.emit(
@@ -713,19 +810,31 @@ describe("CodexProcess (app-server)", () => {
 
     await tick();
     const initReq = nextOutgoingRequest(child);
-    child.stdout.emit("data", `${JSON.stringify({ id: initReq.id, result: {} })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: initReq.id, result: {} })}\n`,
+    );
     await tick();
     nextOutgoingNotification(child); // initialized
     const threadReq = nextOutgoingRequest(child);
-    child.stdout.emit("data", `${JSON.stringify({ id: threadReq.id, result: { thread: { id: "thr_4" } } })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: threadReq.id, result: { thread: { id: "thr_4" } } })}\n`,
+    );
 
     await tick();
     drainSkillsList(child);
     proc.sendInput("make a plan");
     await tick();
     const turnReq = nextOutgoingRequest(child);
-    child.stdout.emit("data", `${JSON.stringify({ id: turnReq.id, result: { turn: { id: "turn_3" } } })}\n`);
-    child.stdout.emit("data", `${JSON.stringify({ method: "turn/started", params: { turn: { id: "turn_3" } } })}\n`);
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: turnReq.id, result: { turn: { id: "turn_3" } } })}\n`,
+    );
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ method: "turn/started", params: { turn: { id: "turn_3" } } })}\n`,
+    );
 
     child.stdout.emit(
       "data",
@@ -761,7 +870,9 @@ describe("CodexProcess (app-server)", () => {
           content: expect.arrayContaining([
             expect.objectContaining({
               type: "text",
-              text: expect.stringContaining("Plan update: Initial plan drafted"),
+              text: expect.stringContaining(
+                "Plan update: Initial plan drafted",
+              ),
             }),
           ]),
         }),
@@ -780,37 +891,62 @@ function consumeOutgoing(
     .flatMap((chunk) => chunk.split("\n"))
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
-  const parsed = lines.map((line) => JSON.parse(line) as Record<string, unknown>);
+  const parsed = lines.map(
+    (line) => JSON.parse(line) as Record<string, unknown>,
+  );
   const index = parsed.findIndex(predicate);
   if (index < 0) {
     throw new Error("Expected outgoing JSON-RPC message was not found");
   }
   const remaining = lines.filter((_, lineIndex) => lineIndex !== index);
-  child.stdin.writes = remaining.length > 0 ? [`${remaining.join("\n")}\n`] : [];
+  child.stdin.writes =
+    remaining.length > 0 ? [`${remaining.join("\n")}\n`] : [];
 
   return parsed[index];
 }
 
 function nextOutgoingRequest(child: FakeChildProcess): Record<string, unknown> {
-  return consumeOutgoing(child, (value) => typeof value.method === "string" && value.id !== undefined);
+  return consumeOutgoing(
+    child,
+    (value) => typeof value.method === "string" && value.id !== undefined,
+  );
 }
 
 /** Consume and reply to the background skills/list request that fires after thread/start. */
 function drainSkillsList(child: FakeChildProcess): void {
   try {
-    const req = consumeOutgoing(child, (value) => value.method === "skills/list" && value.id !== undefined);
-    child.stdout.emit("data", `${JSON.stringify({ id: req.id, result: { data: [] } })}\n`);
+    const req = consumeOutgoing(
+      child,
+      (value) => value.method === "skills/list" && value.id !== undefined,
+    );
+    child.stdout.emit(
+      "data",
+      `${JSON.stringify({ id: req.id, result: { data: [] } })}\n`,
+    );
   } catch {
     // skills/list may not have been emitted yet — safe to ignore
   }
 }
 
-function nextOutgoingNotification(child: FakeChildProcess): Record<string, unknown> {
-  return consumeOutgoing(child, (value) => typeof value.method === "string" && value.id === undefined);
+function nextOutgoingNotification(
+  child: FakeChildProcess,
+): Record<string, unknown> {
+  return consumeOutgoing(
+    child,
+    (value) => typeof value.method === "string" && value.id === undefined,
+  );
 }
 
-function nextOutgoingResponse(child: FakeChildProcess): Record<string, unknown> {
-  return consumeOutgoing(child, (value) => value.id !== undefined && value.result !== undefined && value.method === undefined);
+function nextOutgoingResponse(
+  child: FakeChildProcess,
+): Record<string, unknown> {
+  return consumeOutgoing(
+    child,
+    (value) =>
+      value.id !== undefined &&
+      value.result !== undefined &&
+      value.method === undefined,
+  );
 }
 
 async function tick(): Promise<void> {

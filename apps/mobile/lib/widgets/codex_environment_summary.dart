@@ -9,6 +9,7 @@ class CodexEnvironmentSummary extends StatelessWidget {
   final String? approvalPolicy;
   final String? permissionMode;
   final String? sandboxMode;
+  final bool showDefaultReasoning;
   final bool compact;
   final String? leadingLabel;
 
@@ -19,6 +20,7 @@ class CodexEnvironmentSummary extends StatelessWidget {
     this.approvalPolicy,
     this.permissionMode,
     this.sandboxMode,
+    this.showDefaultReasoning = false,
     this.compact = false,
     this.leadingLabel,
   });
@@ -37,7 +39,11 @@ class CodexEnvironmentSummary extends StatelessWidget {
       if (leadingLabel != null) Text(leadingLabel!, style: textStyle),
       if (_displayModel(model) case final modelText?)
         Text(modelText, style: textStyle, overflow: TextOverflow.ellipsis),
-      if (_displayReasoning(reasoningEffort) case final reasoningText?)
+      if (_displayReasoning(
+            reasoningEffort,
+            showDefaultWhenUnset: showDefaultReasoning,
+          )
+          case final reasoningText?)
         Text(reasoningText, style: textStyle, overflow: TextOverflow.ellipsis),
       _EnvironmentIcon(
         icon: _permissionIcon(permissionMode, approvalPolicy),
@@ -106,8 +112,10 @@ String? _displayModel(String? raw) {
   return raw;
 }
 
-String? _displayReasoning(String? raw) {
-  if (raw == null || raw.isEmpty) return null;
+String? _displayReasoning(String? raw, {required bool showDefaultWhenUnset}) {
+  if (raw == null || raw.isEmpty) {
+    return showDefaultWhenUnset ? 'Reasoning Default' : null;
+  }
   ReasoningEffort? effort;
   for (final value in ReasoningEffort.values) {
     if (value.value == raw) {

@@ -453,6 +453,7 @@ class _RunningSessionCardState extends State<RunningSessionCard> {
                       approvalPolicy: session.codexApprovalPolicy,
                       permissionMode: session.permissionMode,
                       sandboxMode: session.codexSandboxMode,
+                      showDefaultReasoning: true,
                       compact: true,
                     )
                   else
@@ -2423,6 +2424,7 @@ class RecentSessionCard extends StatelessWidget {
                       reasoningEffort: session.codexModelReasoningEffort,
                       approvalPolicy: session.codexApprovalPolicy,
                       sandboxMode: session.codexSandboxMode,
+                      showDefaultReasoning: true,
                       compact: true,
                     ),
                   ],
