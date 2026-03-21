@@ -292,7 +292,7 @@ class _NewSessionSheetContentState extends State<_NewSessionSheetContent> {
   // Claude-specific options
   String? _selectedClaudeModel;
   String? _selectedClaudeFallbackModel;
-  ClaudeEffort? _claudeEffort;
+  ClaudeEffort _claudeEffort = ClaudeEffort.medium;
   bool _claudeForkSession = false;
   bool _claudePersistSession = true;
 
@@ -304,7 +304,7 @@ class _NewSessionSheetContentState extends State<_NewSessionSheetContent> {
   String? _selectedModel;
   var _claudeSandboxMode = SandboxMode.off; // Claude default = OFF
   var _codexSandboxMode = SandboxMode.on; // Codex default = ON
-  ReasoningEffort? _modelReasoningEffort;
+  ReasoningEffort _modelReasoningEffort = ReasoningEffort.high;
   bool _networkAccessEnabled = true;
   WebSearchMode? _webSearchMode;
 
@@ -474,13 +474,13 @@ class _NewSessionSheetContentState extends State<_NewSessionSheetContent> {
     } else {
       _codexSandboxMode = p.sandboxMode ?? SandboxMode.on;
     }
-    _modelReasoningEffort = p.modelReasoningEffort;
+    _modelReasoningEffort = p.modelReasoningEffort ?? _modelReasoningEffort;
     _networkAccessEnabled = p.networkAccessEnabled ?? _networkAccessEnabled;
     _webSearchMode = p.webSearchMode;
     _selectedClaudeModel = _claudeModelList.contains(p.claudeModel)
         ? p.claudeModel
         : null;
-    _claudeEffort = p.claudeEffort;
+    _claudeEffort = p.claudeEffort ?? _claudeEffort;
     _claudeMaxTurnsController.text = p.claudeMaxTurns?.toString() ?? "";
     _claudeMaxBudgetController.text = p.claudeMaxBudgetUsd?.toString() ?? "";
     _selectedClaudeFallbackModel =
@@ -1283,8 +1283,8 @@ class _OptionsSection extends StatelessWidget {
   final List<String> claudeModels;
   final String? selectedClaudeModel;
   final ValueChanged<String?> onClaudeModelChanged;
-  final ClaudeEffort? claudeEffort;
-  final ValueChanged<ClaudeEffort?> onClaudeEffortChanged;
+  final ClaudeEffort claudeEffort;
+  final ValueChanged<ClaudeEffort> onClaudeEffortChanged;
   final TextEditingController claudeMaxTurnsController;
   final String? maxTurnsError;
   final VoidCallback onMaxTurnsChanged;
@@ -1304,8 +1304,8 @@ class _OptionsSection extends StatelessWidget {
   final ValueChanged<String?> onSelectedModelChanged;
   final SandboxMode sandboxMode;
   final ValueChanged<SandboxMode> onSandboxModeChanged;
-  final ReasoningEffort? modelReasoningEffort;
-  final ValueChanged<ReasoningEffort?> onModelReasoningEffortChanged;
+  final ReasoningEffort modelReasoningEffort;
+  final ValueChanged<ReasoningEffort> onModelReasoningEffortChanged;
   final WebSearchMode? webSearchMode;
   final ValueChanged<WebSearchMode?> onWebSearchModeChanged;
   final bool networkAccessEnabled;
@@ -1697,73 +1697,76 @@ class _OptionsSection extends StatelessWidget {
             label: l.model,
             icon: Icons.smart_toy_outlined,
             title: provider == Provider.claude
-                ? (selectedClaudeModel ?? l.defaultLabel)
-                : (selectedModel ?? l.defaultLabel),
+                ? (selectedClaudeModel ?? claudeModels.firstOrNull ?? '')
+                : (selectedModel ?? codexModels.firstOrNull ?? ''),
             subtitle: '',
             onTap: () {
               final models = provider == Provider.claude
                   ? claudeModels
                   : codexModels;
               final current = provider == Provider.claude
-                  ? selectedClaudeModel
-                  : selectedModel;
+                  ? (selectedClaudeModel ?? models.firstOrNull)
+                  : (selectedModel ?? models.firstOrNull);
               final onChanged = provider == Provider.claude
                   ? onClaudeModelChanged
                   : onSelectedModelChanged;
-              showModeSheet<String?>(
+              showModeSheet<String>(
                 title: l.model,
                 subtitle: l.sheetSubtitleModel,
-                modes: [null, ...models],
-                currentMode: current,
+                modes: models,
+                currentMode: current ?? '',
                 iconFor: (_) => Icons.smart_toy_outlined,
-                labelFor: (m) => m ?? l.defaultLabel,
+                labelFor: (m) => m,
                 descriptionFor: (_) => '',
-                onSelected: onChanged,
+                onSelected: (m) => onChanged(m),
               );
             },
           ),
           const SizedBox(height: 8),
           // -- Effort / Reasoning selector --
-          provider == Provider.claude
-              ? modeSelectorField(
-                  key: const ValueKey('dialog_claude_effort'),
-                  label: l.effort,
-                  icon: Icons.speed,
-                  title: claudeEffort?.label ?? l.defaultLabel,
-                  subtitle: _claudeEffortDescription(claudeEffort, l),
-                  onTap: () => showModeSheet<ClaudeEffort?>(
-                    title: l.effort,
-                    subtitle: l.sheetSubtitleEffort,
-                    modes: [null, ...ClaudeEffort.values],
-                    currentMode: claudeEffort,
-                    iconFor: (_) => Icons.speed,
-                    labelFor: (e) => e?.label ?? l.defaultLabel,
-                    descriptionFor: (e) =>
-                        _claudeEffortDescription(e, l),
-                    onSelected: onClaudeEffortChanged,
-                  ),
-                )
-              : modeSelectorField(
-                  key: const ValueKey('dialog_codex_reasoning_effort'),
-                  label: l.reasoning,
-                  icon: Icons.psychology,
-                  title: modelReasoningEffort?.label ?? l.defaultLabel,
-                  subtitle: _reasoningEffortDescription(
-                    modelReasoningEffort,
-                    l,
-                  ),
-                  onTap: () => showModeSheet<ReasoningEffort?>(
-                    title: l.reasoning,
-                    subtitle: l.sheetSubtitleEffort,
-                    modes: [null, ...ReasoningEffort.values],
-                    currentMode: modelReasoningEffort,
-                    iconFor: (_) => Icons.psychology,
-                    labelFor: (e) => e?.label ?? l.defaultLabel,
-                    descriptionFor: (e) =>
-                        _reasoningEffortDescription(e, l),
-                    onSelected: onModelReasoningEffortChanged,
-                  ),
-                ),
+          // Claude Effort is only meaningful for Opus models.
+          if (provider == Provider.claude &&
+              _isOpusModel(selectedClaudeModel ?? claudeModels.firstOrNull))
+            modeSelectorField(
+              key: const ValueKey('dialog_claude_effort'),
+              label: l.effort,
+              icon: Icons.speed,
+              title: claudeEffort.label,
+              subtitle: _claudeEffortDescription(claudeEffort, l),
+              onTap: () => showModeSheet<ClaudeEffort>(
+                title: l.effort,
+                subtitle: l.sheetSubtitleEffort,
+                modes: ClaudeEffort.values,
+                currentMode: claudeEffort,
+                iconFor: (_) => Icons.speed,
+                labelFor: (e) => e.label,
+                descriptionFor: (e) =>
+                    _claudeEffortDescription(e, l),
+                onSelected: onClaudeEffortChanged,
+              ),
+            ),
+          if (provider == Provider.codex)
+            modeSelectorField(
+              key: const ValueKey('dialog_codex_reasoning_effort'),
+              label: l.reasoning,
+              icon: Icons.psychology,
+              title: modelReasoningEffort.label,
+              subtitle: _reasoningEffortDescription(
+                modelReasoningEffort,
+                l,
+              ),
+              onTap: () => showModeSheet<ReasoningEffort>(
+                title: l.reasoning,
+                subtitle: l.sheetSubtitleEffort,
+                modes: ReasoningEffort.values,
+                currentMode: modelReasoningEffort,
+                iconFor: (_) => Icons.psychology,
+                labelFor: (e) => e.label,
+                descriptionFor: (e) =>
+                    _reasoningEffortDescription(e, l),
+                onSelected: onModelReasoningEffortChanged,
+              ),
+            ),
           const SizedBox(height: 8),
           // Worktree toggle (shared) + inline options when expanded
           _WorktreeToggleTile(
@@ -1893,9 +1896,13 @@ class _WorktreeToggleTile extends StatelessWidget {
   }
 }
 
-String _claudeEffortDescription(ClaudeEffort? effort, AppLocalizations l) {
+bool _isOpusModel(String? model) {
+  if (model == null) return true; // default model may be opus
+  return model.toLowerCase().contains('opus');
+}
+
+String _claudeEffortDescription(ClaudeEffort effort, AppLocalizations l) {
   return switch (effort) {
-    null => '',
     ClaudeEffort.low => l.claudeEffortLowDesc,
     ClaudeEffort.medium => l.claudeEffortMediumDesc,
     ClaudeEffort.high => l.claudeEffortHighDesc,
@@ -1904,11 +1911,10 @@ String _claudeEffortDescription(ClaudeEffort? effort, AppLocalizations l) {
 }
 
 String _reasoningEffortDescription(
-  ReasoningEffort? effort,
+  ReasoningEffort effort,
   AppLocalizations l,
 ) {
   return switch (effort) {
-    null => '',
     ReasoningEffort.minimal => l.reasoningEffortMinimalDesc,
     ReasoningEffort.low => l.reasoningEffortLowDesc,
     ReasoningEffort.medium => l.reasoningEffortMediumDesc,
