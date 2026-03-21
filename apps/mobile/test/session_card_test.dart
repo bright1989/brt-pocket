@@ -670,7 +670,8 @@ void main() {
 
       expect(find.text('Approve tool call'), findsOneWidget);
       expect(find.text('Allow Once'), findsOneWidget);
-      expect(find.text('Allow for This Session'), findsOneWidget);
+      expect(find.text('Allow'), findsOneWidget);
+      expect(find.text('This Session'), findsOneWidget);
       expect(find.text('Reject'), findsOneWidget);
       expect(find.text('Other answer...'), findsNothing);
 

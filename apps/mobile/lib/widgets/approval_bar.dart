@@ -363,6 +363,9 @@ class _ApprovalButtons extends StatelessWidget {
     }
 
     final cs = Theme.of(context).colorScheme;
+    final isCodex = planApprovalUiMode == PlanApprovalUiMode.codex;
+    final alwaysMain = isCodex ? l.approveSessionMain : l.approveAlways;
+    final alwaysSub = isCodex ? l.approveSessionSub : l.approveAlwaysSub;
     return Row(
       children: [
         Expanded(
@@ -370,7 +373,7 @@ class _ApprovalButtons extends StatelessWidget {
             key: const ValueKey('reject_button'),
             onPressed: onReject,
             style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              padding: const EdgeInsets.symmetric(vertical: 8),
             ),
             child: Text(l.reject, style: const TextStyle(fontSize: 13)),
           ),
@@ -381,13 +384,23 @@ class _ApprovalButtons extends StatelessWidget {
             key: const ValueKey('approve_always_button'),
             onPressed: onApproveAlways,
             style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              padding: const EdgeInsets.symmetric(vertical: 6),
               foregroundColor: cs.error,
               side: BorderSide(color: cs.error.withValues(alpha: 0.5)),
             ),
-            child: Text(
-              l.approveForSession,
-              style: const TextStyle(fontSize: 13),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(alwaysMain, style: const TextStyle(fontSize: 13)),
+                Text(
+                  alwaysSub,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w400,
+                    color: cs.error.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

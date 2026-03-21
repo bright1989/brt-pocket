@@ -67,7 +67,8 @@ void main() {
       expect(find.text('ls -la'), findsOneWidget);
       expect(find.text('Allow Once'), findsOneWidget);
       expect(find.text('Reject'), findsOneWidget);
-      expect(find.text('Allow for This Session'), findsOneWidget);
+      expect(find.text('Always'), findsOneWidget);
+      expect(find.text('Permanently'), findsOneWidget);
     });
 
     testWidgets('shows granular approval detail lines', (tester) async {
@@ -113,8 +114,9 @@ void main() {
       expect(find.text('Plan Approval'), findsOneWidget);
       expect(find.text('Accept Plan'), findsOneWidget);
       expect(find.text('Keep Planning'), findsOneWidget);
-      // Session-only approval is hidden for plan approval
-      expect(find.text('Allow for This Session'), findsNothing);
+      // Tool approval buttons are hidden for plan approval
+      expect(find.text('Always'), findsNothing);
+      expect(find.text('Permanently'), findsNothing);
     });
 
     testWidgets('codex plan approval hides keep planning and clear action', (

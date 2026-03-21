@@ -420,6 +420,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get approveForSession => 'Allow for This Session';
 
   @override
+  String get approveAlways => 'Always';
+
+  @override
+  String get approveAlwaysSub => 'Permanently';
+
+  @override
+  String get approveSessionMain => 'Allow';
+
+  @override
+  String get approveSessionSub => 'This Session';
+
+  @override
   String get permissionDefaultDescription => 'Standard permission prompts';
 
   @override

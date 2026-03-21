@@ -228,6 +228,7 @@ class _RunningSessionCardState extends State<RunningSessionCard> {
                         : _ToolApprovalArea(
                             permission: permission,
                             statusColor: statusColor,
+                            isCodex: isCodexSession,
                             onApprove: () {
                               if (isRequestUserInputApproval) {
                                 widget.onAnswer?.call(
@@ -303,6 +304,7 @@ class _RunningSessionCardState extends State<RunningSessionCard> {
                       _ => _ToolApprovalArea(
                         permission: permission,
                         statusColor: statusColor,
+                        isCodex: isCodexSession,
                         onApprove: () {
                           if (isRequestUserInputApproval) {
                             widget.onAnswer?.call(
@@ -562,6 +564,7 @@ class _ToolApprovalArea extends StatelessWidget {
   final VoidCallback onApprove;
   final VoidCallback? onApproveAlways;
   final VoidCallback onReject;
+  final bool isCodex;
 
   const _ToolApprovalArea({
     required this.permission,
@@ -569,6 +572,7 @@ class _ToolApprovalArea extends StatelessWidget {
     required this.onApprove,
     this.onApproveAlways,
     required this.onReject,
+    this.isCodex = false,
   });
 
   @override
@@ -596,7 +600,7 @@ class _ToolApprovalArea extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               SizedBox(
-                height: 28,
+                height: 36,
                 child: OutlinedButton.icon(
                   onPressed: onReject,
                   icon: const Icon(Icons.close, size: 14),
@@ -609,14 +613,11 @@ class _ToolApprovalArea extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               SizedBox(
-                height: 28,
-                child: OutlinedButton.icon(
+                height: 36,
+                child: OutlinedButton(
                   onPressed: onApproveAlways,
-                  icon: const Icon(Icons.done_all, size: 14),
-                  label: Text(AppLocalizations.of(context).approveForSession),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 10),
-                    textStyle: const TextStyle(fontSize: 12),
                     foregroundColor: Theme.of(context).colorScheme.error,
                     side: BorderSide(
                       color: Theme.of(
@@ -624,11 +625,34 @@ class _ToolApprovalArea extends StatelessWidget {
                       ).colorScheme.error.withValues(alpha: 0.5),
                     ),
                   ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        isCodex
+                            ? AppLocalizations.of(context).approveSessionMain
+                            : AppLocalizations.of(context).approveAlways,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      Text(
+                        isCodex
+                            ? AppLocalizations.of(context).approveSessionSub
+                            : AppLocalizations.of(context).approveAlwaysSub,
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w400,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.error.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               SizedBox(
-                height: 28,
+                height: 36,
                 child: FilledButton.tonalIcon(
                   onPressed: onApprove,
                   icon: const Icon(Icons.check, size: 14),

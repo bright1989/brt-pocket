@@ -113,9 +113,13 @@ dart-mcp `get_app_logs` でVM Service URIを取得し、marionette `connect` で
 
 #### 4-3. 各シナリオのスクショ撮影
 
-**テーマ設定**: アプリ起動後、設定画面からテーマを「Light」に変更する（01〜07はライトテーマ）。
-アプリの `ThemeMode` は SharedPreferences に永続化されるため、シミュレーターの外観設定だけでは不十分。
-必ずアプリ内の設定画面（テーマ → Light）で切り替えること。
+**テーマ設定**: アプリ起動後、カスタムエクステンションでテーマを切り替える（01〜07はライトテーマ）:
+- marionette `call_custom_extension`: `ccpocket.setTheme` / `{ "theme": "light" }`
+- 値: `light`, `dark`, `system`
+
+**言語設定**: 必要に応じてカスタムエクステンションで言語を切り替える:
+- marionette `call_custom_extension`: `ccpocket.setLocale` / `{ "locale": "en" }`
+- 値: `en`, `ja`, `zh`, `""` (システムデフォルト)
 
 選択された各シナリオに対して:
 
@@ -135,7 +139,7 @@ dart-mcp `get_app_logs` でVM Service URIを取得し、marionette `connect` で
 
 5. **待機**: 1秒（ルートへの遷移完了）
 
-**08_dark_theme の撮影**: 01〜07撮影後、設定画面からテーマを「Dark」に戻し、Session List シナリオを撮影する。
+**08_dark_theme の撮影**: 01〜07撮影後、`ccpocket.setTheme` で `dark` に切り替え、Session List シナリオを撮影する。
 
 #### 4-4. アプリ停止
 

@@ -417,6 +417,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get approveForSession => 'このセッション中は許可';
 
   @override
+  String get approveAlways => '常に許可';
+
+  @override
+  String get approveAlwaysSub => '永続的に';
+
+  @override
+  String get approveSessionMain => '許可';
+
+  @override
+  String get approveSessionSub => 'このセッション';
+
+  @override
   String get permissionDefaultDescription => '標準の承認フローです';
 
   @override

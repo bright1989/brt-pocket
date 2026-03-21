@@ -7,6 +7,8 @@
 /// Extensions registered:
 /// - `ccpocket.navigateToStoreScenario` — navigate to a named store scenario
 /// - `ccpocket.popToRoot` — pop all routes back to root
+/// - `ccpocket.setTheme` — switch theme (light/dark/system)
+/// - `ccpocket.setLocale` — switch app language (en/ja/zh)
 library;
 
 import 'package:flutter/foundation.dart';
@@ -15,6 +17,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:marionette_flutter/marionette_flutter.dart';
 
 import '../features/claude_session/claude_session_screen.dart';
+import '../features/settings/state/settings_cubit.dart';
 import '../features/codex_session/codex_session_screen.dart';
 import '../features/diff/diff_screen.dart';
 import '../features/session_list/state/session_list_cubit.dart';
@@ -99,6 +102,64 @@ void registerStoreScreenshotExtensions() {
       }
       navState.popUntil((route) => route.isFirst);
       return MarionetteExtensionResult.success({'status': 'popped'});
+    },
+  );
+
+  registerMarionetteExtension(
+    name: 'ccpocket.setTheme',
+    description:
+        'Switch the app theme. '
+        'Values: "light", "dark", "system".',
+    callback: (params) async {
+      final theme = params['theme'];
+      if (theme == null || theme.isEmpty) {
+        return MarionetteExtensionResult.invalidParams(
+          'Missing required parameter: theme (light/dark/system)',
+        );
+      }
+
+      final ctx = StoreScreenshotState.navigatorKey?.currentContext;
+      if (ctx == null) {
+        return MarionetteExtensionResult.error(1, 'Context not available.');
+      }
+
+      final mode = switch (theme.toLowerCase()) {
+        'light' => ThemeMode.light,
+        'dark' => ThemeMode.dark,
+        'system' => ThemeMode.system,
+        _ => null,
+      };
+      if (mode == null) {
+        return MarionetteExtensionResult.invalidParams(
+          'Invalid theme: $theme. Use light, dark, or system.',
+        );
+      }
+
+      ctx.read<SettingsCubit>().setThemeMode(mode);
+      return MarionetteExtensionResult.success({'theme': theme});
+    },
+  );
+
+  registerMarionetteExtension(
+    name: 'ccpocket.setLocale',
+    description:
+        'Switch the app language. '
+        'Values: "en", "ja", "zh", "" (system default).',
+    callback: (params) async {
+      final locale = params['locale'];
+      if (locale == null) {
+        return MarionetteExtensionResult.invalidParams(
+          'Missing required parameter: locale (en/ja/zh/"")',
+        );
+      }
+
+      final ctx = StoreScreenshotState.navigatorKey?.currentContext;
+      if (ctx == null) {
+        return MarionetteExtensionResult.error(1, 'Context not available.');
+      }
+
+      ctx.read<SettingsCubit>().setAppLocaleId(locale);
+      return MarionetteExtensionResult.success({'locale': locale});
     },
   );
 
