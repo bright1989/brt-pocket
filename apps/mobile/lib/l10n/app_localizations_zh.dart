@@ -448,6 +448,48 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sandboxNativeCautionDescription => '在原生环境中运行命令（谨慎）';
 
   @override
+  String get sheetSubtitleApproval => '控制哪些操作需要你的审批';
+
+  @override
+  String get sheetSubtitleSandboxCodex => 'Codex 默认启用沙箱以确保安全。禁用后将允许完全访问系统。';
+
+  @override
+  String get sheetSubtitleSandboxClaude => 'Claude Code 默认在原生环境运行。启用沙箱将限制系统访问。';
+
+  @override
+  String get sheetSubtitleModel => '不同模型在速度、能力和成本上各有差异。';
+
+  @override
+  String get sheetSubtitleEffort => '更高的 Effort 会进行更深入的分析，但需要更多时间和成本。';
+
+  @override
+  String get claudeEffortLowDesc => '更快响应，分析较少';
+
+  @override
+  String get claudeEffortMediumDesc => '速度与质量的平衡';
+
+  @override
+  String get claudeEffortHighDesc => '更深入的分析（默认）';
+
+  @override
+  String get claudeEffortMaxDesc => '最深入，最慢';
+
+  @override
+  String get reasoningEffortMinimalDesc => '最快，分析最少';
+
+  @override
+  String get reasoningEffortLowDesc => '更快响应，分析较少';
+
+  @override
+  String get reasoningEffortMediumDesc => '速度与质量的平衡';
+
+  @override
+  String get reasoningEffortHighDesc => '更深入的分析（默认）';
+
+  @override
+  String get reasoningEffortXhighDesc => '最深入，最慢';
+
+  @override
   String get changePermissionModeTitle => '更改权限模式';
 
   @override

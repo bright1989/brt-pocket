@@ -189,6 +189,24 @@
   "sandboxRestrictedDescription": "制限された環境でコマンドを実行します",
   "sandboxNativeDescription": "ネイティブ環境でコマンドを実行します",
   "sandboxNativeCautionDescription": "ネイティブ環境でコマンドを実行します（注意）",
+
+  "sheetSubtitleApproval": "どの操作に承認が必要かを制御します",
+  "sheetSubtitleSandboxCodex": "Codex は安全のためデフォルトで Sandbox が有効です。無効にするとシステムへのフルアクセスが可能になります。",
+  "sheetSubtitleSandboxClaude": "Claude Code はデフォルトでネイティブ実行です。Sandbox を有効にするとアクセスが制限されます。",
+  "sheetSubtitleModel": "モデルによって速度・能力・コストが異なります。",
+  "sheetSubtitleEffort": "高い Effort はより丁寧な分析を行いますが、時間とコストが増えます。",
+
+  "claudeEffortLowDesc": "高速な応答、分析は少なめ",
+  "claudeEffortMediumDesc": "速度と品質のバランス",
+  "claudeEffortHighDesc": "より丁寧な分析（デフォルト）",
+  "claudeEffortMaxDesc": "最も丁寧、最も遅い",
+
+  "reasoningEffortMinimalDesc": "最速、分析は最小限",
+  "reasoningEffortLowDesc": "高速な応答、分析は少なめ",
+  "reasoningEffortMediumDesc": "速度と品質のバランス",
+  "reasoningEffortHighDesc": "より丁寧な分析（デフォルト）",
+  "reasoningEffortXhighDesc": "最も丁寧、最も遅い",
+
   "changePermissionModeTitle": "Permission Mode を変更",
   "changePermissionModeBody": "{mode} に切り替えるとセッションが再起動します。会話は保持されます。",
   "@changePermissionModeBody": {

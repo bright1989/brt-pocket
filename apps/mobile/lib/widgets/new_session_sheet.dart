@@ -1460,15 +1460,16 @@ class _OptionsSection extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(title, style: const TextStyle(fontSize: 13)),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: cs.onSurfaceVariant,
+                    if (subtitle.isNotEmpty)
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: cs.onSurfaceVariant,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
                   ],
                 ),
               ),
@@ -1482,6 +1483,7 @@ class _OptionsSection extends StatelessWidget {
 
     void showModeSheet<T>({
       required String title,
+      String? subtitle,
       required List<T> modes,
       required T currentMode,
       required IconData Function(T) iconFor,
@@ -1495,46 +1497,80 @@ class _OptionsSection extends StatelessWidget {
         builder: (sheetContext) {
           final sheetCs = Theme.of(sheetContext).colorScheme;
           return SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: sheetCs.onSurface,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(sheetContext).size.height * 0.7,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: sheetCs.onSurface,
+                            ),
+                          ),
+                          if (subtitle != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              subtitle,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: sheetCs.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   ),
-                ),
-                for (final mode in modes)
-                  ListTile(
-                    leading: Icon(
-                      iconFor(mode),
-                      color: mode == currentMode
-                          ? (colorFor?.call(mode, sheetCs) ?? sheetCs.primary)
-                          : sheetCs.onSurfaceVariant,
+                  Flexible(
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: [
+                        for (final mode in modes)
+                          ListTile(
+                            leading: Icon(
+                              iconFor(mode),
+                              color: mode == currentMode
+                                  ? (colorFor?.call(mode, sheetCs) ??
+                                      sheetCs.primary)
+                                  : sheetCs.onSurfaceVariant,
+                            ),
+                            title: Text(labelFor(mode)),
+                            subtitle: descriptionFor(mode).isNotEmpty
+                                ? Text(
+                                    descriptionFor(mode),
+                                    style: const TextStyle(fontSize: 12),
+                                  )
+                                : null,
+                            trailing: mode == currentMode
+                                ? Icon(
+                                    Icons.check,
+                                    color: sheetCs.primary,
+                                    size: 20,
+                                  )
+                                : null,
+                            onTap: () {
+                              Navigator.pop(sheetContext);
+                              onSelected(mode);
+                            },
+                          ),
+                        const SizedBox(height: 8),
+                      ],
                     ),
-                    title: Text(labelFor(mode)),
-                    subtitle: Text(
-                      descriptionFor(mode),
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    trailing: mode == currentMode
-                        ? Icon(Icons.check, color: sheetCs.primary, size: 20)
-                        : null,
-                    onTap: () {
-                      Navigator.pop(sheetContext);
-                      onSelected(mode);
-                    },
                   ),
-                const SizedBox(height: 8),
-              ],
+                ],
+              ),
             ),
           );
         },
@@ -1572,6 +1608,7 @@ class _OptionsSection extends StatelessWidget {
                   subtitle: executionDescription(effectiveExecutionMode),
                   onTap: () => showModeSheet<ExecutionMode>(
                     title: l.approval,
+                    subtitle: l.sheetSubtitleApproval,
                     modes: const [
                       ExecutionMode.defaultMode,
                       ExecutionMode.fullAccess,
@@ -1595,6 +1632,7 @@ class _OptionsSection extends StatelessWidget {
                   subtitle: permissionDescription(selectedPermissionMode),
                   onTap: () => showModeSheet<PermissionMode>(
                     title: l.approval,
+                    subtitle: l.sheetSubtitleApproval,
                     modes: PermissionMode.values,
                     currentMode: selectedPermissionMode,
                     iconFor: permissionIcon,
@@ -1631,6 +1669,9 @@ class _OptionsSection extends StatelessWidget {
             subtitle: sandboxDescription(sandboxMode),
             onTap: () => showModeSheet<SandboxMode>(
               title: l.sandbox,
+              subtitle: isClaude
+                  ? l.sheetSubtitleSandboxClaude
+                  : l.sheetSubtitleSandboxCodex,
               modes: isClaude
                   ? SandboxMode.values.reversed.toList()
                   : SandboxMode.values,
@@ -1646,22 +1687,82 @@ class _OptionsSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
+          // -- Model selector --
+          modeSelectorField(
+            key: ValueKey(
+              provider == Provider.claude
+                  ? 'dialog_claude_model'
+                  : 'dialog_codex_model',
+            ),
+            label: l.model,
+            icon: Icons.smart_toy_outlined,
+            title: provider == Provider.claude
+                ? (selectedClaudeModel ?? l.defaultLabel)
+                : (selectedModel ?? l.defaultLabel),
+            subtitle: '',
+            onTap: () {
+              final models = provider == Provider.claude
+                  ? claudeModels
+                  : codexModels;
+              final current = provider == Provider.claude
+                  ? selectedClaudeModel
+                  : selectedModel;
+              final onChanged = provider == Provider.claude
+                  ? onClaudeModelChanged
+                  : onSelectedModelChanged;
+              showModeSheet<String?>(
+                title: l.model,
+                subtitle: l.sheetSubtitleModel,
+                modes: [null, ...models],
+                currentMode: current,
+                iconFor: (_) => Icons.smart_toy_outlined,
+                labelFor: (m) => m ?? l.defaultLabel,
+                descriptionFor: (_) => '',
+                onSelected: onChanged,
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          // -- Effort / Reasoning selector --
           provider == Provider.claude
-              ? _PrimaryClaudeOptions(
-                  buildInputDecoration: buildInputDecoration,
-                  claudeModels: claudeModels,
-                  selectedClaudeModel: selectedClaudeModel,
-                  onClaudeModelChanged: onClaudeModelChanged,
-                  claudeEffort: claudeEffort,
-                  onClaudeEffortChanged: onClaudeEffortChanged,
+              ? modeSelectorField(
+                  key: const ValueKey('dialog_claude_effort'),
+                  label: l.effort,
+                  icon: Icons.speed,
+                  title: claudeEffort?.label ?? l.defaultLabel,
+                  subtitle: _claudeEffortDescription(claudeEffort, l),
+                  onTap: () => showModeSheet<ClaudeEffort?>(
+                    title: l.effort,
+                    subtitle: l.sheetSubtitleEffort,
+                    modes: [null, ...ClaudeEffort.values],
+                    currentMode: claudeEffort,
+                    iconFor: (_) => Icons.speed,
+                    labelFor: (e) => e?.label ?? l.defaultLabel,
+                    descriptionFor: (e) =>
+                        _claudeEffortDescription(e, l),
+                    onSelected: onClaudeEffortChanged,
+                  ),
                 )
-              : _PrimaryCodexOptions(
-                  buildInputDecoration: buildInputDecoration,
-                  codexModels: codexModels,
-                  selectedModel: selectedModel,
-                  onSelectedModelChanged: onSelectedModelChanged,
-                  modelReasoningEffort: modelReasoningEffort,
-                  onModelReasoningEffortChanged: onModelReasoningEffortChanged,
+              : modeSelectorField(
+                  key: const ValueKey('dialog_codex_reasoning_effort'),
+                  label: l.reasoning,
+                  icon: Icons.psychology,
+                  title: modelReasoningEffort?.label ?? l.defaultLabel,
+                  subtitle: _reasoningEffortDescription(
+                    modelReasoningEffort,
+                    l,
+                  ),
+                  onTap: () => showModeSheet<ReasoningEffort?>(
+                    title: l.reasoning,
+                    subtitle: l.sheetSubtitleEffort,
+                    modes: [null, ...ReasoningEffort.values],
+                    currentMode: modelReasoningEffort,
+                    iconFor: (_) => Icons.psychology,
+                    labelFor: (e) => e?.label ?? l.defaultLabel,
+                    descriptionFor: (e) =>
+                        _reasoningEffortDescription(e, l),
+                    onSelected: onModelReasoningEffortChanged,
+                  ),
                 ),
           const SizedBox(height: 8),
           // Worktree toggle (shared) + inline options when expanded
@@ -1792,154 +1893,28 @@ class _WorktreeToggleTile extends StatelessWidget {
   }
 }
 
-class _PrimaryClaudeOptions extends StatelessWidget {
-  final InputDecoration Function(
-    String, {
-    String? hintText,
-    Widget? prefixIcon,
-    String? errorText,
-  })
-  buildInputDecoration;
-  final List<String> claudeModels;
-  final String? selectedClaudeModel;
-  final ValueChanged<String?> onClaudeModelChanged;
-  final ClaudeEffort? claudeEffort;
-  final ValueChanged<ClaudeEffort?> onClaudeEffortChanged;
-
-  const _PrimaryClaudeOptions({
-    required this.buildInputDecoration,
-    required this.claudeModels,
-    required this.selectedClaudeModel,
-    required this.onClaudeModelChanged,
-    required this.claudeEffort,
-    required this.onClaudeEffortChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    return _ResponsiveOptionRow(
-      leading: DropdownButtonFormField<String?>(
-        key: const ValueKey('dialog_claude_model'),
-        initialValue: selectedClaudeModel,
-        isExpanded: true,
-        decoration: buildInputDecoration(l.model),
-        style: TextStyle(
-          fontSize: 13,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
-        items: [
-          DropdownMenuItem<String?>(
-            value: null,
-            child: Text(l.defaultLabel, style: const TextStyle(fontSize: 13)),
-          ),
-          for (final model in claudeModels)
-            DropdownMenuItem<String?>(
-              value: model,
-              child: Text(model, style: const TextStyle(fontSize: 13)),
-            ),
-        ],
-        onChanged: onClaudeModelChanged,
-      ),
-      trailing: DropdownButtonFormField<ClaudeEffort?>(
-        key: const ValueKey('dialog_claude_effort'),
-        initialValue: claudeEffort,
-        isExpanded: true,
-        decoration: buildInputDecoration(l.effort),
-        style: TextStyle(
-          fontSize: 13,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
-        items: [
-          DropdownMenuItem<ClaudeEffort?>(
-            value: null,
-            child: Text(l.defaultLabel, style: const TextStyle(fontSize: 13)),
-          ),
-          for (final effort in ClaudeEffort.values)
-            DropdownMenuItem<ClaudeEffort?>(
-              value: effort,
-              child: Text(effort.label, style: const TextStyle(fontSize: 13)),
-            ),
-        ],
-        onChanged: onClaudeEffortChanged,
-      ),
-    );
-  }
+String _claudeEffortDescription(ClaudeEffort? effort, AppLocalizations l) {
+  return switch (effort) {
+    null => '',
+    ClaudeEffort.low => l.claudeEffortLowDesc,
+    ClaudeEffort.medium => l.claudeEffortMediumDesc,
+    ClaudeEffort.high => l.claudeEffortHighDesc,
+    ClaudeEffort.max => l.claudeEffortMaxDesc,
+  };
 }
 
-class _PrimaryCodexOptions extends StatelessWidget {
-  final InputDecoration Function(
-    String, {
-    String? hintText,
-    Widget? prefixIcon,
-    String? errorText,
-  })
-  buildInputDecoration;
-  final List<String> codexModels;
-  final String? selectedModel;
-  final ValueChanged<String?> onSelectedModelChanged;
-  final ReasoningEffort? modelReasoningEffort;
-  final ValueChanged<ReasoningEffort?> onModelReasoningEffortChanged;
-
-  const _PrimaryCodexOptions({
-    required this.buildInputDecoration,
-    required this.codexModels,
-    required this.selectedModel,
-    required this.onSelectedModelChanged,
-    required this.modelReasoningEffort,
-    required this.onModelReasoningEffortChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    return _ResponsiveOptionRow(
-      leading: DropdownButtonFormField<String?>(
-        key: const ValueKey('dialog_codex_model'),
-        initialValue: selectedModel,
-        isExpanded: true,
-        decoration: buildInputDecoration(l.model),
-        style: TextStyle(
-          fontSize: 13,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
-        items: [
-          DropdownMenuItem<String?>(
-            value: null,
-            child: Text(l.defaultLabel, style: const TextStyle(fontSize: 13)),
-          ),
-          for (final model in codexModels)
-            DropdownMenuItem<String?>(
-              value: model,
-              child: Text(model, style: const TextStyle(fontSize: 13)),
-            ),
-        ],
-        onChanged: onSelectedModelChanged,
-      ),
-      trailing: DropdownButtonFormField<ReasoningEffort?>(
-        key: const ValueKey('dialog_codex_reasoning_effort'),
-        initialValue: modelReasoningEffort,
-        isExpanded: true,
-        decoration: buildInputDecoration(l.reasoning),
-        style: TextStyle(
-          fontSize: 13,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
-        items: [
-          DropdownMenuItem<ReasoningEffort?>(
-            value: null,
-            child: Text(l.defaultLabel, style: const TextStyle(fontSize: 13)),
-          ),
-          for (final effort in ReasoningEffort.values)
-            DropdownMenuItem<ReasoningEffort?>(
-              value: effort,
-              child: Text(effort.label, style: const TextStyle(fontSize: 13)),
-            ),
-        ],
-        onChanged: onModelReasoningEffortChanged,
-      ),
-    );
-  }
+String _reasoningEffortDescription(
+  ReasoningEffort? effort,
+  AppLocalizations l,
+) {
+  return switch (effort) {
+    null => '',
+    ReasoningEffort.minimal => l.reasoningEffortMinimalDesc,
+    ReasoningEffort.low => l.reasoningEffortLowDesc,
+    ReasoningEffort.medium => l.reasoningEffortMediumDesc,
+    ReasoningEffort.high => l.reasoningEffortHighDesc,
+    ReasoningEffort.xhigh => l.reasoningEffortXhighDesc,
+  };
 }
 
 class _ResponsiveOptionRow extends StatelessWidget {

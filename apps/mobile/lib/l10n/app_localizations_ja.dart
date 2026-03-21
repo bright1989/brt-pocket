@@ -450,6 +450,50 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sandboxNativeCautionDescription => 'ネイティブ環境でコマンドを実行します（注意）';
 
   @override
+  String get sheetSubtitleApproval => 'どの操作に承認が必要かを制御します';
+
+  @override
+  String get sheetSubtitleSandboxCodex =>
+      'Codex は安全のためデフォルトで Sandbox が有効です。無効にするとシステムへのフルアクセスが可能になります。';
+
+  @override
+  String get sheetSubtitleSandboxClaude =>
+      'Claude Code はデフォルトでネイティブ実行です。Sandbox を有効にするとアクセスが制限されます。';
+
+  @override
+  String get sheetSubtitleModel => 'モデルによって速度・能力・コストが異なります。';
+
+  @override
+  String get sheetSubtitleEffort => '高い Effort はより丁寧な分析を行いますが、時間とコストが増えます。';
+
+  @override
+  String get claudeEffortLowDesc => '高速な応答、分析は少なめ';
+
+  @override
+  String get claudeEffortMediumDesc => '速度と品質のバランス';
+
+  @override
+  String get claudeEffortHighDesc => 'より丁寧な分析（デフォルト）';
+
+  @override
+  String get claudeEffortMaxDesc => '最も丁寧、最も遅い';
+
+  @override
+  String get reasoningEffortMinimalDesc => '最速、分析は最小限';
+
+  @override
+  String get reasoningEffortLowDesc => '高速な応答、分析は少なめ';
+
+  @override
+  String get reasoningEffortMediumDesc => '速度と品質のバランス';
+
+  @override
+  String get reasoningEffortHighDesc => 'より丁寧な分析（デフォルト）';
+
+  @override
+  String get reasoningEffortXhighDesc => '最も丁寧、最も遅い';
+
+  @override
   String get changePermissionModeTitle => 'Permission Mode を変更';
 
   @override

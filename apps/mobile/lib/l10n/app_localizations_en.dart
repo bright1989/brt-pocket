@@ -458,6 +458,53 @@ class AppLocalizationsEn extends AppLocalizations {
       'Run commands natively (CAUTION)';
 
   @override
+  String get sheetSubtitleApproval =>
+      'Controls which actions require your approval';
+
+  @override
+  String get sheetSubtitleSandboxCodex =>
+      'Sandbox is on by default for safety. Disabling allows full system access.';
+
+  @override
+  String get sheetSubtitleSandboxClaude =>
+      'Claude Code runs natively by default. Enabling sandbox restricts access.';
+
+  @override
+  String get sheetSubtitleModel =>
+      'Different models vary in speed, capability, and cost.';
+
+  @override
+  String get sheetSubtitleEffort =>
+      'Higher effort produces more thorough analysis but takes longer.';
+
+  @override
+  String get claudeEffortLowDesc => 'Faster responses, less thorough';
+
+  @override
+  String get claudeEffortMediumDesc => 'Balanced speed and quality';
+
+  @override
+  String get claudeEffortHighDesc => 'More thorough analysis (default)';
+
+  @override
+  String get claudeEffortMaxDesc => 'Most thorough, slowest';
+
+  @override
+  String get reasoningEffortMinimalDesc => 'Fastest, least analysis';
+
+  @override
+  String get reasoningEffortLowDesc => 'Faster responses, less thorough';
+
+  @override
+  String get reasoningEffortMediumDesc => 'Balanced speed and quality';
+
+  @override
+  String get reasoningEffortHighDesc => 'More thorough analysis (default)';
+
+  @override
+  String get reasoningEffortXhighDesc => 'Most thorough, slowest';
+
+  @override
   String get changePermissionModeTitle => 'Change Permission Mode';
 
   @override

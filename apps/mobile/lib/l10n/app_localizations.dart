@@ -946,6 +946,90 @@ abstract class AppLocalizations {
   /// **'ネイティブ環境でコマンドを実行します（注意）'**
   String get sandboxNativeCautionDescription;
 
+  /// No description provided for @sheetSubtitleApproval.
+  ///
+  /// In ja, this message translates to:
+  /// **'どの操作に承認が必要かを制御します'**
+  String get sheetSubtitleApproval;
+
+  /// No description provided for @sheetSubtitleSandboxCodex.
+  ///
+  /// In ja, this message translates to:
+  /// **'Codex は安全のためデフォルトで Sandbox が有効です。無効にするとシステムへのフルアクセスが可能になります。'**
+  String get sheetSubtitleSandboxCodex;
+
+  /// No description provided for @sheetSubtitleSandboxClaude.
+  ///
+  /// In ja, this message translates to:
+  /// **'Claude Code はデフォルトでネイティブ実行です。Sandbox を有効にするとアクセスが制限されます。'**
+  String get sheetSubtitleSandboxClaude;
+
+  /// No description provided for @sheetSubtitleModel.
+  ///
+  /// In ja, this message translates to:
+  /// **'モデルによって速度・能力・コストが異なります。'**
+  String get sheetSubtitleModel;
+
+  /// No description provided for @sheetSubtitleEffort.
+  ///
+  /// In ja, this message translates to:
+  /// **'高い Effort はより丁寧な分析を行いますが、時間とコストが増えます。'**
+  String get sheetSubtitleEffort;
+
+  /// No description provided for @claudeEffortLowDesc.
+  ///
+  /// In ja, this message translates to:
+  /// **'高速な応答、分析は少なめ'**
+  String get claudeEffortLowDesc;
+
+  /// No description provided for @claudeEffortMediumDesc.
+  ///
+  /// In ja, this message translates to:
+  /// **'速度と品質のバランス'**
+  String get claudeEffortMediumDesc;
+
+  /// No description provided for @claudeEffortHighDesc.
+  ///
+  /// In ja, this message translates to:
+  /// **'より丁寧な分析（デフォルト）'**
+  String get claudeEffortHighDesc;
+
+  /// No description provided for @claudeEffortMaxDesc.
+  ///
+  /// In ja, this message translates to:
+  /// **'最も丁寧、最も遅い'**
+  String get claudeEffortMaxDesc;
+
+  /// No description provided for @reasoningEffortMinimalDesc.
+  ///
+  /// In ja, this message translates to:
+  /// **'最速、分析は最小限'**
+  String get reasoningEffortMinimalDesc;
+
+  /// No description provided for @reasoningEffortLowDesc.
+  ///
+  /// In ja, this message translates to:
+  /// **'高速な応答、分析は少なめ'**
+  String get reasoningEffortLowDesc;
+
+  /// No description provided for @reasoningEffortMediumDesc.
+  ///
+  /// In ja, this message translates to:
+  /// **'速度と品質のバランス'**
+  String get reasoningEffortMediumDesc;
+
+  /// No description provided for @reasoningEffortHighDesc.
+  ///
+  /// In ja, this message translates to:
+  /// **'より丁寧な分析（デフォルト）'**
+  String get reasoningEffortHighDesc;
+
+  /// No description provided for @reasoningEffortXhighDesc.
+  ///
+  /// In ja, this message translates to:
+  /// **'最も丁寧、最も遅い'**
+  String get reasoningEffortXhighDesc;
+
   /// No description provided for @changePermissionModeTitle.
   ///
   /// In ja, this message translates to:
