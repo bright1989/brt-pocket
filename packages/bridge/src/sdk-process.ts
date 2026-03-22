@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { EventEmitter } from "node:events";
-import { query, type Query, type SDKMessage } from "@anthropic-ai/claude-agent-sdk";
+import { query, type Query, type SDKMessage, type PermissionResult } from "@anthropic-ai/claude-agent-sdk";
 import {
   normalizeToolResultContent,
   type ServerMessage,
@@ -374,9 +374,7 @@ interface PendingPermission {
   input: Record<string, unknown>;
 }
 
-type PermissionResult =
-  | { behavior: "allow"; updatedInput?: Record<string, unknown> }
-  | { behavior: "deny"; message: string };
+// PermissionResult is imported from @anthropic-ai/claude-agent-sdk
 
 /** Image content block for SDK message */
 interface ImageBlock {
@@ -728,12 +726,30 @@ export class SdkProcess extends EventEmitter<SdkProcessEvents> {
   approveAlways(toolUseId?: string): void {
     const id = toolUseId ?? this.firstPendingId();
     const pending = id ? this.pendingPermissions.get(id) : undefined;
-    if (pending) {
-      const rule = buildSessionRule(pending.toolName, pending.input);
-      this.sessionAllowRules.add(rule);
-      console.log(`[sdk-process] Added session allow rule: ${rule}`);
+    if (!pending) {
+      console.log("[sdk-process] approveAlways() called but no pending permission requests");
+      return;
     }
-    this.approve(id);
+
+    const rule = buildSessionRule(pending.toolName, pending.input);
+    this.sessionAllowRules.add(rule);
+    console.log(`[sdk-process] Added session allow rule: ${rule}`);
+
+    this.pendingPermissions.delete(id!);
+    pending.resolve({
+      behavior: "allow",
+      updatedInput: pending.input,
+      updatedPermissions: [{
+        type: "addRules",
+        rules: [{ toolName: pending.toolName }],
+        behavior: "allow",
+        destination: "session",
+      }],
+    });
+
+    if (this.pendingPermissions.size === 0) {
+      this.setStatus("running");
+    }
   }
 
   /**
