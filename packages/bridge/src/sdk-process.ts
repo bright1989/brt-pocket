@@ -957,6 +957,21 @@ export class SdkProcess extends EventEmitter<SdkProcessEvents> {
 
       // Extract session ID and model from system/init
       if (message.type === "system" && "subtype" in message && (message as Record<string, unknown>).subtype === "init") {
+        // Guard: reject OAuth authentication even if SDK accepted it.
+        // API key (ANTHROPIC_API_KEY) is the only allowed auth source.
+        const apiKeySource = (message as Record<string, unknown>).apiKeySource;
+        if (apiKeySource === "oauth") {
+          console.log("[sdk-process] Rejected OAuth auth source at runtime");
+          this.emitMessage({
+            type: "error",
+            message: "⚠ API key required\n\nOAuth (subscription) authentication is not permitted. Please set the ANTHROPIC_API_KEY environment variable on the Bridge machine.\nhttps://console.anthropic.com/settings/keys",
+            errorCode: "auth_api_error",
+          });
+          this.stop();
+          this.emit("exit", 1);
+          return;
+        }
+
         if (this.initTimeoutId) {
           clearTimeout(this.initTimeoutId);
           this.initTimeoutId = null;
