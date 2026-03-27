@@ -5,7 +5,13 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<string>en</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>ja</string>
+		<string>zh-Hans</string>
+	</array>
 	<key>CFBundleDisplayName</key>
 	<string>CC Pocket</string>
 	<key>CFBundleExecutable</key>
