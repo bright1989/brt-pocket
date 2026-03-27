@@ -1,5 +1,4 @@
-- Redesigned Codex session modes (Execution / Plan controls)
-- Refined new session sheet UI with mode descriptions
-- Plan mode can now be toggled without restarting idle Codex sessions
-- Simplified settings by removing default options from Model and others
-- Many stability improvements and bug fixes
+- Expanded localization coverage
+- Added untracked files and relevance scoring to @mention file list
+- Improved new session sheet (tool-colored project tiles, customizable tool order)
+- Improved resume command for mac / Linux

@@ -114,22 +114,21 @@ void main() {
       );
     });
 
-    test('prefers resumeCwd for Codex sessions', () {
+    test('uses resumeCwd for worktree sessions', () {
       final session = RecentSession(
-        sessionId: 'codex-thread-1',
-        provider: Provider.codex.value,
-        firstPrompt: 'Resume me',
+        sessionId: 'worktree-session',
+        firstPrompt: 'test',
         created: '2025-01-01T00:00:00Z',
         modified: '2025-01-01T00:00:00Z',
-        gitBranch: 'feature/worktree',
+        gitBranch: 'feature',
         projectPath: '/home/user/project',
-        resumeCwd: '/home/user/project-worktrees/feature-worktree',
+        resumeCwd: '/home/user/project-worktrees/feature',
         isSidechain: false,
       );
 
       expect(
         buildResumeCommand(session),
-        "cd '/home/user/project-worktrees/feature-worktree' && codex resume 'codex-thread-1'",
+        "cd '/home/user/project-worktrees/feature' && claude --resume 'worktree-session'",
       );
     });
 
@@ -142,6 +141,60 @@ void main() {
       expect(
         buildResumeCommand(session),
         "cd '/tmp/it'\\''s/project' && claude --resume 'session'\\''42'",
+      );
+    });
+
+    test('adds --dangerously-skip-permissions for bypassPermissions', () {
+      final session = RecentSession(
+        sessionId: 'bypass-session',
+        firstPrompt: 'test',
+        created: '2025-01-01T00:00:00Z',
+        modified: '2025-01-01T00:00:00Z',
+        gitBranch: 'main',
+        projectPath: '/home/user/project',
+        executionMode: ExecutionMode.fullAccess.value,
+        isSidechain: false,
+      );
+
+      expect(
+        buildResumeCommand(session),
+        "cd '/home/user/project' && claude --resume 'bypass-session' --dangerously-skip-permissions",
+      );
+    });
+
+    test('adds --permission-mode for acceptEdits', () {
+      final session = RecentSession(
+        sessionId: 'edit-session',
+        firstPrompt: 'test',
+        created: '2025-01-01T00:00:00Z',
+        modified: '2025-01-01T00:00:00Z',
+        gitBranch: 'main',
+        projectPath: '/home/user/project',
+        executionMode: ExecutionMode.acceptEdits.value,
+        isSidechain: false,
+      );
+
+      expect(
+        buildResumeCommand(session),
+        "cd '/home/user/project' && claude --resume 'edit-session' --permission-mode acceptEdits",
+      );
+    });
+
+    test('adds --permission-mode for plan mode', () {
+      final session = RecentSession(
+        sessionId: 'plan-session',
+        firstPrompt: 'test',
+        created: '2025-01-01T00:00:00Z',
+        modified: '2025-01-01T00:00:00Z',
+        gitBranch: 'main',
+        projectPath: '/home/user/project',
+        planMode: true,
+        isSidechain: false,
+      );
+
+      expect(
+        buildResumeCommand(session),
+        "cd '/home/user/project' && claude --resume 'plan-session' --permission-mode plan",
       );
     });
   });

@@ -31,8 +31,8 @@ type SystemServerMessage = Extract<ServerMessage, { type: "system" }>;
 // ---- Available model lists (delivered to clients via session_list) ----
 
 const CLAUDE_MODELS: string[] = [
-  "claude-opus-4-6[1m]",
   "claude-opus-4-6",
+  "claude-opus-4-6[1m]",
   "claude-sonnet-4-6",
   "claude-haiku-4-6",
 ];
@@ -1765,7 +1765,7 @@ export class BridgeWebSocketServer {
           this.send(ws, this.buildPathNotAllowedError(msg.projectPath));
           break;
         }
-        execFile("git", ["ls-files"], { cwd: msg.projectPath, maxBuffer: 10 * 1024 * 1024 }, (err, stdout) => {
+        execFile("git", ["ls-files", "--cached", "--others", "--exclude-standard"], { cwd: msg.projectPath, maxBuffer: 10 * 1024 * 1024 }, (err, stdout) => {
           if (err) {
             if (/not a git repository/i.test(err.message)) {
               // Non-git project: silently return empty list (file listing is auxiliary)

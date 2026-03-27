@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.49.0] - 2026-03-27
+
+### Added
+- Native localization for iOS and Android (en, ja, zh-Hans) — localized permission dialogs and OS-level UI
+- Improve @mention file list with untracked files and relevance scoring
+- Improve resume command copy for worktree and permission modes
+
+### Changed
+- Refactor new session sheet with dynamic tabs and provider-colored project tiles
+
+## [1.48.1] - 2026-03-27
+
+### Changed
+- Upgrade Flutter SDK from 3.41.4 to 3.41.5 (Dart 3.11.3)
+- Upgrade Shorebird from 1.6.88 to 1.6.91
+- Update marionette_flutter to ^0.4.0 and remove git dependency override
+
+## [1.48.0] - 2026-03-24
+
+### Added
+- Hide bridge-dependent settings sections when disconnected
+- Hide AppBar on scroll with floating SliverAppBar in session list
+
+### Changed
+- Swap default Claude model order: opus 4.6 before opus 4.6[1m]
+- Update expected Bridge Server version to 1.28.0
+
 ## [1.47.3] - 2026-03-22
 
 ### Changed

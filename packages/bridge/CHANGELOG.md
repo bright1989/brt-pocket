@@ -2,6 +2,25 @@
 
 All notable changes to `@ccpocket/bridge` will be documented in this file.
 
+## [1.29.0] - 2026-03-27
+
+### Added
+- Improve @mention file list with untracked files and relevance scoring
+- Improve resume command copy for worktree and permission modes
+
+## [1.28.0] - 2026-03-24
+
+### Added
+- Emit acceptEdits mode when file-edit tool is always-approved
+- Propagate SDK permission mode changes to connected clients
+
+### Changed
+- Swap default Claude model order: opus 4.6 before opus 4.6[1m]
+
+### Fixed
+- Return updatedPermissions in approveAlways for mode transition
+- Add runtime guard to reject OAuth auth source
+
 ## [1.27.0] - 2026-03-21
 
 ### Added

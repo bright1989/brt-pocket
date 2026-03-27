@@ -20,6 +20,8 @@ export interface SessionIndexEntry {
   projectPath: string;
   /** Raw cwd used to resume this session (worktree path for codex, if any). */
   resumeCwd?: string;
+  /** Permission mode from the first user message (Claude sessions only). */
+  permissionMode?: string;
   isSidechain: boolean;
   codexSettings?: {
     approvalPolicy?: string;
@@ -240,6 +242,7 @@ const RE_TIMESTAMP = /"timestamp"\s*:\s*"([^"]+)"/;
 const RE_GIT_BRANCH = /"gitBranch"\s*:\s*"([^"]+)"/;
 const RE_CWD = /"cwd"\s*:\s*"([^"]+)"/;
 const RE_IS_SIDECHAIN = /"isSidechain"\s*:\s*true/;
+const RE_PERMISSION_MODE = /"permissionMode"\s*:\s*"([^"]+)"/;
 const RE_TYPE_CUSTOM_TITLE = /"type"\s*:\s*"custom-title"/;
 const RE_CUSTOM_TITLE = /"customTitle"\s*:\s*"([^"]+)"/;
 
@@ -290,8 +293,10 @@ function parseFromChunks(
   let created = "";
   let modified = "";
   let gitBranch = "";
+  let rawCwd = "";
   let projectPath = "";
   let customTitle = "";
+  let permissionMode = "";
   let isSidechain = false;
   let hasAnyMessage = false;
   let headFoundFirstPrompt = false;
@@ -332,13 +337,19 @@ function parseFromChunks(
     if (!projectPath) {
       const cwdMatch = line.match(RE_CWD);
       if (cwdMatch) {
-        projectPath = normalizeWorktreePath(cwdMatch[1]);
+        rawCwd = cwdMatch[1];
+        projectPath = normalizeWorktreePath(rawCwd);
         headFoundProjectPath = true;
       }
     }
 
     if (!isSidechain && RE_IS_SIDECHAIN.test(line)) {
       isSidechain = true;
+    }
+
+    if (isUser && !permissionMode) {
+      const pmMatch = line.match(RE_PERMISSION_MODE);
+      if (pmMatch) permissionMode = pmMatch[1];
     }
 
     if (isUser && !firstPrompt) {
@@ -415,7 +426,10 @@ function parseFromChunks(
         }
         if (!projectPath) {
           const cwdMatch = line.match(RE_CWD);
-          if (cwdMatch) projectPath = normalizeWorktreePath(cwdMatch[1]);
+          if (cwdMatch) {
+            rawCwd = cwdMatch[1];
+            projectPath = normalizeWorktreePath(rawCwd);
+          }
         }
         if (gitBranch && projectPath) break;
       }
@@ -442,6 +456,8 @@ function parseFromChunks(
       modified,
       gitBranch,
       projectPath,
+      ...(rawCwd && rawCwd !== projectPath ? { resumeCwd: rawCwd } : {}),
+      ...(permissionMode ? { permissionMode } : {}),
       isSidechain,
     },
     headFoundFirstPrompt,
@@ -521,6 +537,11 @@ async function parseClaudeJsonlFileFast(
     }
     if (missing.projectPath) {
       result.projectPath = missing.projectPath;
+      if (missing.rawCwd && missing.rawCwd !== missing.projectPath) {
+        result.resumeCwd = missing.rawCwd;
+      } else {
+        delete result.resumeCwd;
+      }
     }
     if (missing.gitBranch) {
       result.gitBranch = missing.gitBranch;
@@ -534,6 +555,8 @@ async function hydrateClaudeIndexedEntry(
   dirPath: string,
   entry: RawSessionEntry,
 ): Promise<SessionIndexEntry> {
+  const rawProjectPath = entry.projectPath ?? "";
+  const normalizedPath = normalizeWorktreePath(rawProjectPath);
   const base: SessionIndexEntry = {
     sessionId: entry.sessionId,
     provider: "claude",
@@ -543,7 +566,8 @@ async function hydrateClaudeIndexedEntry(
     created: entry.created ?? "",
     modified: entry.modified ?? "",
     gitBranch: entry.gitBranch ?? "",
-    projectPath: normalizeWorktreePath(entry.projectPath ?? ""),
+    projectPath: normalizedPath,
+    ...(rawProjectPath && rawProjectPath !== normalizedPath ? { resumeCwd: rawProjectPath } : {}),
     isSidechain: entry.isSidechain ?? false,
   };
 
@@ -552,7 +576,8 @@ async function hydrateClaudeIndexedEntry(
     !base.projectPath ||
     !base.gitBranch ||
     !base.created ||
-    !base.modified;
+    !base.modified ||
+    !base.permissionMode;
 
   if (!needsJsonlRepair) return base;
 
@@ -569,6 +594,7 @@ async function hydrateClaudeIndexedEntry(
     projectPath: base.projectPath || parsed.projectPath,
     isSidechain: base.isSidechain || parsed.isSidechain,
     ...(base.lastPrompt || !parsed.lastPrompt ? {} : { lastPrompt: parsed.lastPrompt }),
+    ...(base.permissionMode || !parsed.permissionMode ? {} : { permissionMode: parsed.permissionMode }),
   };
 }
 
@@ -584,11 +610,12 @@ async function extractMissingFieldsStreaming(
   needFirstPrompt: boolean,
   needProjectPath: boolean,
   needGitBranch: boolean,
-): Promise<{ firstPrompt: string; projectPath: string; gitBranch: string }> {
+): Promise<{ firstPrompt: string; projectPath: string; rawCwd: string; gitBranch: string }> {
   return new Promise((resolve) => {
     const stream = createReadStream(filePath, { encoding: "utf-8" });
     const rl = createInterface({ input: stream, crlfDelay: Infinity });
     let firstPrompt = "";
+    let rawCwd = "";
     let projectPath = "";
     let gitBranch = "";
     let done = false;
@@ -601,7 +628,7 @@ async function extractMissingFieldsStreaming(
         done = true;
         rl.close();
         stream.destroy();
-        resolve({ firstPrompt, projectPath, gitBranch });
+        resolve({ firstPrompt, projectPath, rawCwd, gitBranch });
       }
     }
 
@@ -615,7 +642,8 @@ async function extractMissingFieldsStreaming(
       if (needProjectPath && !projectPath) {
         const cwdMatch = line.match(RE_CWD);
         if (cwdMatch) {
-          projectPath = normalizeWorktreePath(cwdMatch[1]);
+          rawCwd = cwdMatch[1];
+          projectPath = normalizeWorktreePath(rawCwd);
         }
       }
       if (needGitBranch && !gitBranch) {
@@ -640,11 +668,11 @@ async function extractMissingFieldsStreaming(
     });
 
     rl.on("close", () => {
-      if (!done) resolve({ firstPrompt, projectPath, gitBranch });
+      if (!done) resolve({ firstPrompt, projectPath, rawCwd, gitBranch });
     });
 
     stream.on("error", () => {
-      if (!done) resolve({ firstPrompt, projectPath, gitBranch });
+      if (!done) resolve({ firstPrompt, projectPath, rawCwd, gitBranch });
     });
   });
 }
@@ -938,8 +966,32 @@ export async function getAllRecentSessions(
   markDuration(durations, "loadClaudeSessions", loadClaudeStartedAt);
   markDuration(durations, "loadCodexSessions", loadCodexStartedAt);
 
-  // Combine results
-  entries.push(...claudeEntries, ...codexEntries);
+  // Combine results and deduplicate by sessionId.
+  // The same session can appear in both the main project dir and a worktree dir
+  // (Claude CLI writes to both sessions-index.json files).  Keep the entry with
+  // richer data (more non-empty fields) so the UI shows correct metadata.
+  const combined = [...claudeEntries, ...codexEntries];
+  const seen = new Map<string, SessionIndexEntry>();
+  for (const entry of combined) {
+    const existing = seen.get(entry.sessionId);
+    if (!existing) {
+      seen.set(entry.sessionId, entry);
+    } else {
+      // Pick the entry with more populated fields
+      const score = (e: SessionIndexEntry): number =>
+        (e.firstPrompt ? 1 : 0) +
+        (e.gitBranch ? 1 : 0) +
+        (e.created ? 1 : 0) +
+        (e.modified ? 1 : 0) +
+        (e.name ? 1 : 0) +
+        (e.summary ? 1 : 0) +
+        (e.lastPrompt ? 1 : 0);
+      if (score(entry) > score(existing)) {
+        seen.set(entry.sessionId, entry);
+      }
+    }
+  }
+  entries.push(...seen.values());
 
   // Filter out archived sessions
   const archivedIds = options.archivedSessionIds;
