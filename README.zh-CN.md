@@ -5,7 +5,7 @@ CC Pocket 是一款可以让你只用手机就启动并完成 Claude Code / Code
 [English README](README.md) | [日本語 README](README.ja.md)
 
 <p align="center">
-  <img src="docs/images/screenshots.png" alt="CC Pocket screenshots" width="800">
+  <img src="docs/images/screenshots-zh-CN.png" alt="CC Pocket 截图" width="800">
 </p>
 
 CC Pocket 与 Anthropic 或 OpenAI 没有任何关联，也未获得其认可、赞助或官方合作。
