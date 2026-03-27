@@ -6,6 +6,7 @@ import 'package:scroll_to_index/scroll_to_index.dart';
 import '../../../models/messages.dart';
 import '../../../services/bridge_service.dart';
 import '../../../widgets/message_bubble.dart';
+import '../../file_peek/file_peek_sheet.dart';
 import '../../message_images/message_images_screen.dart';
 import '../state/chat_session_cubit.dart';
 import '../state/streaming_state.dart';
@@ -212,6 +213,19 @@ class _ChatMessageListState extends State<ChatMessageList> {
             allowPlanEditing: widget.allowPlanEditing,
             pendingPlanToolUseId: widget.pendingPlanToolUseId,
             hiddenToolUseIds: hiddenToolUseIds,
+            onFileTap: (filePath) {
+              final projectPath = context
+                  .read<ChatSessionCubit>()
+                  .state
+                  .projectPath;
+              if (projectPath == null || projectPath.isEmpty) return;
+              showFilePeekSheet(
+                context,
+                bridge: context.read<BridgeService>(),
+                projectPath: projectPath,
+                filePath: filePath,
+              );
+            },
             onImageTap: (user) {
               final claudeSessionId = context
                   .read<ChatSessionCubit>()
