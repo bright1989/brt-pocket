@@ -79,6 +79,8 @@ String shellQuote(String value) {
 }
 
 /// Build a provider-specific CLI resume command for handoff to another machine.
+/// Uses resumeCwd (worktree path) when available so the CLI finds the session
+/// in the correct project slug directory.
 String buildResumeCommand(RecentSession session) {
   final cwd = (session.resumeCwd?.isNotEmpty ?? false)
       ? session.resumeCwd!
@@ -86,9 +88,23 @@ String buildResumeCommand(RecentSession session) {
   final provider = session.provider == Provider.codex.value
       ? Provider.codex
       : Provider.claude;
-  final resumeCommand = provider == Provider.codex
-      ? 'codex resume ${shellQuote(session.sessionId)}'
-      : 'claude --resume ${shellQuote(session.sessionId)}';
+
+  String resumeCommand;
+  if (provider == Provider.codex) {
+    resumeCommand = 'codex resume ${shellQuote(session.sessionId)}';
+  } else {
+    final buf = StringBuffer('claude --resume ${shellQuote(session.sessionId)}');
+    final pm = session.permissionMode;
+    if (pm == PermissionMode.bypassPermissions.value) {
+      buf.write(' --dangerously-skip-permissions');
+    } else if (pm == PermissionMode.acceptEdits.value) {
+      buf.write(' --permission-mode acceptEdits');
+    } else if (pm == PermissionMode.plan.value) {
+      buf.write(' --permission-mode plan');
+    }
+    resumeCommand = buf.toString();
+  }
+
   return 'cd ${shellQuote(cwd)} && $resumeCommand';
 }
 
