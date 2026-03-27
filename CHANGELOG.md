@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.49.0] - 2026-03-27
+
+### Added
+- Native localization for iOS and Android (en, ja, zh-Hans) — localized permission dialogs and OS-level UI
+- Improve @mention file list with untracked files and relevance scoring
+- Improve resume command copy for worktree and permission modes
+
+### Changed
+- Refactor new session sheet with dynamic tabs and provider-colored project tiles
+
 ## [1.48.1] - 2026-03-27
 
 ### Changed
