@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.50.0] - 2026-03-29
+
+### Added
+- File Peek: tap file paths in assistant messages to preview file contents in a bottom sheet
+- Partial path resolution: automatically resolve shortened paths (e.g. `lib/main.dart`) against the project file list, with a picker for ambiguous matches
+- Syntax highlighting in File Peek matching the chat code block style
+- Markdown raw/preview toggle (Tt button) in File Peek
+- Copy @path button for pasting file references into chat input
+
+### Changed
+- Remove unused list_dir/DirListing infrastructure (directory browsing handled client-side)
+
 ## [1.49.0] - 2026-03-27
 
 ### Added
