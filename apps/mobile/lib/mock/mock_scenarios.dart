@@ -2760,7 +2760,9 @@ final _filePeek = MockScenario(
                   'The architecture docs in `docs/architecture.md` confirm the pattern. '
                   'I also verified the test setup in `test/widget_test.dart`.\n\n'
                   'Everything looks good! The changes are consistent with the '
-                  'project structure defined in `pubspec.yaml`.',
+                  'project structure defined in `pubspec.yaml`.\n\n'
+                  'I also updated the authentication configuration at '
+                  '`apps/mobile/lib/features/connection/widgets/authentication_connection_settings_dialog.dart`.',
             ),
           ],
           model: 'claude-sonnet-4-20250514',

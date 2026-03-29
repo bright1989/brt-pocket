@@ -287,23 +287,33 @@ class _FilePeekContentState extends State<_FilePeekContent> {
                 color: appColors.subtleText,
               ),
               const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  fileName,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        fileName,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.content_copy, size: 14),
+                      onPressed: _copyPath,
+                      tooltip: 'Copy @path',
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.content_copy, size: 16),
-                onPressed: _copyPath,
-                tooltip: 'Copy @path',
-                visualDensity: VisualDensity.compact,
-              ),
+              const Spacer(),
               if (isMarkdown && !_loading && _result?.error == null)
                 IconButton(
                   icon: Icon(
