@@ -25,6 +25,8 @@ class GitViewCubit extends Cubit<GitViewState> {
   StreamSubscription<GitPushResultMessage>? _pushResultSub;
   StreamSubscription<GitCommitResultMessage>? _commitResultSub;
   StreamSubscription<GitRemoteStatusResultMessage>? _remoteStatusSub;
+  StreamSubscription<GitBranchesResultMessage>? _branchesSub;
+  StreamSubscription<GitCheckoutBranchResultMessage>? _checkoutSub;
   final String? _projectPath;
 
   GitViewCubit({
@@ -32,9 +34,13 @@ class GitViewCubit extends Cubit<GitViewState> {
     String? initialDiff,
     String? projectPath,
     Set<String>? initialSelectedHunkKeys,
+    String? worktreePath,
   }) : _bridge = bridge,
        _projectPath = projectPath,
-       super(_initialState(initialDiff, projectPath, initialSelectedHunkKeys)) {
+       super(_initialState(
+         initialDiff, projectPath, initialSelectedHunkKeys,
+         isWorktree: worktreePath != null,
+       )) {
     if (projectPath != null) {
       _requestDiff(projectPath, initialSelectedHunkKeys);
       _diffImageSub = _bridge.diffImageResults.listen(_onDiffImageResult);
@@ -45,16 +51,20 @@ class GitViewCubit extends Cubit<GitViewState> {
       _pushResultSub = _bridge.gitPushResults.listen(_onPushResult);
       _commitResultSub = _bridge.gitCommitResults.listen(_onCommitResult);
       _remoteStatusSub = _bridge.gitRemoteStatusResults.listen(_onRemoteStatus);
-      // Fetch on init to get fresh remote state
+      _branchesSub = _bridge.gitBranchesResults.listen(_onBranchesResult);
+      _checkoutSub = _bridge.gitCheckoutBranchResults.listen(_onCheckoutResult);
+      // Fetch on init to get fresh remote state + current branch
       _fetchAndUpdateStatus();
+      _bridge.send(ClientMessage.gitBranches(projectPath));
     }
   }
 
   static GitViewState _initialState(
     String? initialDiff,
     String? projectPath,
-    Set<String>? initialSelectedHunkKeys,
-  ) {
+    Set<String>? initialSelectedHunkKeys, {
+    bool isWorktree = false,
+  }) {
     final hasSelection =
         initialSelectedHunkKeys != null && initialSelectedHunkKeys.isNotEmpty;
     if (initialDiff != null) {
@@ -65,7 +75,7 @@ class GitViewCubit extends Cubit<GitViewState> {
       );
     }
     if (projectPath != null) {
-      return const GitViewState(loading: true);
+      return GitViewState(loading: true, isWorktree: isWorktree);
     }
     return const GitViewState();
   }
@@ -105,6 +115,9 @@ class GitViewCubit extends Cubit<GitViewState> {
 
   /// Whether this cubit supports refresh (projectPath mode).
   bool get canRefresh => _projectPath != null;
+
+  /// The project path (for branch selector sheet).
+  String? get projectPath => _projectPath;
 
   /// Re-request `git diff` from Bridge (e.g. for manual refresh).
   void refresh() {
@@ -608,6 +621,27 @@ class GitViewCubit extends Cubit<GitViewState> {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Branch operations
+  // ---------------------------------------------------------------------------
+
+  void _onBranchesResult(GitBranchesResultMessage result) {
+    if (result.error == null) {
+      emit(state.copyWith(currentBranch: result.current));
+    }
+  }
+
+  void _onCheckoutResult(GitCheckoutBranchResultMessage result) {
+    if (result.success) {
+      // Refresh diff + branch + remote status after checkout
+      refresh();
+      final projectPath = _projectPath;
+      if (projectPath != null) {
+        _bridge.send(ClientMessage.gitBranches(projectPath));
+      }
+    }
+  }
+
   @override
   Future<void> close() {
     _diffSub?.cancel();
@@ -619,6 +653,8 @@ class GitViewCubit extends Cubit<GitViewState> {
     _pushResultSub?.cancel();
     _commitResultSub?.cancel();
     _remoteStatusSub?.cancel();
+    _branchesSub?.cancel();
+    _checkoutSub?.cancel();
     return super.close();
   }
 }

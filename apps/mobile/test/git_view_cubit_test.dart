@@ -89,6 +89,10 @@ class MockDiffBridgeService extends BridgeService {
   final _pullController = StreamController<GitPullResultMessage>.broadcast();
   final _remoteStatusController =
       StreamController<GitRemoteStatusResultMessage>.broadcast();
+  final _branchesController =
+      StreamController<GitBranchesResultMessage>.broadcast();
+  final _checkoutController =
+      StreamController<GitCheckoutBranchResultMessage>.broadcast();
   final sentMessages = <ClientMessage>[];
 
   @override
@@ -108,6 +112,12 @@ class MockDiffBridgeService extends BridgeService {
   @override
   Stream<GitRemoteStatusResultMessage> get gitRemoteStatusResults =>
       _remoteStatusController.stream;
+  @override
+  Stream<GitBranchesResultMessage> get gitBranchesResults =>
+      _branchesController.stream;
+  @override
+  Stream<GitCheckoutBranchResultMessage> get gitCheckoutBranchResults =>
+      _checkoutController.stream;
 
   @override
   void send(ClientMessage message) {
@@ -131,6 +141,8 @@ class MockDiffBridgeService extends BridgeService {
     _fetchController.close();
     _pullController.close();
     _remoteStatusController.close();
+    _branchesController.close();
+    _checkoutController.close();
   }
 }
 
@@ -280,7 +292,7 @@ void main() {
       expect(cubit.state.files, isEmpty);
     });
 
-    test('sends getDiff and gitFetch messages to bridge', () {
+    test('sends getDiff, gitFetch, and gitBranches on init', () {
       final mockBridge = MockDiffBridgeService();
       final cubit = GitViewCubit(
         bridge: mockBridge,
@@ -291,10 +303,11 @@ void main() {
         mockBridge.dispose();
       });
 
-      // getDiff + gitFetch on init
-      expect(mockBridge.sentMessages, hasLength(2));
+      // getDiff + gitFetch + gitBranches on init
+      expect(mockBridge.sentMessages, hasLength(3));
       expect(mockBridge.sentMessages[0].type, 'get_diff');
       expect(mockBridge.sentMessages[1].type, 'git_fetch');
+      expect(mockBridge.sentMessages[2].type, 'git_branches');
     });
 
     test('updates state when diff result arrives', () async {

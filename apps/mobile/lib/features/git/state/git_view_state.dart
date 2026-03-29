@@ -61,5 +61,11 @@ abstract class GitViewState with _$GitViewState {
 
     /// Whether a push is in progress.
     @Default(false) bool pushing,
+
+    /// Current branch name.
+    String? currentBranch,
+
+    /// Whether the project is in a worktree.
+    @Default(false) bool isWorktree,
   }) = _GitViewState;
 }

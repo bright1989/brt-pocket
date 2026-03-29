@@ -32,12 +32,10 @@ import '../../widgets/plan_detail_sheet.dart';
 import '../../widgets/rename_session_dialog.dart';
 import '../../widgets/screenshot_sheet.dart';
 import '../../widgets/session_name_title.dart';
-import '../../widgets/worktree_list_sheet.dart';
 import '../chat_session/state/chat_session_cubit.dart';
 import '../chat_session/state/chat_session_state.dart';
 import '../chat_session/state/streaming_state_cubit.dart';
 import '../chat_session/widgets/bottom_overlay_layout.dart';
-import '../chat_session/widgets/branch_chip.dart';
 import '../chat_session/widgets/chat_input_with_overlays.dart';
 import '../chat_session/widgets/chat_message_list.dart';
 import '../chat_session/widgets/reconnect_banner.dart';
@@ -579,21 +577,6 @@ class _ChatScreenBody extends HookWidget {
                         worktreePath ?? projectPath!,
                         diffSelectionFromNav,
                         existingSelection: diffSelectionFromNav.value,
-                      );
-                    },
-                  ),
-                // Branch chip
-                if (projectPath != null)
-                  BranchChip(
-                    branchName: currentBranch.value,
-                    isWorktree: worktreePath != null,
-                    onTap: () {
-                      context.read<BridgeService>().refreshBranch(sessionId);
-                      showWorktreeListSheet(
-                        context: context,
-                        bridge: context.read<BridgeService>(),
-                        projectPath: projectPath!,
-                        currentWorktreePath: worktreePath,
                       );
                     },
                   ),

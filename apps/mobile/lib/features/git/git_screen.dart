@@ -9,6 +9,7 @@ import '../../utils/diff_parser.dart';
 import 'state/commit_cubit.dart';
 import 'state/git_view_cubit.dart';
 import 'state/git_view_state.dart';
+import 'widgets/branch_selector_sheet.dart';
 import 'widgets/commit_bottom_sheet.dart';
 import 'widgets/diff_content_list.dart';
 import 'widgets/diff_empty_state.dart';
@@ -38,12 +39,16 @@ class GitScreen extends StatelessWidget {
   /// Pre-selected hunk keys to restore selection state.
   final Set<String>? initialSelectedHunkKeys;
 
+  /// Worktree path (if the session runs in a worktree).
+  final String? worktreePath;
+
   const GitScreen({
     super.key,
     this.initialDiff,
     this.projectPath,
     this.title,
     this.initialSelectedHunkKeys,
+    this.worktreePath,
   });
 
   @override
@@ -59,6 +64,7 @@ class GitScreen extends StatelessWidget {
             initialDiff: initialDiff,
             projectPath: projectPath,
             initialSelectedHunkKeys: initialSelectedHunkKeys,
+            worktreePath: worktreePath,
           ),
         ),
         if (isProjectMode)
@@ -94,10 +100,22 @@ class _GitScreenBody extends StatelessWidget {
         title: Text(screenTitle, overflow: TextOverflow.ellipsis),
         bottom: isProjectMode
             ? PreferredSize(
-                preferredSize: const Size.fromHeight(40),
-                child: _GitViewModeSegment(
-                  viewMode: state.viewMode,
-                  onChanged: cubit.switchMode,
+                preferredSize: const Size.fromHeight(72),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Branch indicator
+                    _BranchIndicator(
+                      branchName: state.currentBranch,
+                      isWorktree: state.isWorktree,
+                      projectPath: cubit.projectPath,
+                    ),
+                    // View mode tabs
+                    _GitViewModeSegment(
+                      viewMode: state.viewMode,
+                      onChanged: cubit.switchMode,
+                    ),
+                  ],
                 ),
               )
             : null,
@@ -601,6 +619,64 @@ class _ActionButton extends StatelessWidget {
           const SizedBox(width: 4),
           Text(label, style: const TextStyle(fontSize: 13)),
         ],
+      ),
+    );
+  }
+}
+
+/// Tappable branch name indicator in the AppBar bottom area.
+class _BranchIndicator extends StatelessWidget {
+  final String? branchName;
+  final bool isWorktree;
+  final String? projectPath;
+
+  const _BranchIndicator({
+    required this.branchName,
+    required this.isWorktree,
+    this.projectPath,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final displayName = branchName ?? '...';
+
+    return GestureDetector(
+      onTap: projectPath != null
+          ? () => showBranchSelectorSheet(context, projectPath!)
+          : null,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isWorktree ? Icons.fork_right : Icons.commit,
+              size: 14,
+              color: cs.onSurfaceVariant,
+            ),
+            const SizedBox(width: 4),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 200),
+              child: Text(
+                displayName,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: cs.onSurfaceVariant,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 2),
+            Icon(
+              Icons.arrow_drop_down,
+              size: 16,
+              color: cs.onSurfaceVariant,
+            ),
+          ],
+        ),
       ),
     );
   }

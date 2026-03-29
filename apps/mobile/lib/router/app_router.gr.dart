@@ -343,6 +343,7 @@ class GitRoute extends PageRouteInfo<GitRouteArgs> {
     String? projectPath,
     String? title,
     Set<String>? initialSelectedHunkKeys,
+    String? worktreePath,
     List<PageRouteInfo>? children,
   }) : super(
          GitRoute.name,
@@ -352,6 +353,7 @@ class GitRoute extends PageRouteInfo<GitRouteArgs> {
            projectPath: projectPath,
            title: title,
            initialSelectedHunkKeys: initialSelectedHunkKeys,
+           worktreePath: worktreePath,
          ),
          initialChildren: children,
        );
@@ -370,6 +372,7 @@ class GitRoute extends PageRouteInfo<GitRouteArgs> {
         projectPath: args.projectPath,
         title: args.title,
         initialSelectedHunkKeys: args.initialSelectedHunkKeys,
+        worktreePath: args.worktreePath,
       );
     },
   );
@@ -382,6 +385,7 @@ class GitRouteArgs {
     this.projectPath,
     this.title,
     this.initialSelectedHunkKeys,
+    this.worktreePath,
   });
 
   final Key? key;
@@ -394,9 +398,11 @@ class GitRouteArgs {
 
   final Set<String>? initialSelectedHunkKeys;
 
+  final String? worktreePath;
+
   @override
   String toString() {
-    return 'GitRouteArgs{key: $key, initialDiff: $initialDiff, projectPath: $projectPath, title: $title, initialSelectedHunkKeys: $initialSelectedHunkKeys}';
+    return 'GitRouteArgs{key: $key, initialDiff: $initialDiff, projectPath: $projectPath, title: $title, initialSelectedHunkKeys: $initialSelectedHunkKeys, worktreePath: $worktreePath}';
   }
 
   @override
@@ -410,7 +416,8 @@ class GitRouteArgs {
         const SetEquality<String>().equals(
           initialSelectedHunkKeys,
           other.initialSelectedHunkKeys,
-        );
+        ) &&
+        worktreePath == other.worktreePath;
   }
 
   @override
@@ -419,7 +426,8 @@ class GitRouteArgs {
       initialDiff.hashCode ^
       projectPath.hashCode ^
       title.hashCode ^
-      const SetEquality<String>().hash(initialSelectedHunkKeys);
+      const SetEquality<String>().hash(initialSelectedHunkKeys) ^
+      worktreePath.hashCode;
 }
 
 /// generated route for

@@ -31,7 +31,9 @@ mixin _$GitViewState {
  bool get hasUpstream;/// Whether a fetch is in progress.
  bool get fetching;/// Whether a pull is in progress.
  bool get pulling;/// Whether a push is in progress.
- bool get pushing;
+ bool get pushing;/// Current branch name.
+ String? get currentBranch;/// Whether the project is in a worktree.
+ bool get isWorktree;
 /// Create a copy of GitViewState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -42,16 +44,16 @@ $GitViewStateCopyWith<GitViewState> get copyWith => _$GitViewStateCopyWithImpl<G
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GitViewState&&const DeepCollectionEquality().equals(other.files, files)&&const DeepCollectionEquality().equals(other.hiddenFileIndices, hiddenFileIndices)&&const DeepCollectionEquality().equals(other.collapsedFileIndices, collapsedFileIndices)&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.error, error) || other.error == error)&&(identical(other.errorCode, errorCode) || other.errorCode == errorCode)&&(identical(other.selectionMode, selectionMode) || other.selectionMode == selectionMode)&&const DeepCollectionEquality().equals(other.selectedHunkKeys, selectedHunkKeys)&&const DeepCollectionEquality().equals(other.loadingImageIndices, loadingImageIndices)&&(identical(other.viewMode, viewMode) || other.viewMode == viewMode)&&(identical(other.staging, staging) || other.staging == staging)&&(identical(other.commitsAhead, commitsAhead) || other.commitsAhead == commitsAhead)&&(identical(other.commitsBehind, commitsBehind) || other.commitsBehind == commitsBehind)&&(identical(other.hasUpstream, hasUpstream) || other.hasUpstream == hasUpstream)&&(identical(other.fetching, fetching) || other.fetching == fetching)&&(identical(other.pulling, pulling) || other.pulling == pulling)&&(identical(other.pushing, pushing) || other.pushing == pushing));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GitViewState&&const DeepCollectionEquality().equals(other.files, files)&&const DeepCollectionEquality().equals(other.hiddenFileIndices, hiddenFileIndices)&&const DeepCollectionEquality().equals(other.collapsedFileIndices, collapsedFileIndices)&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.error, error) || other.error == error)&&(identical(other.errorCode, errorCode) || other.errorCode == errorCode)&&(identical(other.selectionMode, selectionMode) || other.selectionMode == selectionMode)&&const DeepCollectionEquality().equals(other.selectedHunkKeys, selectedHunkKeys)&&const DeepCollectionEquality().equals(other.loadingImageIndices, loadingImageIndices)&&(identical(other.viewMode, viewMode) || other.viewMode == viewMode)&&(identical(other.staging, staging) || other.staging == staging)&&(identical(other.commitsAhead, commitsAhead) || other.commitsAhead == commitsAhead)&&(identical(other.commitsBehind, commitsBehind) || other.commitsBehind == commitsBehind)&&(identical(other.hasUpstream, hasUpstream) || other.hasUpstream == hasUpstream)&&(identical(other.fetching, fetching) || other.fetching == fetching)&&(identical(other.pulling, pulling) || other.pulling == pulling)&&(identical(other.pushing, pushing) || other.pushing == pushing)&&(identical(other.currentBranch, currentBranch) || other.currentBranch == currentBranch)&&(identical(other.isWorktree, isWorktree) || other.isWorktree == isWorktree));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(files),const DeepCollectionEquality().hash(hiddenFileIndices),const DeepCollectionEquality().hash(collapsedFileIndices),loading,error,errorCode,selectionMode,const DeepCollectionEquality().hash(selectedHunkKeys),const DeepCollectionEquality().hash(loadingImageIndices),viewMode,staging,commitsAhead,commitsBehind,hasUpstream,fetching,pulling,pushing);
+int get hashCode => Object.hashAll([runtimeType,const DeepCollectionEquality().hash(files),const DeepCollectionEquality().hash(hiddenFileIndices),const DeepCollectionEquality().hash(collapsedFileIndices),loading,error,errorCode,selectionMode,const DeepCollectionEquality().hash(selectedHunkKeys),const DeepCollectionEquality().hash(loadingImageIndices),viewMode,staging,commitsAhead,commitsBehind,hasUpstream,fetching,pulling,pushing,currentBranch,isWorktree]);
 
 @override
 String toString() {
-  return 'GitViewState(files: $files, hiddenFileIndices: $hiddenFileIndices, collapsedFileIndices: $collapsedFileIndices, loading: $loading, error: $error, errorCode: $errorCode, selectionMode: $selectionMode, selectedHunkKeys: $selectedHunkKeys, loadingImageIndices: $loadingImageIndices, viewMode: $viewMode, staging: $staging, commitsAhead: $commitsAhead, commitsBehind: $commitsBehind, hasUpstream: $hasUpstream, fetching: $fetching, pulling: $pulling, pushing: $pushing)';
+  return 'GitViewState(files: $files, hiddenFileIndices: $hiddenFileIndices, collapsedFileIndices: $collapsedFileIndices, loading: $loading, error: $error, errorCode: $errorCode, selectionMode: $selectionMode, selectedHunkKeys: $selectedHunkKeys, loadingImageIndices: $loadingImageIndices, viewMode: $viewMode, staging: $staging, commitsAhead: $commitsAhead, commitsBehind: $commitsBehind, hasUpstream: $hasUpstream, fetching: $fetching, pulling: $pulling, pushing: $pushing, currentBranch: $currentBranch, isWorktree: $isWorktree)';
 }
 
 
@@ -62,7 +64,7 @@ abstract mixin class $GitViewStateCopyWith<$Res>  {
   factory $GitViewStateCopyWith(GitViewState value, $Res Function(GitViewState) _then) = _$GitViewStateCopyWithImpl;
 @useResult
 $Res call({
- List<DiffFile> files, Set<int> hiddenFileIndices, Set<int> collapsedFileIndices, bool loading, String? error, String? errorCode, bool selectionMode, Set<String> selectedHunkKeys, Set<int> loadingImageIndices, GitViewMode viewMode, bool staging, int commitsAhead, int commitsBehind, bool hasUpstream, bool fetching, bool pulling, bool pushing
+ List<DiffFile> files, Set<int> hiddenFileIndices, Set<int> collapsedFileIndices, bool loading, String? error, String? errorCode, bool selectionMode, Set<String> selectedHunkKeys, Set<int> loadingImageIndices, GitViewMode viewMode, bool staging, int commitsAhead, int commitsBehind, bool hasUpstream, bool fetching, bool pulling, bool pushing, String? currentBranch, bool isWorktree
 });
 
 
@@ -79,7 +81,7 @@ class _$GitViewStateCopyWithImpl<$Res>
 
 /// Create a copy of GitViewState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? files = null,Object? hiddenFileIndices = null,Object? collapsedFileIndices = null,Object? loading = null,Object? error = freezed,Object? errorCode = freezed,Object? selectionMode = null,Object? selectedHunkKeys = null,Object? loadingImageIndices = null,Object? viewMode = null,Object? staging = null,Object? commitsAhead = null,Object? commitsBehind = null,Object? hasUpstream = null,Object? fetching = null,Object? pulling = null,Object? pushing = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? files = null,Object? hiddenFileIndices = null,Object? collapsedFileIndices = null,Object? loading = null,Object? error = freezed,Object? errorCode = freezed,Object? selectionMode = null,Object? selectedHunkKeys = null,Object? loadingImageIndices = null,Object? viewMode = null,Object? staging = null,Object? commitsAhead = null,Object? commitsBehind = null,Object? hasUpstream = null,Object? fetching = null,Object? pulling = null,Object? pushing = null,Object? currentBranch = freezed,Object? isWorktree = null,}) {
   return _then(_self.copyWith(
 files: null == files ? _self.files : files // ignore: cast_nullable_to_non_nullable
 as List<DiffFile>,hiddenFileIndices: null == hiddenFileIndices ? _self.hiddenFileIndices : hiddenFileIndices // ignore: cast_nullable_to_non_nullable
@@ -98,6 +100,8 @@ as int,hasUpstream: null == hasUpstream ? _self.hasUpstream : hasUpstream // ign
 as bool,fetching: null == fetching ? _self.fetching : fetching // ignore: cast_nullable_to_non_nullable
 as bool,pulling: null == pulling ? _self.pulling : pulling // ignore: cast_nullable_to_non_nullable
 as bool,pushing: null == pushing ? _self.pushing : pushing // ignore: cast_nullable_to_non_nullable
+as bool,currentBranch: freezed == currentBranch ? _self.currentBranch : currentBranch // ignore: cast_nullable_to_non_nullable
+as String?,isWorktree: null == isWorktree ? _self.isWorktree : isWorktree // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -183,10 +187,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<DiffFile> files,  Set<int> hiddenFileIndices,  Set<int> collapsedFileIndices,  bool loading,  String? error,  String? errorCode,  bool selectionMode,  Set<String> selectedHunkKeys,  Set<int> loadingImageIndices,  GitViewMode viewMode,  bool staging,  int commitsAhead,  int commitsBehind,  bool hasUpstream,  bool fetching,  bool pulling,  bool pushing)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<DiffFile> files,  Set<int> hiddenFileIndices,  Set<int> collapsedFileIndices,  bool loading,  String? error,  String? errorCode,  bool selectionMode,  Set<String> selectedHunkKeys,  Set<int> loadingImageIndices,  GitViewMode viewMode,  bool staging,  int commitsAhead,  int commitsBehind,  bool hasUpstream,  bool fetching,  bool pulling,  bool pushing,  String? currentBranch,  bool isWorktree)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GitViewState() when $default != null:
-return $default(_that.files,_that.hiddenFileIndices,_that.collapsedFileIndices,_that.loading,_that.error,_that.errorCode,_that.selectionMode,_that.selectedHunkKeys,_that.loadingImageIndices,_that.viewMode,_that.staging,_that.commitsAhead,_that.commitsBehind,_that.hasUpstream,_that.fetching,_that.pulling,_that.pushing);case _:
+return $default(_that.files,_that.hiddenFileIndices,_that.collapsedFileIndices,_that.loading,_that.error,_that.errorCode,_that.selectionMode,_that.selectedHunkKeys,_that.loadingImageIndices,_that.viewMode,_that.staging,_that.commitsAhead,_that.commitsBehind,_that.hasUpstream,_that.fetching,_that.pulling,_that.pushing,_that.currentBranch,_that.isWorktree);case _:
   return orElse();
 
 }
@@ -204,10 +208,10 @@ return $default(_that.files,_that.hiddenFileIndices,_that.collapsedFileIndices,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<DiffFile> files,  Set<int> hiddenFileIndices,  Set<int> collapsedFileIndices,  bool loading,  String? error,  String? errorCode,  bool selectionMode,  Set<String> selectedHunkKeys,  Set<int> loadingImageIndices,  GitViewMode viewMode,  bool staging,  int commitsAhead,  int commitsBehind,  bool hasUpstream,  bool fetching,  bool pulling,  bool pushing)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<DiffFile> files,  Set<int> hiddenFileIndices,  Set<int> collapsedFileIndices,  bool loading,  String? error,  String? errorCode,  bool selectionMode,  Set<String> selectedHunkKeys,  Set<int> loadingImageIndices,  GitViewMode viewMode,  bool staging,  int commitsAhead,  int commitsBehind,  bool hasUpstream,  bool fetching,  bool pulling,  bool pushing,  String? currentBranch,  bool isWorktree)  $default,) {final _that = this;
 switch (_that) {
 case _GitViewState():
-return $default(_that.files,_that.hiddenFileIndices,_that.collapsedFileIndices,_that.loading,_that.error,_that.errorCode,_that.selectionMode,_that.selectedHunkKeys,_that.loadingImageIndices,_that.viewMode,_that.staging,_that.commitsAhead,_that.commitsBehind,_that.hasUpstream,_that.fetching,_that.pulling,_that.pushing);case _:
+return $default(_that.files,_that.hiddenFileIndices,_that.collapsedFileIndices,_that.loading,_that.error,_that.errorCode,_that.selectionMode,_that.selectedHunkKeys,_that.loadingImageIndices,_that.viewMode,_that.staging,_that.commitsAhead,_that.commitsBehind,_that.hasUpstream,_that.fetching,_that.pulling,_that.pushing,_that.currentBranch,_that.isWorktree);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -224,10 +228,10 @@ return $default(_that.files,_that.hiddenFileIndices,_that.collapsedFileIndices,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<DiffFile> files,  Set<int> hiddenFileIndices,  Set<int> collapsedFileIndices,  bool loading,  String? error,  String? errorCode,  bool selectionMode,  Set<String> selectedHunkKeys,  Set<int> loadingImageIndices,  GitViewMode viewMode,  bool staging,  int commitsAhead,  int commitsBehind,  bool hasUpstream,  bool fetching,  bool pulling,  bool pushing)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<DiffFile> files,  Set<int> hiddenFileIndices,  Set<int> collapsedFileIndices,  bool loading,  String? error,  String? errorCode,  bool selectionMode,  Set<String> selectedHunkKeys,  Set<int> loadingImageIndices,  GitViewMode viewMode,  bool staging,  int commitsAhead,  int commitsBehind,  bool hasUpstream,  bool fetching,  bool pulling,  bool pushing,  String? currentBranch,  bool isWorktree)?  $default,) {final _that = this;
 switch (_that) {
 case _GitViewState() when $default != null:
-return $default(_that.files,_that.hiddenFileIndices,_that.collapsedFileIndices,_that.loading,_that.error,_that.errorCode,_that.selectionMode,_that.selectedHunkKeys,_that.loadingImageIndices,_that.viewMode,_that.staging,_that.commitsAhead,_that.commitsBehind,_that.hasUpstream,_that.fetching,_that.pulling,_that.pushing);case _:
+return $default(_that.files,_that.hiddenFileIndices,_that.collapsedFileIndices,_that.loading,_that.error,_that.errorCode,_that.selectionMode,_that.selectedHunkKeys,_that.loadingImageIndices,_that.viewMode,_that.staging,_that.commitsAhead,_that.commitsBehind,_that.hasUpstream,_that.fetching,_that.pulling,_that.pushing,_that.currentBranch,_that.isWorktree);case _:
   return null;
 
 }
@@ -239,7 +243,7 @@ return $default(_that.files,_that.hiddenFileIndices,_that.collapsedFileIndices,_
 
 
 class _GitViewState implements GitViewState {
-  const _GitViewState({final  List<DiffFile> files = const [], final  Set<int> hiddenFileIndices = const {}, final  Set<int> collapsedFileIndices = const {}, this.loading = false, this.error, this.errorCode, this.selectionMode = false, final  Set<String> selectedHunkKeys = const {}, final  Set<int> loadingImageIndices = const {}, this.viewMode = GitViewMode.all, this.staging = false, this.commitsAhead = 0, this.commitsBehind = 0, this.hasUpstream = false, this.fetching = false, this.pulling = false, this.pushing = false}): _files = files,_hiddenFileIndices = hiddenFileIndices,_collapsedFileIndices = collapsedFileIndices,_selectedHunkKeys = selectedHunkKeys,_loadingImageIndices = loadingImageIndices;
+  const _GitViewState({final  List<DiffFile> files = const [], final  Set<int> hiddenFileIndices = const {}, final  Set<int> collapsedFileIndices = const {}, this.loading = false, this.error, this.errorCode, this.selectionMode = false, final  Set<String> selectedHunkKeys = const {}, final  Set<int> loadingImageIndices = const {}, this.viewMode = GitViewMode.all, this.staging = false, this.commitsAhead = 0, this.commitsBehind = 0, this.hasUpstream = false, this.fetching = false, this.pulling = false, this.pushing = false, this.currentBranch, this.isWorktree = false}): _files = files,_hiddenFileIndices = hiddenFileIndices,_collapsedFileIndices = collapsedFileIndices,_selectedHunkKeys = selectedHunkKeys,_loadingImageIndices = loadingImageIndices;
   
 
 /// Parsed diff files.
@@ -311,6 +315,10 @@ class _GitViewState implements GitViewState {
 @override@JsonKey() final  bool pulling;
 /// Whether a push is in progress.
 @override@JsonKey() final  bool pushing;
+/// Current branch name.
+@override final  String? currentBranch;
+/// Whether the project is in a worktree.
+@override@JsonKey() final  bool isWorktree;
 
 /// Create a copy of GitViewState
 /// with the given fields replaced by the non-null parameter values.
@@ -322,16 +330,16 @@ _$GitViewStateCopyWith<_GitViewState> get copyWith => __$GitViewStateCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GitViewState&&const DeepCollectionEquality().equals(other._files, _files)&&const DeepCollectionEquality().equals(other._hiddenFileIndices, _hiddenFileIndices)&&const DeepCollectionEquality().equals(other._collapsedFileIndices, _collapsedFileIndices)&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.error, error) || other.error == error)&&(identical(other.errorCode, errorCode) || other.errorCode == errorCode)&&(identical(other.selectionMode, selectionMode) || other.selectionMode == selectionMode)&&const DeepCollectionEquality().equals(other._selectedHunkKeys, _selectedHunkKeys)&&const DeepCollectionEquality().equals(other._loadingImageIndices, _loadingImageIndices)&&(identical(other.viewMode, viewMode) || other.viewMode == viewMode)&&(identical(other.staging, staging) || other.staging == staging)&&(identical(other.commitsAhead, commitsAhead) || other.commitsAhead == commitsAhead)&&(identical(other.commitsBehind, commitsBehind) || other.commitsBehind == commitsBehind)&&(identical(other.hasUpstream, hasUpstream) || other.hasUpstream == hasUpstream)&&(identical(other.fetching, fetching) || other.fetching == fetching)&&(identical(other.pulling, pulling) || other.pulling == pulling)&&(identical(other.pushing, pushing) || other.pushing == pushing));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GitViewState&&const DeepCollectionEquality().equals(other._files, _files)&&const DeepCollectionEquality().equals(other._hiddenFileIndices, _hiddenFileIndices)&&const DeepCollectionEquality().equals(other._collapsedFileIndices, _collapsedFileIndices)&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.error, error) || other.error == error)&&(identical(other.errorCode, errorCode) || other.errorCode == errorCode)&&(identical(other.selectionMode, selectionMode) || other.selectionMode == selectionMode)&&const DeepCollectionEquality().equals(other._selectedHunkKeys, _selectedHunkKeys)&&const DeepCollectionEquality().equals(other._loadingImageIndices, _loadingImageIndices)&&(identical(other.viewMode, viewMode) || other.viewMode == viewMode)&&(identical(other.staging, staging) || other.staging == staging)&&(identical(other.commitsAhead, commitsAhead) || other.commitsAhead == commitsAhead)&&(identical(other.commitsBehind, commitsBehind) || other.commitsBehind == commitsBehind)&&(identical(other.hasUpstream, hasUpstream) || other.hasUpstream == hasUpstream)&&(identical(other.fetching, fetching) || other.fetching == fetching)&&(identical(other.pulling, pulling) || other.pulling == pulling)&&(identical(other.pushing, pushing) || other.pushing == pushing)&&(identical(other.currentBranch, currentBranch) || other.currentBranch == currentBranch)&&(identical(other.isWorktree, isWorktree) || other.isWorktree == isWorktree));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_files),const DeepCollectionEquality().hash(_hiddenFileIndices),const DeepCollectionEquality().hash(_collapsedFileIndices),loading,error,errorCode,selectionMode,const DeepCollectionEquality().hash(_selectedHunkKeys),const DeepCollectionEquality().hash(_loadingImageIndices),viewMode,staging,commitsAhead,commitsBehind,hasUpstream,fetching,pulling,pushing);
+int get hashCode => Object.hashAll([runtimeType,const DeepCollectionEquality().hash(_files),const DeepCollectionEquality().hash(_hiddenFileIndices),const DeepCollectionEquality().hash(_collapsedFileIndices),loading,error,errorCode,selectionMode,const DeepCollectionEquality().hash(_selectedHunkKeys),const DeepCollectionEquality().hash(_loadingImageIndices),viewMode,staging,commitsAhead,commitsBehind,hasUpstream,fetching,pulling,pushing,currentBranch,isWorktree]);
 
 @override
 String toString() {
-  return 'GitViewState(files: $files, hiddenFileIndices: $hiddenFileIndices, collapsedFileIndices: $collapsedFileIndices, loading: $loading, error: $error, errorCode: $errorCode, selectionMode: $selectionMode, selectedHunkKeys: $selectedHunkKeys, loadingImageIndices: $loadingImageIndices, viewMode: $viewMode, staging: $staging, commitsAhead: $commitsAhead, commitsBehind: $commitsBehind, hasUpstream: $hasUpstream, fetching: $fetching, pulling: $pulling, pushing: $pushing)';
+  return 'GitViewState(files: $files, hiddenFileIndices: $hiddenFileIndices, collapsedFileIndices: $collapsedFileIndices, loading: $loading, error: $error, errorCode: $errorCode, selectionMode: $selectionMode, selectedHunkKeys: $selectedHunkKeys, loadingImageIndices: $loadingImageIndices, viewMode: $viewMode, staging: $staging, commitsAhead: $commitsAhead, commitsBehind: $commitsBehind, hasUpstream: $hasUpstream, fetching: $fetching, pulling: $pulling, pushing: $pushing, currentBranch: $currentBranch, isWorktree: $isWorktree)';
 }
 
 
@@ -342,7 +350,7 @@ abstract mixin class _$GitViewStateCopyWith<$Res> implements $GitViewStateCopyWi
   factory _$GitViewStateCopyWith(_GitViewState value, $Res Function(_GitViewState) _then) = __$GitViewStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<DiffFile> files, Set<int> hiddenFileIndices, Set<int> collapsedFileIndices, bool loading, String? error, String? errorCode, bool selectionMode, Set<String> selectedHunkKeys, Set<int> loadingImageIndices, GitViewMode viewMode, bool staging, int commitsAhead, int commitsBehind, bool hasUpstream, bool fetching, bool pulling, bool pushing
+ List<DiffFile> files, Set<int> hiddenFileIndices, Set<int> collapsedFileIndices, bool loading, String? error, String? errorCode, bool selectionMode, Set<String> selectedHunkKeys, Set<int> loadingImageIndices, GitViewMode viewMode, bool staging, int commitsAhead, int commitsBehind, bool hasUpstream, bool fetching, bool pulling, bool pushing, String? currentBranch, bool isWorktree
 });
 
 
@@ -359,7 +367,7 @@ class __$GitViewStateCopyWithImpl<$Res>
 
 /// Create a copy of GitViewState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? files = null,Object? hiddenFileIndices = null,Object? collapsedFileIndices = null,Object? loading = null,Object? error = freezed,Object? errorCode = freezed,Object? selectionMode = null,Object? selectedHunkKeys = null,Object? loadingImageIndices = null,Object? viewMode = null,Object? staging = null,Object? commitsAhead = null,Object? commitsBehind = null,Object? hasUpstream = null,Object? fetching = null,Object? pulling = null,Object? pushing = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? files = null,Object? hiddenFileIndices = null,Object? collapsedFileIndices = null,Object? loading = null,Object? error = freezed,Object? errorCode = freezed,Object? selectionMode = null,Object? selectedHunkKeys = null,Object? loadingImageIndices = null,Object? viewMode = null,Object? staging = null,Object? commitsAhead = null,Object? commitsBehind = null,Object? hasUpstream = null,Object? fetching = null,Object? pulling = null,Object? pushing = null,Object? currentBranch = freezed,Object? isWorktree = null,}) {
   return _then(_GitViewState(
 files: null == files ? _self._files : files // ignore: cast_nullable_to_non_nullable
 as List<DiffFile>,hiddenFileIndices: null == hiddenFileIndices ? _self._hiddenFileIndices : hiddenFileIndices // ignore: cast_nullable_to_non_nullable
@@ -378,6 +386,8 @@ as int,hasUpstream: null == hasUpstream ? _self.hasUpstream : hasUpstream // ign
 as bool,fetching: null == fetching ? _self.fetching : fetching // ignore: cast_nullable_to_non_nullable
 as bool,pulling: null == pulling ? _self.pulling : pulling // ignore: cast_nullable_to_non_nullable
 as bool,pushing: null == pushing ? _self.pushing : pushing // ignore: cast_nullable_to_non_nullable
+as bool,currentBranch: freezed == currentBranch ? _self.currentBranch : currentBranch // ignore: cast_nullable_to_non_nullable
+as String?,isWorktree: null == isWorktree ? _self.isWorktree : isWorktree // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
