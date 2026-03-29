@@ -23,6 +23,16 @@ class MockBridgeService extends BridgeService {
       Stream.value(BridgeConnectionState.connected);
 
   @override
+  Stream<FileContentMessage> get fileContent => _mockMessageController.stream
+      .where((m) => m is FileContentMessage)
+      .cast<FileContentMessage>();
+
+  @override
+  Stream<DirListingMessage> get dirListing => _mockMessageController.stream
+      .where((m) => m is DirListingMessage)
+      .cast<DirListingMessage>();
+
+  @override
   void send(ClientMessage message) {
     final json = jsonDecode(message.toJson()) as Map<String, dynamic>;
     final type = json['type'] as String;
@@ -251,56 +261,98 @@ class MockBridgeService extends BridgeService {
   }
 
   static String _mockFileContent(String filePath) {
-    if (filePath.endsWith('.dart')) {
-      return '''import 'package:flutter/material.dart';
+    // Path-specific content for File Peek mock scenario
+    final knownFiles = _knownMockFiles;
+    final match = knownFiles[filePath];
+    if (match != null) return match;
+
+    // Fallback: extension-based generic content
+    final ext = filePath.split('.').lastOrNull?.toLowerCase();
+    return switch (ext) {
+      'dart' => _genericDart(filePath),
+      'md' => _genericMarkdown(filePath),
+      'yaml' || 'yml' => _genericYaml(filePath),
+      'json' => _genericJson(filePath),
+      'ts' || 'tsx' => _genericTypeScript(filePath),
+      _ => 'File content for: $filePath\n\nThis is a mock file preview.',
+    };
+  }
+
+  // --- Path-specific mock contents (matched by exact path) ---
+
+  static final Map<String, String> _knownMockFiles = {
+    'lib/main.dart': '''import 'package:flutter/material.dart';
+import 'features/session_list/session_list_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const MyApp(title: "Hello"));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, required this.title});
+
+  final String title;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'CC Pocket',
+      title: title,
       theme: ThemeData(
         colorSchemeSeed: Colors.blue,
         useMaterial3: true,
+        brightness: Brightness.dark,
       ),
-      home: const HomeScreen(),
+      home: const SessionListScreen(),
     );
   }
-}
+}''',
+    'pubspec.yaml': '''name: ccpocket
+description: Claude Code / Codex mobile client
+publish_to: 'none'
+version: 2.4.0+82
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+environment:
+  sdk: '>=3.5.0 <4.0.0'
 
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
+dependencies:
+  flutter:
+    sdk: flutter
+  web_socket_channel: ^3.0.1
+  flutter_bloc: ^9.1.0
+  shared_preferences: ^2.3.0
+  flutter_markdown: ^0.7.7
+  url_launcher: ^6.3.0
 
-class _HomeScreenState extends State<HomeScreen> {
-  int _counter = 0;
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0''',
+    'packages/bridge/src/index.ts': '''import { startServer } from "./websocket.js";
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Home')),
-      body: Center(
-        child: Text('Count: \$_counter'),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => setState(() => _counter++),
-        child: const Icon(Icons.add),
-      ),
-    );
+const PORT = Number(process.env.BRIDGE_PORT ?? 8765);
+const HOST = process.env.BRIDGE_HOST ?? "0.0.0.0";
+const API_KEY = process.env.BRIDGE_API_KEY;
+
+async function main() {
+  console.log(`Starting Bridge Server on \${HOST}:\${PORT}`);
+  if (API_KEY) {
+    console.log("API key authentication enabled");
   }
-}''';
-    }
-    if (filePath.endsWith('.md')) {
-      return '''# CC Pocket
+
+  const server = await startServer({ port: PORT, host: HOST, apiKey: API_KEY });
+
+  process.on("SIGINT", () => {
+    console.log("Shutting down...");
+    server.close();
+    process.exit(0);
+  });
+}
+
+main().catch((err) => {
+  console.error("Failed to start:", err);
+  process.exit(1);
+});''',
+    'README.md': '''# CC Pocket
 
 Claude Code / Codex mobile client for iOS and Android.
 
@@ -309,102 +361,129 @@ Claude Code / Codex mobile client for iOS and Android.
 - **Real-time streaming** of agent responses
 - **Approval flow** for tool execution
 - **Diff viewer** with syntax highlighting
+- **File Peek** — tap file paths to preview contents
 - **Multi-session** management
 - **Tailscale** remote access support
 
-## Getting Started
+## Quick Start
 
-1. Install Flutter SDK
-2. Run `flutter pub get`
-3. Run `flutter run`
+```bash
+# 1. Start Bridge Server
+npm run bridge
 
-### Architecture
-
-```
-Flutter App <-- WebSocket --> Bridge Server <-- SDK --> Claude Code CLI
+# 2. Run the app
+cd apps/mobile && flutter run
 ```
 
-> Note: Bridge Server must be running on the same machine as Claude Code.
+## Architecture
+
+```
+Flutter App <─ WebSocket ─> Bridge Server <─ SDK ─> Claude Code CLI
+```
+
+> Bridge Server must be running on the same machine as Claude Code.
 
 ## License
 
-MIT
-''';
-    }
-    if (filePath.endsWith('.yaml') || filePath.endsWith('.yml')) {
-      return '''name: ccpocket
-description: Claude Code mobile client
-publish_to: 'none'
-version: 1.0.0+1
-
-environment:
-  sdk: '>=3.5.0 <4.0.0'
-
-dependencies:
-  flutter:
-    sdk: flutter
-  web_socket_channel: ^3.0.0
-  flutter_bloc: ^9.1.0
-  shared_preferences: ^2.3.0
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^4.0.0
-''';
-    }
-    if (filePath.endsWith('.json')) {
-      return '''{
-  "name": "ccpocket-bridge",
-  "version": "1.0.0",
+MIT''',
+    'package.json': '''{
+  "name": "ccpocket",
+  "version": "2.4.0",
+  "private": true,
   "type": "module",
+  "workspaces": ["packages/*"],
   "scripts": {
     "bridge": "tsx packages/bridge/src/index.ts",
-    "bridge:build": "tsc -p packages/bridge/tsconfig.json"
+    "bridge:build": "tsc -p packages/bridge/tsconfig.json",
+    "dev": "bash scripts/dev-restart.sh"
   },
   "devDependencies": {
-    "typescript": "^5.6.0",
-    "tsx": "^4.19.0"
+    "typescript": "^5.7.0",
+    "tsx": "^4.19.0",
+    "@anthropic-ai/sdk": "^0.39.0"
   }
-}
-''';
-    }
-    if (filePath.endsWith('.ts') || filePath.endsWith('.tsx')) {
-      return '''import { WebSocketServer, WebSocket } from "ws";
+}''',
+    'docs/architecture.md': '''# Architecture
 
-const PORT = process.env.BRIDGE_PORT ?? 8765;
+## Overview
 
-const wss = new WebSocketServer({ port: Number(PORT) });
+CC Pocket uses a **Bridge Server** pattern to connect the mobile app
+to Claude Code / Codex CLIs running on a desktop machine.
 
-wss.on("connection", (ws: WebSocket) => {
-  console.log("Client connected");
+## Components
 
-  ws.on("message", (data: Buffer) => {
-    const msg = JSON.parse(data.toString());
-    handleMessage(ws, msg);
+### Bridge Server (`packages/bridge/`)
+
+TypeScript WebSocket server that:
+- Manages multiple concurrent sessions
+- Spawns Claude Code / Codex CLI processes via SDK
+- Streams responses back to the mobile client
+- Handles file operations (read, diff)
+
+### Mobile App (`apps/mobile/`)
+
+Flutter app that:
+- Connects to Bridge Server via WebSocket
+- Renders streaming assistant messages as Markdown
+- Provides approval/rejection flow for tool execution
+- Displays git diffs with syntax highlighting
+
+## Data Flow
+
+```
+User Input ─> WebSocket ─> Bridge Server ─> Claude SDK ─> Claude Code CLI
+                                                              │
+User <── Rendered UI <── Stream Parser <── WebSocket <────────┘
+```
+
+## Security
+
+- Optional API key authentication
+- Path allowlist (`BRIDGE_ALLOWED_DIRS`)
+- Read-only file access from mobile client''',
+    'test/widget_test.dart': '''import 'package:flutter_test/flutter_test.dart';
+import 'package:ccpocket/main.dart';
+
+void main() {
+  group('MyApp', () {
+    testWidgets('renders with title', (tester) async {
+      await tester.pumpWidget(const MyApp(title: 'Test'));
+      expect(find.text('Test'), findsOneWidget);
+    });
+
+    testWidgets('navigates to session list', (tester) async {
+      await tester.pumpWidget(const MyApp(title: 'CC Pocket'));
+      expect(find.byType(SessionListScreen), findsOneWidget);
+    });
   });
+}''',
+  };
 
-  ws.on("close", () => {
-    console.log("Client disconnected");
-  });
-});
+  // --- Extension-based fallback content ---
 
-function handleMessage(ws: WebSocket, msg: Record<string, unknown>) {
-  switch (msg.type) {
-    case "start":
-      ws.send(JSON.stringify({ type: "system", subtype: "init" }));
-      break;
-    default:
-      console.warn("Unknown message type:", msg.type);
+  static String _genericDart(String filePath) {
+    final name = filePath.split('/').last.replaceAll('.dart', '');
+    return "// $filePath\n\nclass ${_toPascalCase(name)} {\n  // TODO: implementation\n}";
   }
-}
 
-console.log("Bridge server running on port " + PORT);
-''';
-    }
-    // Default: plain text
-    return 'File content for: $filePath\n\nThis is a mock file preview.';
+  static String _genericMarkdown(String filePath) {
+    final name = filePath.split('/').last;
+    return '# $name\n\nDocumentation for `$filePath`.';
   }
+
+  static String _genericYaml(String filePath) =>
+      '# $filePath\n# Configuration file';
+
+  static String _genericJson(String filePath) =>
+      '{\n  "_comment": "$filePath"\n}';
+
+  static String _genericTypeScript(String filePath) =>
+      '// $filePath\n\nexport {};';
+
+  static String _toPascalCase(String input) => input
+      .split(RegExp(r'[_\-]'))
+      .map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}')
+      .join();
 
   static String? _mockFileLanguage(String filePath) {
     final ext = filePath.split('.').lastOrNull?.toLowerCase();
