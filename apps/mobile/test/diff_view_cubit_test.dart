@@ -415,7 +415,7 @@ void main() {
         mockBridge.dispose();
       });
 
-      cubit.switchMode(DiffViewMode.unstaged); // same as default
+      cubit.switchMode(DiffViewMode.all); // same as default
       // Should not send additional message
       expect(mockBridge.sentMessages, hasLength(1));
     });

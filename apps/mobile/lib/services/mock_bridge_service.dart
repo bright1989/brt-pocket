@@ -197,8 +197,11 @@ class MockBridgeService extends BridgeService {
         );
       // ---- Git Operations (mock, stateful) ----
       case 'get_diff':
-        final staged = json['staged'] as bool? ?? false;
-        final filtered = _filterDiffByStageState(staged);
+        final stagedParam = json['staged'] as bool?;
+        // null (all mode) → return full diff; true → staged only; false → unstaged only
+        final filtered = stagedParam == null
+            ? (_mockDiff ?? '')
+            : _filterDiffByStageState(stagedParam);
         _scheduleMessage(
           const Duration(milliseconds: 300),
           DiffResultMessage(diff: filtered),

@@ -74,7 +74,7 @@ class DiffContentList extends StatelessWidget {
         itemCount: 1 + hunkCount,
         itemBuilder: (context, index) {
           if (index == 0) {
-            return DiffFileHeader(
+            final header = DiffFileHeader(
               file: file,
               collapsed: collapsed,
               onToggleCollapse: () => onToggleCollapse(0),
@@ -85,6 +85,16 @@ class DiffContentList extends StatelessWidget {
                   ? () => onToggleFileSelection!(0)
                   : null,
             );
+            if (onSwipeStage != null || onSwipeUnstage != null) {
+              return _SwipeStageDismissible(
+                fileIdx: 0,
+                filePath: file.filePath,
+                onSwipeStage: onSwipeStage,
+                onSwipeUnstage: onSwipeUnstage,
+                child: header,
+              );
+            }
+            return header;
           }
           final hunkIdx = index - 1;
           return DiffHunkWidget(

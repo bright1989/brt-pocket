@@ -4,8 +4,8 @@ import '../../../utils/diff_parser.dart';
 
 part 'diff_view_state.freezed.dart';
 
-/// Which diff to display: working-tree changes or staged (index) changes.
-enum DiffViewMode { unstaged, staged }
+/// Which diff to display: working-tree changes, staged (index) changes, or all.
+enum DiffViewMode { unstaged, staged, all }
 
 /// State for the diff viewer screen.
 @freezed
@@ -39,7 +39,7 @@ abstract class DiffViewState with _$DiffViewState {
     @Default({}) Set<int> loadingImageIndices,
 
     /// Current diff view mode: unstaged (working-tree) or staged (index).
-    @Default(DiffViewMode.unstaged) DiffViewMode viewMode,
+    @Default(DiffViewMode.all) DiffViewMode viewMode,
 
     /// Whether a stage/unstage operation is in progress.
     @Default(false) bool staging,

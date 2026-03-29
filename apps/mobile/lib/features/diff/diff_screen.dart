@@ -147,7 +147,7 @@ class _DiffScreenBody extends StatelessWidget {
           : state.error != null
           ? DiffErrorState(error: state.error!, errorCode: state.errorCode)
           : state.files.isEmpty
-          ? const DiffEmptyState()
+          ? DiffEmptyState(viewMode: isProjectMode ? state.viewMode : null)
           : DiffContentList(
               files: state.files,
               hiddenFileIndices: state.hiddenFileIndices,
@@ -216,11 +216,12 @@ class _DiffScreenBody extends StatelessWidget {
       );
     }
 
-    // Stage All FAB (project mode, unstaged tab, not in selection, has files)
+    // Stage All FAB (project mode, unstaged/all tab, not in selection, has files)
     if (isProjectMode &&
         !state.selectionMode &&
         state.files.isNotEmpty &&
-        state.viewMode == DiffViewMode.unstaged) {
+        (state.viewMode == DiffViewMode.unstaged ||
+         state.viewMode == DiffViewMode.all)) {
       return FloatingActionButton.extended(
         key: const ValueKey('stage_all_fab'),
         onPressed: state.staging ? null : cubit.stageAll,
@@ -336,14 +337,16 @@ class _DiffViewModeSegment extends StatelessWidget {
       child: SegmentedButton<DiffViewMode>(
         segments: const [
           ButtonSegment(
+            value: DiffViewMode.all,
+            label: Text('All'),
+          ),
+          ButtonSegment(
             value: DiffViewMode.unstaged,
             label: Text('Unstaged'),
-            icon: Icon(Icons.edit_note, size: 18),
           ),
           ButtonSegment(
             value: DiffViewMode.staged,
             label: Text('Staged'),
-            icon: Icon(Icons.check_circle_outline, size: 18),
           ),
         ],
         selected: {viewMode},
