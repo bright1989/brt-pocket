@@ -346,8 +346,6 @@ class _FilePeekContentState extends State<_FilePeekContent> {
                   color: appColors.subtleText,
                   fontFamily: 'monospace',
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ),
           ),
