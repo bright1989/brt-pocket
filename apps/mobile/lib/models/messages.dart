@@ -709,14 +709,7 @@ sealed class ServerMessage {
       ),
       'git_push_result' => GitPushResultMessage(
         success: json['success'] as bool? ?? false,
-        remote: json['remote'] as String?,
-        branch: json['branch'] as String?,
         error: json['error'] as String?,
-      ),
-      'git_status_result' => GitStatusResultMessage(
-        staged: (json['staged'] as List?)?.cast<String>() ?? const [],
-        unstaged: (json['unstaged'] as List?)?.cast<String>() ?? const [],
-        untracked: (json['untracked'] as List?)?.cast<String>() ?? const [],
       ),
       'git_branches_result' => GitBranchesResultMessage(
         current: json['current'] as String? ?? '',
@@ -1670,15 +1663,8 @@ class GitCommitResultMessage implements ServerMessage {
 
 class GitPushResultMessage implements ServerMessage {
   final bool success;
-  final String? remote;
-  final String? branch;
   final String? error;
-  const GitPushResultMessage({
-    required this.success,
-    this.remote,
-    this.branch,
-    this.error,
-  });
+  const GitPushResultMessage({required this.success, this.error});
 }
 
 class GitBranchRemoteStatus {
@@ -1699,17 +1685,6 @@ class GitBranchRemoteStatus {
       hasUpstream: json['hasUpstream'] as bool? ?? false,
     );
   }
-}
-
-class GitStatusResultMessage implements ServerMessage {
-  final List<String> staged;
-  final List<String> unstaged;
-  final List<String> untracked;
-  const GitStatusResultMessage({
-    required this.staged,
-    required this.unstaged,
-    required this.untracked,
-  });
 }
 
 class GitBranchesResultMessage implements ServerMessage {
@@ -2664,31 +2639,24 @@ class ClientMessage {
 
   factory ClientMessage.gitCommit(
     String projectPath, {
+    String? sessionId,
     String? message,
     bool? autoGenerate,
   }) => ClientMessage._(<String, dynamic>{
     'type': 'git_commit',
     'projectPath': projectPath,
+    'sessionId': ?sessionId,
     'message': ?message,
     'autoGenerate': ?autoGenerate,
   });
 
-  factory ClientMessage.gitPush(String projectPath, {bool? forceLease}) =>
-      ClientMessage._(<String, dynamic>{
-        'type': 'git_push',
-        'projectPath': projectPath,
-        'forceLease': ?forceLease,
-      });
+  factory ClientMessage.gitPush(String projectPath) => ClientMessage._(
+    <String, dynamic>{'type': 'git_push', 'projectPath': projectPath},
+  );
 
-  factory ClientMessage.gitStatus(String projectPath) =>
-      ClientMessage._({'type': 'git_status', 'projectPath': projectPath});
-
-  factory ClientMessage.gitBranches(String projectPath, {String? query}) =>
-      ClientMessage._(<String, dynamic>{
-        'type': 'git_branches',
-        'projectPath': projectPath,
-        'query': ?query,
-      });
+  factory ClientMessage.gitBranches(String projectPath) => ClientMessage._(
+    <String, dynamic>{'type': 'git_branches', 'projectPath': projectPath},
+  );
 
   factory ClientMessage.gitCreateBranch(
     String projectPath,

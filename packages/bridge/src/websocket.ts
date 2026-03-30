@@ -46,7 +46,6 @@ import {
   unstageHunks,
   gitCommit,
   gitPush,
-  gitStatus,
   listBranches,
   createBranch,
   checkoutBranch,
@@ -56,6 +55,7 @@ import {
   gitPull,
   gitRemoteStatus,
 } from "./git-operations.js";
+import { generateCommitMessage } from "./git-assist.js";
 import { listWindows, takeScreenshot } from "./screenshot.js";
 import { DebugTraceStore } from "./debug-trace-store.js";
 import { RecordingStore } from "./recording-store.js";
@@ -2630,8 +2630,43 @@ export class BridgeWebSocketServer {
           this.send(ws, this.buildPathNotAllowedError(msg.projectPath));
           break;
         }
+        const session = msg.sessionId
+          ? this.sessionManager.get(msg.sessionId)
+          : undefined;
         try {
-          const result = gitCommit(msg.projectPath, msg.message ?? "");
+          const message =
+            msg.autoGenerate === true
+              ? (() => {
+                  if (!msg.sessionId) {
+                    throw new Error(
+                      "git_commit with autoGenerate=true requires sessionId",
+                    );
+                  }
+                  if (!session) {
+                    throw new Error(`Session ${msg.sessionId} not found`);
+                  }
+                  const expectedPath = resolve(
+                    session.worktreePath ?? session.projectPath,
+                  );
+                  const requestedPath = resolve(msg.projectPath);
+                  if (requestedPath !== expectedPath) {
+                    throw new Error(
+                      "git_commit projectPath must match the active session cwd",
+                    );
+                  }
+                  return generateCommitMessage({
+                    provider: session.provider,
+                    projectPath: msg.projectPath,
+                    model:
+                      session.provider === "claude"
+                        ? session.process instanceof SdkProcess
+                          ? session.process.model
+                          : undefined
+                        : session.codexSettings?.model,
+                  });
+                })()
+              : msg.message ?? "";
+          const result = gitCommit(msg.projectPath, message);
           this.send(ws, {
             type: "git_commit_result",
             success: true,
@@ -2642,7 +2677,7 @@ export class BridgeWebSocketServer {
           this.send(ws, {
             type: "git_commit_result",
             success: false,
-            error: String(err),
+            error: err instanceof Error ? err.message : String(err),
           });
         }
         break;
@@ -2654,12 +2689,10 @@ export class BridgeWebSocketServer {
           break;
         }
         try {
-          const result = gitPush(msg.projectPath, msg.forceLease);
+          gitPush(msg.projectPath);
           this.send(ws, {
             type: "git_push_result",
             success: true,
-            remote: result.remote,
-            branch: result.branch,
           });
         } catch (err) {
           this.send(ws, {
@@ -2671,35 +2704,13 @@ export class BridgeWebSocketServer {
         break;
       }
 
-      case "git_status": {
-        if (!this.isPathAllowed(msg.projectPath)) {
-          this.send(ws, this.buildPathNotAllowedError(msg.projectPath));
-          break;
-        }
-        try {
-          const result = gitStatus(msg.projectPath);
-          this.send(ws, {
-            type: "git_status_result",
-            staged: result.staged,
-            unstaged: result.unstaged,
-            untracked: result.untracked,
-          });
-        } catch (err) {
-          this.send(ws, {
-            type: "error",
-            message: `Failed to get git status: ${err}`,
-          });
-        }
-        break;
-      }
-
       case "git_branches": {
         if (!this.isPathAllowed(msg.projectPath)) {
           this.send(ws, this.buildPathNotAllowedError(msg.projectPath));
           break;
         }
         try {
-          const result = listBranches(msg.projectPath, msg.query);
+          const result = listBranches(msg.projectPath);
           this.send(ws, {
             type: "git_branches_result",
             current: result.current,

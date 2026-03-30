@@ -139,13 +139,7 @@ void main() {
               as Map<String, dynamic>;
       expect(pushJson['type'], 'git_push');
 
-      mockBridge.emitPush(
-        const GitPushResultMessage(
-          success: true,
-          remote: 'origin',
-          branch: 'feat/x',
-        ),
-      );
+      mockBridge.emitPush(const GitPushResultMessage(success: true));
       await Future.microtask(() {});
 
       expect(cubit.state.status, CommitStatus.success);

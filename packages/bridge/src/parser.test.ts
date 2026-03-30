@@ -608,6 +608,26 @@ describe("parseClientMessage", () => {
     });
   });
 
+  it("parses git_commit with sessionId", () => {
+    const msg = parseClientMessage(
+      '{"type":"git_commit","projectPath":"/p","sessionId":"s-1","autoGenerate":true}',
+    );
+    expect(msg).toEqual({
+      type: "git_commit",
+      projectPath: "/p",
+      sessionId: "s-1",
+      autoGenerate: true,
+    });
+  });
+
+  it("rejects git_commit with unknown fields", () => {
+    expect(
+      parseClientMessage(
+        '{"type":"git_commit","projectPath":"/p","message":"feat: add feature","forceLease":true}',
+      ),
+    ).toBeNull();
+  });
+
   it("rejects git_commit without projectPath", () => {
     expect(
       parseClientMessage('{"type":"git_commit","message":"x"}'),
@@ -620,29 +640,16 @@ describe("parseClientMessage", () => {
     expect(msg).toEqual({ type: "git_push", projectPath: "/p" });
   });
 
-  it("parses git_push with forceLease", () => {
-    const msg = parseClientMessage(
-      '{"type":"git_push","projectPath":"/p","forceLease":true}',
-    );
-    expect(msg).toEqual({
-      type: "git_push",
-      projectPath: "/p",
-      forceLease: true,
-    });
+  it("rejects git_push with removed forceLease field", () => {
+    expect(
+      parseClientMessage(
+        '{"type":"git_push","projectPath":"/p","forceLease":true}',
+      ),
+    ).toBeNull();
   });
 
   it("rejects git_push without projectPath", () => {
     expect(parseClientMessage('{"type":"git_push"}')).toBeNull();
-  });
-
-  // git_status
-  it("parses git_status", () => {
-    const msg = parseClientMessage('{"type":"git_status","projectPath":"/p"}');
-    expect(msg).toEqual({ type: "git_status", projectPath: "/p" });
-  });
-
-  it("rejects git_status without projectPath", () => {
-    expect(parseClientMessage('{"type":"git_status"}')).toBeNull();
   });
 
   // git_branches
@@ -653,15 +660,12 @@ describe("parseClientMessage", () => {
     expect(msg).toEqual({ type: "git_branches", projectPath: "/p" });
   });
 
-  it("parses git_branches with query", () => {
-    const msg = parseClientMessage(
-      '{"type":"git_branches","projectPath":"/p","query":"feat"}',
-    );
-    expect(msg).toEqual({
-      type: "git_branches",
-      projectPath: "/p",
-      query: "feat",
-    });
+  it("rejects git_branches with removed query field", () => {
+    expect(
+      parseClientMessage(
+        '{"type":"git_branches","projectPath":"/p","query":"feat"}',
+      ),
+    ).toBeNull();
   });
 
   it("rejects git_branches without projectPath", () => {

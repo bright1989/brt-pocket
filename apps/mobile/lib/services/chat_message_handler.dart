@@ -111,7 +111,6 @@ const _unsupportedActions = <String, UnsupportedAction>{
   'git_unstage_hunks': UnsupportedAction.showUpdateHint,
   'git_commit': UnsupportedAction.showUpdateHint,
   'git_push': UnsupportedAction.showUpdateHint,
-  'git_status': UnsupportedAction.showUpdateHint,
   'git_branches': UnsupportedAction.showUpdateHint,
   'git_create_branch': UnsupportedAction.showUpdateHint,
   'git_checkout_branch': UnsupportedAction.showUpdateHint,

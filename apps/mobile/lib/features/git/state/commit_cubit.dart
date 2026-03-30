@@ -10,6 +10,7 @@ import 'commit_state.dart';
 class CommitCubit extends Cubit<CommitState> {
   final BridgeService _bridge;
   final String _projectPath;
+  final String? _sessionId;
 
   StreamSubscription<GitCommitResultMessage>? _commitSub;
   StreamSubscription<GitPushResultMessage>? _pushSub;
@@ -17,10 +18,14 @@ class CommitCubit extends Cubit<CommitState> {
   /// What to do after a successful commit.
   _PostCommitAction _postCommitAction = _PostCommitAction.none;
 
-  CommitCubit({required BridgeService bridge, required String projectPath})
-    : _bridge = bridge,
-      _projectPath = projectPath,
-      super(const CommitState()) {
+  CommitCubit({
+    required BridgeService bridge,
+    required String projectPath,
+    String? sessionId,
+  }) : _bridge = bridge,
+       _projectPath = projectPath,
+       _sessionId = sessionId,
+       super(const CommitState()) {
     _commitSub = _bridge.gitCommitResults.listen(_onCommitResult);
     _pushSub = _bridge.gitPushResults.listen(_onPushResult);
   }
@@ -69,6 +74,7 @@ class CommitCubit extends Cubit<CommitState> {
     _bridge.send(
       ClientMessage.gitCommit(
         _projectPath,
+        sessionId: state.autoGenerate ? _sessionId : null,
         message: state.autoGenerate ? null : state.message,
         autoGenerate: state.autoGenerate ? true : null,
       ),

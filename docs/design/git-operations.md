@@ -147,32 +147,11 @@ echo "${diff}" | codex -q --model gpt-5.4-mini \
 
 ### Bridge設定
 
-設定ファイル（config.json）と環境変数の両方で指定可能。優先順位: 環境変数 > config.json > デフォルト値。
+現行実装では追加設定は持たず、アクティブなセッションの provider / model をそのまま使う。
 
-```jsonc
-// bridge config.json
-{
-  "gitAssist": {
-    "model": {
-      "claude": "claude-sonnet-4-6",
-      "codex": "gpt-5.4-mini"
-    },
-    "prompts": {
-      "commitMessage": "",
-      "prTitle": "",
-      "prBody": ""
-    }
-  }
-}
-```
-
-```bash
-# 環境変数での上書き
-GIT_ASSIST_MODEL_CLAUDE=claude-sonnet-4-6
-GIT_ASSIST_MODEL_CODEX=gpt-5.4-mini
-GIT_COMMIT_PROMPT="Conventional Commits形式で日本語で書いて"
-GIT_PR_PROMPT="Summaryセクションを含めて"
-```
+- Claude セッションでは `SdkProcess.model` を優先
+- Codex セッションでは `session.codexSettings.model` を優先
+- model が取れない場合は CLI デフォルトにフォールバック
 
 ### 注意点
 
@@ -211,18 +190,22 @@ GIT_PR_PROMPT="Summaryセクションを含めて"
 {
   "type": "git_commit",
   "projectPath": "/home/user/project",
+  "sessionId": "s-1234",
   "message": "feat: add login screen",
   "autoGenerate": false
 }
 ```
+
+- `autoGenerate: true` のときのみ `sessionId` 必須
+- `sessionId` に対応するアクティブセッションの provider で commit message を生成する
+- `projectPath` はそのセッションの `worktreePath ?? projectPath` と一致している必要がある
 
 #### `git_push` — リモートへpush
 
 ```json
 {
   "type": "git_push",
-  "projectPath": "/home/user/project",
-  "forceLease": false
+  "projectPath": "/home/user/project"
 }
 ```
 
@@ -264,8 +247,7 @@ GIT_PR_PROMPT="Summaryセクションを含めて"
 ```json
 {
   "type": "git_branches",
-  "projectPath": "/home/user/project",
-  "query": "feat"
+  "projectPath": "/home/user/project"
 }
 ```
 
@@ -317,9 +299,7 @@ GIT_PR_PROMPT="Summaryセクションを含めて"
 ```json
 {
   "type": "git_push_result",
-  "success": true,
-  "remote": "origin",
-  "branch": "feat/login"
+  "success": true
 }
 ```
 

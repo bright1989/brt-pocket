@@ -10,7 +10,7 @@ import {
   unstageFiles,
   unstageHunks,
   gitCommit,
-  gitStatus,
+  getStagedDiff,
   listBranches,
   createBranch,
   checkoutBranch,
@@ -298,7 +298,7 @@ describe("gitCommit", () => {
   });
 });
 
-describe("gitStatus", () => {
+describe("getStagedDiff", () => {
   let repo: string;
 
   beforeEach(() => {
@@ -308,27 +308,19 @@ describe("gitStatus", () => {
     rmSync(repo, { recursive: true, force: true });
   });
 
-  it("categorizes files correctly", () => {
-    // Create staged, unstaged, and untracked files
-    writeFileSync(join(repo, "staged.txt"), "staged\n");
-    execFileSync("git", ["add", "staged.txt"], { cwd: repo });
+  it("returns only staged changes", () => {
+    writeFileSync(join(repo, "initial.txt"), "staged\n");
+    execFileSync("git", ["add", "initial.txt"], { cwd: repo });
+    writeFileSync(join(repo, "other.txt"), "unstaged\n");
 
-    writeFileSync(join(repo, "initial.txt"), "modified\n"); // unstaged (tracked, modified)
+    const diff = getStagedDiff(repo);
 
-    writeFileSync(join(repo, "untracked.txt"), "new\n"); // untracked
-
-    const status = gitStatus(repo);
-
-    expect(status.staged).toContain("staged.txt");
-    expect(status.unstaged).toContain("initial.txt");
-    expect(status.untracked).toContain("untracked.txt");
+    expect(diff).toContain("+++ b/initial.txt");
+    expect(diff).not.toContain("other.txt");
   });
 
-  it("returns empty arrays for clean repo", () => {
-    const status = gitStatus(repo);
-    expect(status.staged).toEqual([]);
-    expect(status.unstaged).toEqual([]);
-    expect(status.untracked).toEqual([]);
+  it("returns empty string for clean repo", () => {
+    expect(getStagedDiff(repo)).toBe("");
   });
 });
 
@@ -356,27 +348,6 @@ describe("listBranches", () => {
     expect(result.branches).toContain("feat/signup");
     expect(result.branches).toContain("fix/bug");
     expect(result.branches.length).toBeGreaterThanOrEqual(4); // main + 3 created
-  });
-
-  it("filters branches by query", () => {
-    const result = listBranches(repo, "feat");
-
-    expect(result.branches).toContain("feat/login");
-    expect(result.branches).toContain("feat/signup");
-    expect(result.branches).not.toContain("fix/bug");
-  });
-
-  it("query is case-insensitive", () => {
-    const result = listBranches(repo, "FEAT");
-
-    expect(result.branches).toContain("feat/login");
-    expect(result.branches).toContain("feat/signup");
-  });
-
-  it("returns empty branches for no match", () => {
-    const result = listBranches(repo, "nonexistent");
-
-    expect(result.branches).toEqual([]);
   });
 
   it("includes ahead/behind status for branches with upstream", () => {

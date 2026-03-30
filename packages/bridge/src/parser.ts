@@ -227,12 +227,12 @@ export type ClientMessage =
   | {
       type: "git_commit";
       projectPath: string;
+      sessionId?: string;
       message?: string;
       autoGenerate?: boolean;
     }
-  | { type: "git_push"; projectPath: string; forceLease?: boolean }
-  | { type: "git_status"; projectPath: string }
-  | { type: "git_branches"; projectPath: string; query?: string }
+  | { type: "git_push"; projectPath: string }
+  | { type: "git_branches"; projectPath: string }
   | {
       type: "git_create_branch";
       projectPath: string;
@@ -489,15 +489,7 @@ export type ServerMessage =
   | {
       type: "git_push_result";
       success: boolean;
-      remote?: string;
-      branch?: string;
       error?: string;
-    }
-  | {
-      type: "git_status_result";
-      staged: string[];
-      unstaged: string[];
-      untracked: string[];
     }
   | {
       type: "git_branches_result";
@@ -569,6 +561,10 @@ export function parseClientMessage(data: string): ClientMessage | null {
   try {
     const msg = JSON.parse(data) as Record<string, unknown>;
     if (!msg.type || typeof msg.type !== "string") return null;
+    const hasOnlyKeys = (allowedKeys: readonly string[]): boolean => {
+      const allowed = new Set(allowedKeys);
+      return Object.keys(msg).every((key) => allowed.has(key));
+    };
 
     switch (msg.type) {
       case "start":
@@ -921,7 +917,19 @@ export function parseClientMessage(data: string): ClientMessage | null {
         }
         break;
       case "git_commit":
+        if (
+          !hasOnlyKeys([
+            "type",
+            "projectPath",
+            "sessionId",
+            "message",
+            "autoGenerate",
+          ])
+        )
+          return null;
         if (typeof msg.projectPath !== "string") return null;
+        if (msg.sessionId !== undefined && typeof msg.sessionId !== "string")
+          return null;
         if (msg.message !== undefined && typeof msg.message !== "string")
           return null;
         if (
@@ -931,17 +939,12 @@ export function parseClientMessage(data: string): ClientMessage | null {
           return null;
         break;
       case "git_push":
-        if (typeof msg.projectPath !== "string") return null;
-        if (msg.forceLease !== undefined && typeof msg.forceLease !== "boolean")
-          return null;
-        break;
-      case "git_status":
+        if (!hasOnlyKeys(["type", "projectPath"])) return null;
         if (typeof msg.projectPath !== "string") return null;
         break;
       case "git_branches":
+        if (!hasOnlyKeys(["type", "projectPath"])) return null;
         if (typeof msg.projectPath !== "string") return null;
-        if (msg.query !== undefined && typeof msg.query !== "string")
-          return null;
         break;
       case "git_create_branch":
         if (typeof msg.projectPath !== "string") return null;

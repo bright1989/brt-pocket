@@ -317,36 +317,10 @@ void main() {
       final msg = ServerMessage.fromJson({
         'type': 'git_push_result',
         'success': true,
-        'remote': 'origin',
-        'branch': 'feat/login',
       });
       final r = msg as GitPushResultMessage;
       expect(r.success, isTrue);
-      expect(r.remote, 'origin');
-      expect(r.branch, 'feat/login');
-    });
-  });
-
-  group('GitStatusResultMessage', () {
-    test('parses status with all categories', () {
-      final msg = ServerMessage.fromJson({
-        'type': 'git_status_result',
-        'staged': ['a.txt'],
-        'unstaged': ['b.txt'],
-        'untracked': ['c.txt'],
-      });
-      final r = msg as GitStatusResultMessage;
-      expect(r.staged, ['a.txt']);
-      expect(r.unstaged, ['b.txt']);
-      expect(r.untracked, ['c.txt']);
-    });
-
-    test('handles missing arrays', () {
-      final msg = ServerMessage.fromJson({'type': 'git_status_result'});
-      final r = msg as GitStatusResultMessage;
-      expect(r.staged, isEmpty);
-      expect(r.unstaged, isEmpty);
-      expect(r.untracked, isEmpty);
+      expect(r.error, isNull);
     });
   });
 
@@ -475,6 +449,17 @@ void main() {
       expect(json['autoGenerate'], isTrue);
     });
 
+    test('gitCommit with sessionId', () {
+      final msg = ClientMessage.gitCommit(
+        '/p',
+        sessionId: 's-1',
+        autoGenerate: true,
+      );
+      final json = jsonDecode(msg.toJson()) as Map<String, dynamic>;
+      expect(json['sessionId'], 's-1');
+      expect(json['autoGenerate'], isTrue);
+    });
+
     test('gitPush', () {
       final msg = ClientMessage.gitPush('/p');
       final json = jsonDecode(msg.toJson()) as Map<String, dynamic>;
@@ -482,24 +467,11 @@ void main() {
       expect(json['projectPath'], '/p');
     });
 
-    test('gitPush with forceLease', () {
-      final msg = ClientMessage.gitPush('/p', forceLease: true);
-      final json = jsonDecode(msg.toJson()) as Map<String, dynamic>;
-      expect(json['forceLease'], isTrue);
-    });
-
-    test('gitStatus', () {
-      final msg = ClientMessage.gitStatus('/p');
-      final json = jsonDecode(msg.toJson()) as Map<String, dynamic>;
-      expect(json['type'], 'git_status');
-      expect(json['projectPath'], '/p');
-    });
-
     test('gitBranches', () {
-      final msg = ClientMessage.gitBranches('/p', query: 'feat');
+      final msg = ClientMessage.gitBranches('/p');
       final json = jsonDecode(msg.toJson()) as Map<String, dynamic>;
       expect(json['type'], 'git_branches');
-      expect(json['query'], 'feat');
+      expect(json['projectPath'], '/p');
     });
 
     test('gitCreateBranch', () {

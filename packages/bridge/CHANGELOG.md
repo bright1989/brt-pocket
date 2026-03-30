@@ -2,6 +2,17 @@
 
 All notable changes to `@ccpocket/bridge` will be documented in this file.
 
+## [1.31.0] - 2026-03-30
+
+### Added
+- Auto-generate staged commit messages via the active Claude/Codex session provider
+
+### Changed
+- `git_commit` now requires `sessionId` when `autoGenerate=true`
+
+### Removed
+- Unused post-1.30.0 git API surface: `git_status`, `git_status_result`, `git_branches.query`, `git_push.forceLease`, `git_push_result.remote`, `git_push_result.branch`
+
 ## [1.30.0] - 2026-03-29
 
 ### Added

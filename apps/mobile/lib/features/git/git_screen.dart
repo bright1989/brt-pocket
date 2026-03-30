@@ -67,8 +67,11 @@ class GitScreen extends StatelessWidget {
         ),
         if (isProjectMode)
           BlocProvider(
-            create: (_) =>
-                CommitCubit(bridge: bridge, projectPath: projectPath!),
+            create: (_) => CommitCubit(
+              bridge: bridge,
+              projectPath: projectPath!,
+              sessionId: sessionId,
+            ),
           ),
       ],
       child: _GitScreenBody(title: title, isProjectMode: isProjectMode),

@@ -74,12 +74,6 @@ class MockBridgeService extends BridgeService {
       .cast<GitPushResultMessage>();
 
   @override
-  Stream<GitStatusResultMessage> get gitStatusResults => _mockMessageController
-      .stream
-      .where((m) => m is GitStatusResultMessage)
-      .cast<GitStatusResultMessage>();
-
-  @override
   Stream<GitBranchesResultMessage> get gitBranchesResults =>
       _mockMessageController.stream
           .where((m) => m is GitBranchesResultMessage)
@@ -275,20 +269,7 @@ class MockBridgeService extends BridgeService {
       case 'git_push':
         _scheduleMessage(
           const Duration(milliseconds: 600),
-          const GitPushResultMessage(
-            success: true,
-            remote: 'origin',
-            branch: 'feat/mock',
-          ),
-        );
-      case 'git_status':
-        _scheduleMessage(
-          const Duration(milliseconds: 200),
-          const GitStatusResultMessage(
-            staged: ['lib/main.dart', 'lib/app.dart'],
-            unstaged: ['lib/screen.dart'],
-            untracked: ['lib/new_file.dart'],
-          ),
+          const GitPushResultMessage(success: true),
         );
       case 'git_branches':
         _scheduleMessage(

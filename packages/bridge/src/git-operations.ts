@@ -14,17 +14,6 @@ export interface CommitResult {
   message: string;
 }
 
-export interface PushResult {
-  remote: string;
-  branch: string;
-}
-
-export interface GitStatusResult {
-  staged: string[];
-  unstaged: string[];
-  untracked: string[];
-}
-
 export interface BranchRemoteStatus {
   ahead: number;
   behind: number;
@@ -170,65 +159,34 @@ export function gitCommit(projectPath: string, message: string): CommitResult {
   return { hash, message };
 }
 
-/** Push to remote. */
-export function gitPush(projectPath: string, forceLease?: boolean): PushResult {
+/** Return staged diff content for commit-message generation. */
+export function getStagedDiff(projectPath: string): string {
   const cwd = resolveProject(projectPath);
-  const branch = git(["rev-parse", "--abbrev-ref", "HEAD"], cwd);
-
-  const args = ["push", "--set-upstream", "origin", branch];
-  if (forceLease) {
-    args.splice(1, 0, "--force-with-lease");
-  }
-
-  execFileSync("git", args, { cwd, encoding: "utf-8" });
-  return { remote: "origin", branch };
-}
-
-/** Get git status categorized into staged, unstaged, and untracked files. */
-export function gitStatus(projectPath: string): GitStatusResult {
-  const cwd = resolveProject(projectPath);
-  // Do NOT use git() helper here — its trim() strips leading spaces from porcelain output
-  const raw = execFileSync("git", ["status", "--porcelain"], {
+  return execFileSync("git", ["diff", "--cached", "--no-color"], {
     cwd,
     encoding: "utf-8",
   });
-  const output = raw.trimEnd();
+}
 
-  const staged: string[] = [];
-  const unstaged: string[] = [];
-  const untracked: string[] = [];
-
-  if (!output) return { staged, unstaged, untracked };
-
-  for (const line of output.split("\n")) {
-    if (!line || line.length < 3) continue;
-    const x = line[0]; // index status
-    const y = line[1]; // working tree status
-    const file = line.slice(3);
-
-    if (x === "?" && y === "?") {
-      untracked.push(file);
-    } else {
-      if (x !== " " && x !== "?") staged.push(file);
-      if (y !== " " && y !== "?") unstaged.push(file);
-    }
-  }
-
-  return { staged, unstaged, untracked };
+/** Push to remote. */
+export function gitPush(projectPath: string): void {
+  const cwd = resolveProject(projectPath);
+  const branch = git(["rev-parse", "--abbrev-ref", "HEAD"], cwd);
+  execFileSync("git", ["push", "--set-upstream", "origin", branch], {
+    cwd,
+    encoding: "utf-8",
+  });
 }
 
 // ---- Phase 3: Branch Operations ----
 
-/** List branches, optionally filtered by query. Also returns branches checked out by worktrees. */
-export function listBranches(
-  projectPath: string,
-  query?: string,
-): BranchListResult {
+/** List branches and branches checked out by worktrees. */
+export function listBranches(projectPath: string): BranchListResult {
   const cwd = resolveProject(projectPath);
   const current = git(["rev-parse", "--abbrev-ref", "HEAD"], cwd);
 
   const output = git(["branch", "--list", "--format=%(refname:short)"], cwd);
-  let branches = output ? output.split("\n").filter(Boolean) : [];
+  const branches = output ? output.split("\n").filter(Boolean) : [];
 
   // Collect branches checked out by worktrees (+ main repo)
   const checkedOutBranches: string[] = [];
@@ -247,11 +205,6 @@ export function listBranches(
     }
   } catch {
     /* ignore if worktree command fails */
-  }
-
-  if (query) {
-    const q = query.toLowerCase();
-    branches = branches.filter((b) => b.toLowerCase().includes(q));
   }
 
   const remoteStatusByBranch = Object.fromEntries(
