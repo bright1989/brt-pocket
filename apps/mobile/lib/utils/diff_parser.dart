@@ -444,11 +444,23 @@ class DiffSelection {
   /// the diff screen.
   final Set<String> selectedHunkKeys;
 
+  /// Whether this is a "Request Change" action (send file/hunk back to AI).
+  final bool requestChange;
+
   const DiffSelection({
     required this.mentions,
     required this.diffText,
     this.selectedHunkKeys = const {},
+    this.requestChange = false,
   });
+
+  /// Convenience constructor for Request Change from the context menu.
+  DiffSelection.forRequestChange({
+    required String diff,
+    required this.selectedHunkKeys,
+  })  : mentions = const [],
+        diffText = diff,
+        requestChange = true;
 
   bool get isEmpty => mentions.isEmpty && diffText.isEmpty;
 }

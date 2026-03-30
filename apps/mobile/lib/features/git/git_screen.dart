@@ -216,13 +216,96 @@ class _GitScreenBody extends StatelessWidget {
                   ? cubit.revertFile
                   : null,
               // Long-press to enter selection mode
-              onLongPressFile: isProjectMode && !state.selectionMode
-                  ? (fileIdx) {
-                      cubit.toggleSelectionMode();
-                      cubit.toggleFileSelection(fileIdx);
-                    }
+              onLongPressFile: isProjectMode
+                  ? (fileIdx) => _showFileActionSheet(
+                        context, cubit, state, fileIdx)
+
                   : null,
             ),
+    );
+  }
+
+  void _showFileActionSheet(
+    BuildContext context,
+    GitViewCubit cubit,
+    GitViewState state,
+    int fileIdx,
+  ) {
+    if (fileIdx >= state.files.length) return;
+    final file = state.files[fileIdx];
+    final cs = Theme.of(context).colorScheme;
+    final isStaged = state.viewMode == GitViewMode.staged;
+
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                file.filePath,
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Divider(height: 1),
+            // Stage (only in Changes tab)
+            if (!isStaged)
+              ListTile(
+                leading: Icon(Icons.add_circle_outline, color: cs.primary),
+                title: const Text('Stage'),
+                onTap: () {
+                  Navigator.pop(context);
+                  cubit.stageFile(fileIdx);
+                },
+              ),
+            // Unstage (only in Staged tab)
+            if (isStaged)
+              ListTile(
+                leading: Icon(Icons.remove_circle_outline, color: cs.tertiary),
+                title: const Text('Unstage'),
+                onTap: () {
+                  Navigator.pop(context);
+                  cubit.unstageFile(fileIdx);
+                },
+              ),
+            // Revert (only in Changes tab)
+            if (!isStaged)
+              ListTile(
+                leading: Icon(Icons.undo, color: cs.error),
+                title: const Text('Revert'),
+                subtitle: const Text('Discard all changes in this file'),
+                onTap: () {
+                  Navigator.pop(context);
+                  cubit.revertFile(fileIdx);
+                },
+              ),
+            // Request Change (always available)
+            ListTile(
+              leading: Icon(Icons.rate_review_outlined, color: cs.secondary),
+              title: const Text('Request Change'),
+              subtitle: const Text('Send this file back to AI with feedback'),
+              onTap: () {
+                Navigator.pop(context);
+                final hunkKeys = Set<String>.from(
+                  List.generate(file.hunks.length, (i) => '$fileIdx:$i'),
+                );
+                final selection = reconstructDiff(state.files, hunkKeys);
+                context.router.maybePop(DiffSelection.forRequestChange(
+                  diff: selection.diffText,
+                  selectedHunkKeys: hunkKeys,
+                ));
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
