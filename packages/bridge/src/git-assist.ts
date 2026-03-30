@@ -7,6 +7,7 @@ import { getStagedDiff } from "./git-operations.js";
 
 const COMMIT_MESSAGE_PROMPT =
   "Write a single Conventional Commits message in English for the staged changes below. Output only the commit message, with no quotes or explanation.";
+const CODEX_COMMIT_MODEL = "gpt-5.4-mini";
 
 export interface GitAssistOptions {
   provider: Provider;
@@ -52,7 +53,7 @@ export function generateCommitMessage(options: GitAssistOptions): string {
 function runCodexCommitAssist(
   cwd: string,
   diff: string,
-  model?: string,
+  _model?: string,
 ): string {
   const outputDir = mkdtempSync(join(tmpdir(), "ccpocket-git-assist-"));
   const outputPath = join(outputDir, "last-message.txt");
@@ -60,7 +61,7 @@ function runCodexCommitAssist(
   try {
     execFileSync(
       "codex",
-      ["exec", ...(model ? ["-m", model] : []), "-o", outputPath, "-"],
+      ["exec", "-m", CODEX_COMMIT_MODEL, "-o", outputPath, "-"],
       {
         cwd,
         encoding: "utf-8",
