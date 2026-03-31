@@ -31,6 +31,7 @@ _Machine _$MachineFromJson(Map<String, dynamic> json) => _Machine(
   name: json['name'] as String?,
   host: json['host'] as String,
   port: (json['port'] as num?)?.toInt() ?? 8765,
+  useSsl: json['useSsl'] as bool? ?? false,
   hasApiKey: json['hasApiKey'] as bool? ?? false,
   lastConnected: json['lastConnected'] == null
       ? null
@@ -50,6 +51,7 @@ Map<String, dynamic> _$MachineToJson(_Machine instance) => <String, dynamic>{
   'name': instance.name,
   'host': instance.host,
   'port': instance.port,
+  'useSsl': instance.useSsl,
   'hasApiKey': instance.hasApiKey,
   'lastConnected': instance.lastConnected?.toIso8601String(),
   'isFavorite': instance.isFavorite,

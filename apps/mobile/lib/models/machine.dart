@@ -86,6 +86,9 @@ abstract class Machine with _$Machine {
     /// Bridge Server port
     @Default(8765) int port,
 
+    /// Whether to connect via secure WebSocket/HTTP
+    @Default(false) bool useSsl,
+
     /// Whether API key is stored in secure storage
     @Default(false) bool hasApiKey,
 
@@ -120,10 +123,10 @@ abstract class Machine with _$Machine {
   String get displayName => name ?? '$host:$port';
 
   /// WebSocket URL for this machine
-  String get wsUrl => 'ws://$host:$port';
+  String get wsUrl => '${useSsl ? 'wss' : 'ws'}://$host:$port';
 
   /// HTTP base URL for health checks
-  String get httpUrl => 'http://$host:$port';
+  String get httpUrl => '${useSsl ? 'https' : 'http'}://$host:$port';
 
   /// Unique key for deduplication (host:port)
   String get uniqueKey => '$host:$port';

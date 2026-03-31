@@ -62,6 +62,7 @@ class _MachineEditSheetState extends State<MachineEditSheet> {
   late final TextEditingController _sshPortController;
   late final TextEditingController _sshPasswordController;
   late final TextEditingController _sshPrivateKeyController;
+  bool _useSsl = false;
   bool _sshEnabled = false;
   SshAuthType _sshAuthType = SshAuthType.password;
   bool _isSaving = false;
@@ -93,6 +94,7 @@ class _MachineEditSheetState extends State<MachineEditSheet> {
     _sshPrivateKeyController = TextEditingController();
 
     if (m != null) {
+      _useSsl = m.useSsl;
       _sshEnabled = m.sshEnabled;
       _sshAuthType = m.sshAuthType;
     }
@@ -181,6 +183,7 @@ class _MachineEditSheetState extends State<MachineEditSheet> {
             : null,
         host: _hostController.text.trim(),
         port: int.tryParse(_portController.text) ?? 8765,
+        useSsl: _useSsl,
         sshEnabled: _sshEnabled,
         sshUsername: _sshEnabled ? _sshUsernameController.text.trim() : null,
         sshPort: int.tryParse(_sshPortController.text) ?? 22,
@@ -325,6 +328,37 @@ class _MachineEditSheetState extends State<MachineEditSheet> {
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    Container(
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: colorScheme.outlineVariant.withValues(
+                            alpha: 0.5,
+                          ),
+                        ),
+                      ),
+                      child: SwitchListTile(
+                        title: const Text(
+                          'Use secure connection',
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        subtitle: Text(
+                          'Connect with WSS and use HTTPS for health checks',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        value: _useSsl,
+                        onChanged: (v) => setState(() => _useSsl = v),
+                        secondary: const Icon(Icons.lock),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 24),

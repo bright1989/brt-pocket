@@ -82,12 +82,14 @@ class MachineManagerCubit extends Cubit<MachineManagerState> {
     required int port,
     String? apiKey,
     String? name,
+    bool? useSsl,
   }) async {
     return await _service.recordConnection(
       host: host,
       port: port,
       apiKey: apiKey,
       name: name,
+      useSsl: useSsl,
     );
   }
 
@@ -356,7 +358,8 @@ class MachineManagerCubit extends Cubit<MachineManagerState> {
     String? name,
     required String host,
     int port = 8765,
-  }) => _service.createNew(name: name, host: host, port: port);
+    bool useSsl = false,
+  }) => _service.createNew(name: name, host: host, port: port, useSsl: useSsl);
 
   /// Start periodic health check
   void startPeriodicHealthCheck() {

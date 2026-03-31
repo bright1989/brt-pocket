@@ -97,6 +97,7 @@ class MachineManagerService {
                 name: old['name'] as String?,
                 host: host,
                 port: port,
+                useSsl: old['useSsl'] as bool? ?? false,
                 hasApiKey: old['hasApiKey'] as bool? ?? false,
                 isFavorite: true, // Mark saved machines as favorites
                 sshEnabled: old['sshEnabled'] as bool? ?? false,
@@ -126,6 +127,7 @@ class MachineManagerService {
 
           final host = uri.host;
           final port = uri.hasPort ? uri.port : 8765;
+          final useSsl = uri.scheme == 'wss' || uri.scheme == 'https';
           final key = '$host:$port';
 
           if (seenKeys.add(key)) {
@@ -151,6 +153,7 @@ class MachineManagerService {
                 name: entry['name'] as String?,
                 host: host,
                 port: port,
+                useSsl: useSsl,
                 hasApiKey: apiKey != null && apiKey.isNotEmpty,
                 lastConnected: lastConnected,
                 isFavorite: false, // URL history entries are not favorites
@@ -277,6 +280,7 @@ class MachineManagerService {
     required int port,
     String? apiKey,
     String? name,
+    bool? useSsl,
   }) async {
     var machine = findByHostPort(host, port);
 
@@ -285,6 +289,7 @@ class MachineManagerService {
       machine = machine.copyWith(
         lastConnected: DateTime.now(),
         name: name ?? machine.name,
+        useSsl: useSsl ?? machine.useSsl,
       );
       final index = _machines.indexWhere((m) => m.id == machine!.id);
       if (index != -1) {
@@ -297,6 +302,7 @@ class MachineManagerService {
         host: host,
         port: port,
         name: name,
+        useSsl: useSsl ?? false,
         lastConnected: DateTime.now(),
         hasApiKey: apiKey != null && apiKey.isNotEmpty,
       );
@@ -328,8 +334,19 @@ class MachineManagerService {
   // ---- CRUD Operations ----
 
   /// Generate a new machine with unique ID
-  Machine createNew({String? name, required String host, int port = 8765}) {
-    return Machine(id: _uuid.v4(), name: name, host: host, port: port);
+  Machine createNew({
+    String? name,
+    required String host,
+    int port = 8765,
+    bool useSsl = false,
+  }) {
+    return Machine(
+      id: _uuid.v4(),
+      name: name,
+      host: host,
+      port: port,
+      useSsl: useSsl,
+    );
   }
 
   /// Add a new machine

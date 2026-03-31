@@ -48,9 +48,16 @@ class MockMachineManagerService implements MachineManagerService {
     required int port,
     String? apiKey,
     String? name,
+    bool? useSsl,
   }) async {
     calls.add('recordConnection:$host:$port');
-    return Machine(id: 'new-id', host: host, port: port, name: name);
+    return Machine(
+      id: 'new-id',
+      host: host,
+      port: port,
+      name: name,
+      useSsl: useSsl ?? false,
+    );
   }
 
   @override
@@ -107,8 +114,19 @@ class MockMachineManagerService implements MachineManagerService {
   Future<String> buildWsUrl(String machineId) async => 'ws://mock:8765';
 
   @override
-  Machine createNew({String? name, required String host, int port = 8765}) {
-    return Machine(id: 'gen-id', name: name, host: host, port: port);
+  Machine createNew({
+    String? name,
+    required String host,
+    int port = 8765,
+    bool useSsl = false,
+  }) {
+    return Machine(
+      id: 'gen-id',
+      name: name,
+      host: host,
+      port: port,
+      useSsl: useSsl,
+    );
   }
 
   @override

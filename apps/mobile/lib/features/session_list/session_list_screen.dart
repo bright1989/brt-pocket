@@ -331,6 +331,7 @@ class _SessionListScreenState extends State<SessionListScreen>
           host: uri.host,
           port: uri.port != 0 ? uri.port : 8765,
           apiKey: trimmedApiKey.isNotEmpty ? trimmedApiKey : null,
+          useSsl: uri.scheme == 'https',
         );
       }
     }
@@ -1339,21 +1340,30 @@ class _SessionListScreenState extends State<SessionListScreen>
     );
     final host = uri?.host ?? server.name;
     final port = uri?.port ?? 8765;
+    final useSsl = uri?.scheme == 'https';
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => MachineEditSheet(
-        machine: Machine(id: '', host: host, port: port, name: server.name),
+        machine: Machine(
+          id: '',
+          host: host,
+          port: port,
+          name: server.name,
+          useSsl: useSsl,
+        ),
         onSave: ({required machine, apiKey, sshPassword, sshPrivateKey}) async {
           final newMachine = cubit.createNewMachine(
             name: machine.name,
             host: machine.host,
             port: machine.port,
+            useSsl: machine.useSsl,
           );
           await cubit.addMachine(
             newMachine.copyWith(
+              useSsl: machine.useSsl,
               sshEnabled: machine.sshEnabled,
               sshUsername: machine.sshUsername,
               sshPort: machine.sshPort,
@@ -1366,7 +1376,7 @@ class _SessionListScreenState extends State<SessionListScreen>
           );
         },
         onSaveAndConnect: (machine, apiKey) {
-          _connectWithParams('ws://${machine.host}:${machine.port}', apiKey);
+          _connectWithParams(machine.wsUrl, apiKey);
         },
         onTestConnection: cubit.testConnectionWithCredentials,
       ),
@@ -1385,6 +1395,7 @@ class _SessionListScreenState extends State<SessionListScreen>
       host: m.machine.host,
       port: m.machine.port,
       apiKey: apiKey,
+      useSsl: m.machine.useSsl,
     );
 
     if (!mounted) return;
@@ -1588,9 +1599,11 @@ class _SessionListScreenState extends State<SessionListScreen>
             name: machine.name,
             host: machine.host,
             port: machine.port,
+            useSsl: machine.useSsl,
           );
           await cubit.addMachine(
             newMachine.copyWith(
+              useSsl: machine.useSsl,
               sshEnabled: machine.sshEnabled,
               sshUsername: machine.sshUsername,
               sshPort: machine.sshPort,
@@ -1603,7 +1616,7 @@ class _SessionListScreenState extends State<SessionListScreen>
           );
         },
         onSaveAndConnect: (machine, apiKey) {
-          _connectWithParams('ws://${machine.host}:${machine.port}', apiKey);
+          _connectWithParams(machine.wsUrl, apiKey);
         },
         onTestConnection: cubit.testConnectionWithCredentials,
       ),
