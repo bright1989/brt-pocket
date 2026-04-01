@@ -119,8 +119,8 @@ npx @ccpocket/bridge@latest
 
 | 设置 | 选项 | 说明 |
 |------|------|------|
-| **Execution** | `Default` / `Full Access` | 控制哪些操作需要审批 |
-| **Plan** | 开 / 关 | 独立于 Execution 模式切换规划模式 |
+| **Approval Policy** | `Untrusted` / `On Request` / `On Failure` / `Never Ask` | 控制 Codex 何时请求审批。`On Failure` 为兼容保留，已弃用。 |
+| **Plan** | 开 / 关 | 独立于 Approval Policy 切换规划模式 |
 | **Sandbox** | 开（默认）/ 关 | 在受限环境中运行，确保安全 |
 
 > Codex 默认开启 Sandbox（偏向安全）。Claude Code 默认关闭 Sandbox。

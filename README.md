@@ -119,8 +119,8 @@ In the app, choose a project, pick your AI tool, and configure session modes.
 
 | Setting | Options | Description |
 |---------|---------|-------------|
-| **Execution** | `Default` / `Full Access` | Controls which operations require approval |
-| **Plan** | On / Off | Toggle planning mode independently of execution mode |
+| **Approval Policy** | `Untrusted` / `On Request` / `On Failure` / `Never Ask` | Controls when Codex asks for approval. `On Failure` is kept for compatibility and is deprecated. |
+| **Plan** | On / Off | Toggle planning mode independently of approval policy |
 | **Sandbox** | On (default) / Off | Run in a restricted environment for safety |
 
 > Codex defaults to Sandbox On for safety. Claude Code defaults to Sandbox Off.
