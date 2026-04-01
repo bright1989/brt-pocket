@@ -668,7 +668,6 @@ class _StoreGitRouteState extends State<_StoreGitRoute> {
       value: _mockBridge,
       child: const GitScreen(
         projectPath: '/mock/shopify-app',
-        title: 'shopify-app',
       ),
     );
   }

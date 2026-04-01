@@ -1328,7 +1328,6 @@ class _StoreDiffWrapperState extends State<_StoreDiffWrapper> {
       value: _mockBridge,
       child: const GitScreen(
         projectPath: '/mock/shopify-app',
-        title: 'shopify-app',
       ),
     );
   }
