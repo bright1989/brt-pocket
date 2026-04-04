@@ -1,7 +1,7 @@
 {
   "@@locale": "en",
 
-  "appTitle": "CC Pocket",
+  "appTitle": "BrtPocket",
 
   "cancel": "Cancel",
   "save": "Save",
@@ -305,7 +305,7 @@
 
   "setupGuideTitle": "Setup Guide",
 
-  "guideAboutTitle": "What is CC Pocket?",
+  "guideAboutTitle": "What is BrtPocket?",
   "guideAboutDescription": "A mobile client that lets you control Claude Code and Codex from your smartphone.",
   "guideAboutDiagramTitle": "How it works",
   "guideAboutDiagramPhone": "iPhone",
@@ -593,10 +593,10 @@
   "terminalAppExperimental": "Preview",
   "terminalAppExperimentalNote": "This feature is in preview. Presets may not work with all apps or configurations. Contributions for new presets are welcome on GitHub!",
 
-  "sectionSpread": "ENJOYING CC POCKET?",
+  "sectionSpread": "ENJOYING BRTPOCKET?",
   "shareApp": "Share with Friends",
   "shareAppSubtitle": "Tell your friends & colleagues",
-  "shareText": "CC Pocket: Claude Code & Codex\nControl your coding agent from your phone \ud83d\udcf1\n#ccpocket\n{url}",
+  "shareText": "BrtPocket: Claude Code & Codex\nControl your coding agent from your phone \ud83d\udcf1\n#brtpocket\n{url}",
   "@shareText": {
     "placeholders": {
       "url": { "type": "String" }

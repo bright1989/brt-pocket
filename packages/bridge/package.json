@@ -39,7 +39,7 @@
     "access": "public"
   },
   "scripts": {
-    "dev": "env -u CLAUDECODE tsx src/index.ts",
+    "dev": "tsx src/dev.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "prepublishOnly": "tsc",

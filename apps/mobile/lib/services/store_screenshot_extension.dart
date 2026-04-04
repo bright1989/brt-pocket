@@ -311,7 +311,7 @@ class _StoreSessionListRouteState extends State<_StoreSessionListRoute> {
     Widget body = Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('CC Pocket'),
+        title: const Text('BrtPocket'),
         actions: [
           IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
           IconButton(icon: const Icon(Icons.collections), onPressed: () {}),
@@ -729,7 +729,7 @@ class _StoreNewSessionRouteState extends State<_StoreNewSessionRoute> {
     Widget body = Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('CC Pocket'),
+        title: const Text('BrtPocket'),
         actions: [
           IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
           IconButton(icon: const Icon(Icons.collections), onPressed: () {}),

@@ -557,7 +557,7 @@ main().catch((err) => {
   console.error("Failed to start:", err);
   process.exit(1);
 });''',
-    'README.md': '''# CC Pocket
+    'README.md': '''# BrtPocket
 
 Claude Code / Codex mobile client for iOS and Android.
 
@@ -612,7 +612,7 @@ MIT''',
 
 ## Overview
 
-CC Pocket uses a **Bridge Server** pattern to connect the mobile app
+BrtPocket uses a **Bridge Server** pattern to connect the mobile app
 to Claude Code / Codex CLIs running on a desktop machine.
 
 ## Components
@@ -657,7 +657,7 @@ void main() {
     });
 
     testWidgets('navigates to session list', (tester) async {
-      await tester.pumpWidget(const MyApp(title: 'CC Pocket'));
+      await tester.pumpWidget(const MyApp(title: 'BrtPocket'));
       expect(find.byType(SessionListScreen), findsOneWidget);
     });
   });

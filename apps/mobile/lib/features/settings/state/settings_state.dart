@@ -6,17 +6,6 @@ import '../../../models/terminal_app.dart';
 
 part 'settings_state.freezed.dart';
 
-/// Keys for FCM status messages (resolved to localized strings in the UI).
-enum FcmStatusKey {
-  unavailable,
-  bridgeNotInitialized,
-  tokenFailed,
-  enabled,
-  enabledPending,
-  disabled,
-  disabledPending,
-}
-
 /// Application-wide user settings.
 @freezed
 abstract class SettingsState with _$SettingsState {
@@ -34,23 +23,8 @@ abstract class SettingsState with _$SettingsState {
     /// Empty string means use device default.
     @Default('ja-JP') String speechLocaleId,
 
-    /// Set of Machine IDs that have push notifications enabled.
-    @Default({}) Set<String> fcmEnabledMachines,
-
-    /// Set of Machine IDs that have privacy mode enabled for push notifications.
-    @Default({}) Set<String> fcmPrivacyMachines,
-
     /// Currently connected Machine ID (null when disconnected).
     String? activeMachineId,
-
-    /// Whether Firebase Messaging is available in this runtime.
-    @Default(false) bool fcmAvailable,
-
-    /// True while token registration/unregistration is being synchronized.
-    @Default(false) bool fcmSyncInProgress,
-
-    /// Last push sync status key (resolved to localized string in UI).
-    FcmStatusKey? fcmStatusKey,
 
     /// Shorebird update track ('stable' or 'staging').
     @Default('stable') String shorebirdTrack,
@@ -67,12 +41,4 @@ abstract class SettingsState with _$SettingsState {
     /// Visible tabs (and their order) in the new session sheet.
     @Default(defaultNewSessionTabs) List<NewSessionTab> newSessionTabs,
   }) = _SettingsState;
-
-  /// Whether push notifications are enabled for the currently connected machine.
-  bool get fcmEnabled =>
-      activeMachineId != null && fcmEnabledMachines.contains(activeMachineId);
-
-  /// Whether privacy mode is enabled for the currently connected machine.
-  bool get fcmPrivacy =>
-      activeMachineId != null && fcmPrivacyMachines.contains(activeMachineId);
 }

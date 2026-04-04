@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
 import 'guide_page.dart';
 
-/// Page 1: CC Pocketとは
+/// Page 1: BrtPocketとは
 class GuidePageAbout extends StatelessWidget {
   const GuidePageAbout({super.key});
 

@@ -1,7 +1,7 @@
 {
   "@@locale": "zh",
 
-  "appTitle": "CC Pocket",
+  "appTitle": "BrtPocket",
 
   "cancel": "取消",
   "save": "保存",
@@ -329,7 +329,7 @@
 
   "setupGuideTitle": "设置指南",
 
-  "guideAboutTitle": "什么是 CC Pocket？",
+  "guideAboutTitle": "什么是 BrtPocket？",
   "guideAboutDescription": "一款可让你通过智能手机控制 Claude Code 和 Codex 的移动客户端。",
   "guideAboutDiagramTitle": "工作方式",
   "guideAboutDiagramPhone": "iPhone",
@@ -731,10 +731,10 @@
   "terminalAppExperimental": "实验性",
   "terminalAppExperimentalNote": "此功能仍为实验性功能。预设不一定适用于所有应用或配置。欢迎在 GitHub 上贡献新的预设！",
 
-  "sectionSpread": "喜欢 CC POCKET 吗？",
+  "sectionSpread": "喜欢 BRTPOCKET 吗？",
   "shareApp": "分享给朋友",
   "shareAppSubtitle": "告诉你的朋友和同事",
-  "shareText": "CC Pocket: Claude Code & Codex\n用手机控制你的编程 Agent \ud83d\udcf1\n#ccpocket\n{url}",
+  "shareText": "BrtPocket: Claude Code & Codex\n用手机控制你的编程 Agent \ud83d\udcf1\n#brtpocket\n{url}",
   "@shareText": {
     "placeholders": {
       "url": {

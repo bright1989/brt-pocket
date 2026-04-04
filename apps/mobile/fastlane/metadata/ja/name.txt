@@ -1,1 +1,1 @@
-CC Pocket: どこでもコーディング
+BrtPocket: どこでもコーディング

@@ -9,7 +9,7 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
-  String get appTitle => 'CC Pocket';
+  String get appTitle => 'BrtPocket';
 
   @override
   String get cancel => 'キャンセル';
@@ -714,7 +714,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get setupGuideTitle => 'セットアップガイド';
 
   @override
-  String get guideAboutTitle => 'CC Pocket とは';
+  String get guideAboutTitle => 'BrtPocket とは';
 
   @override
   String get guideAboutDescription =>
@@ -1389,7 +1389,7 @@ class AppLocalizationsJa extends AppLocalizations {
       'この機能はプレビュー版です。プリセットはアプリや環境によって動作しない場合があります。新しいプリセットの追加は GitHub で歓迎しています！';
 
   @override
-  String get sectionSpread => 'CC Pocket を広める';
+  String get sectionSpread => 'BrtPocket を広める';
 
   @override
   String get shareApp => 'SNSでシェア';
@@ -1399,7 +1399,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String shareText(String url) {
-    return 'CC Pocket: Claude Code & Codex\nスマホからコーディングエージェントを操作できるアプリ 📱\n#ccpocket\n$url';
+    return 'BrtPocket: Claude Code & Codex\nスマホからコーディングエージェントを操作できるアプリ 📱\n#brtpocket\n$url';
   }
 
   @override

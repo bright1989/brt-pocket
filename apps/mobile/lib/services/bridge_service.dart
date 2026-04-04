@@ -697,26 +697,6 @@ class BridgeService implements BridgeServiceBase {
     send(ClientMessage.interrupt(sessionId: sessionId));
   }
 
-  void registerPushToken({
-    required String token,
-    required String platform,
-    String? locale,
-    bool? privacyMode,
-  }) {
-    send(
-      ClientMessage.pushRegister(
-        token: token,
-        platform: platform,
-        locale: locale,
-        privacyMode: privacyMode,
-      ),
-    );
-  }
-
-  void unregisterPushToken(String token) {
-    send(ClientMessage.pushUnregister(token));
-  }
-
   /// Update the cached [_sessions] list when a [StatusMessage] arrives,
   /// so the session list screen reflects the change in real-time.
   void _patchSessionStatus(String sessionId, ProcessStatus status) {

@@ -71,6 +71,8 @@ npm-debug.log*
 
 # Agent memory (local scope)
 .claude/agent-memory-local/
+.claude/settings.local.json
+.claude/worktrees/
 
 # Playwright CLI
 .playwright-cli/

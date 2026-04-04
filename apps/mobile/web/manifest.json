@@ -1,6 +1,6 @@
 {
-    "name": "ccpocket",
-    "short_name": "ccpocket",
+    "name": "BrtPocket",
+    "short_name": "BrtPocket",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#000000",

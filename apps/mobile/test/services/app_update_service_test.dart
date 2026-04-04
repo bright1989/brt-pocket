@@ -36,7 +36,7 @@ void main() {
         final service = AppUpdateService.test(
           httpClient: client,
           packageInfoLoader: () async => PackageInfo(
-            appName: 'CC Pocket',
+            appName: 'BrtPocket',
             packageName: 'dev.test.ccpocket',
             version: '1.42.0',
             buildNumber: '72',
@@ -82,7 +82,7 @@ void main() {
       final service = AppUpdateService.test(
         httpClient: client,
         packageInfoLoader: () async => PackageInfo(
-          appName: 'CC Pocket',
+          appName: 'BrtPocket',
           packageName: 'dev.test.ccpocket',
           version: '1.42.0',
           buildNumber: '72',

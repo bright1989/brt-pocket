@@ -942,7 +942,7 @@ class _StoreSessionListWrapperState extends State<_StoreSessionListWrapper> {
         child: Scaffold(
           appBar: AppBar(
             automaticallyImplyLeading: false,
-            title: const Text('CC Pocket'),
+            title: const Text('BrtPocket'),
             actions: [
               IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
               IconButton(icon: const Icon(Icons.collections), onPressed: () {}),
@@ -1438,7 +1438,7 @@ class _StoreNewSessionWrapperState extends State<_StoreNewSessionWrapper> {
         child: Scaffold(
           appBar: AppBar(
             automaticallyImplyLeading: false,
-            title: const Text('CC Pocket'),
+            title: const Text('BrtPocket'),
             actions: [
               IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
               IconButton(icon: const Icon(Icons.collections), onPressed: () {}),

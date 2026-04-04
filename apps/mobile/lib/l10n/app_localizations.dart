@@ -103,7 +103,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In ja, this message translates to:
-  /// **'CC Pocket'**
+  /// **'BrtPocket'**
   String get appTitle;
 
   /// No description provided for @cancel.
@@ -1417,7 +1417,7 @@ abstract class AppLocalizations {
   /// No description provided for @guideAboutTitle.
   ///
   /// In ja, this message translates to:
-  /// **'CC Pocket とは'**
+  /// **'BrtPocket とは'**
   String get guideAboutTitle;
 
   /// No description provided for @guideAboutDescription.
@@ -2683,7 +2683,7 @@ abstract class AppLocalizations {
   /// No description provided for @sectionSpread.
   ///
   /// In ja, this message translates to:
-  /// **'CC Pocket を広める'**
+  /// **'BrtPocket を広める'**
   String get sectionSpread;
 
   /// No description provided for @shareApp.
@@ -2701,7 +2701,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareText.
   ///
   /// In ja, this message translates to:
-  /// **'CC Pocket: Claude Code & Codex\nスマホからコーディングエージェントを操作できるアプリ 📱\n#ccpocket\n{url}'**
+  /// **'BrtPocket: Claude Code & Codex\nスマホからコーディングエージェントを操作できるアプリ 📱\n#brtpocket\n{url}'**
   String shareText(String url);
 
   /// No description provided for @starOnGithub.

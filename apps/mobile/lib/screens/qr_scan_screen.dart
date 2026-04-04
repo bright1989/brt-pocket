@@ -40,7 +40,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
     // Invalid QR — show error but keep scanning
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Not a valid CC Pocket connection QR code'),
+        content: Text('Not a valid BrtPocket connection QR code'),
         duration: Duration(seconds: 2),
       ),
     );

@@ -1,11 +1,11 @@
 # Claude Authentication Troubleshooting
 
-CC Pocket uses the Claude Code login state stored on your Bridge machine.
+BrtPocket uses the Claude Code login state stored on your Bridge machine.
 If authentication fails, sign in to Claude Code again on that machine.
 
 ## If You Are Not Near Your Bridge Machine
 
-With CC Pocket, your Bridge machine may be a Mac mini or another Mac running at home.
+With BrtPocket, your Bridge machine may be a Mac mini or another Mac running at home.
 Even in that case, you can log back into Claude Code remotely from your phone.
 
 1. Connect to the Bridge machine from a terminal app
@@ -16,7 +16,7 @@ Even in that case, you can log back into Claude Code remotely from your phone.
 5. Complete sign-in in the browser
 6. Paste the result back into the terminal if prompted
 
-CC Pocket will use the updated login on the next request.
+BrtPocket will use the updated login on the next request.
 
 ## If You Are Near Your Bridge Machine
 

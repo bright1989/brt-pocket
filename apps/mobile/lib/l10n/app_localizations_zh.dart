@@ -9,7 +9,7 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appTitle => 'CC Pocket';
+  String get appTitle => 'BrtPocket';
 
   @override
   String get cancel => '取消';
@@ -708,7 +708,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get setupGuideTitle => '设置指南';
 
   @override
-  String get guideAboutTitle => '什么是 CC Pocket？';
+  String get guideAboutTitle => '什么是 BrtPocket？';
 
   @override
   String get guideAboutDescription =>
@@ -1374,7 +1374,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '此功能仍为实验性功能。预设不一定适用于所有应用或配置。欢迎在 GitHub 上贡献新的预设！';
 
   @override
-  String get sectionSpread => '喜欢 CC POCKET 吗？';
+  String get sectionSpread => '喜欢 BRTPOCKET 吗？';
 
   @override
   String get shareApp => '分享给朋友';
@@ -1384,7 +1384,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String shareText(String url) {
-    return 'CC Pocket: Claude Code & Codex\n用手机控制你的编程 Agent 📱\n#ccpocket\n$url';
+    return 'BrtPocket: Claude Code & Codex\n用手机控制你的编程 Agent 📱\n#brtpocket\n$url';
   }
 
   @override
