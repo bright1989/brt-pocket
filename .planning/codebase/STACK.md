@@ -1,225 +1,94 @@
-# Technology Stack
+# 技术栈
 
-**Analysis Date:** 2026-04-02
+**分析日期：** 2026-04-04
 
-## Languages
+## 语言与运行时
 
-**Primary:**
-- TypeScript 5.7+ -- Bridge Server (`packages/bridge/src/`), Firebase Cloud Functions (`functions/src/`)
-- Dart (SDK ^3.11.0) -- Flutter Mobile App (`apps/mobile/lib/`)
+| 层级 | 语言 | 运行时 |
+|------|------|--------|
+| 移动端 | Dart 3.11+ | Flutter |
+| Bridge 服务器 | TypeScript 5.7+ | Node.js >=18.0.0 |
+| Firebase Functions | TypeScript | Firebase Cloud Functions |
 
-**Secondary:**
-- Kotlin -- Android native configuration (`apps/mobile/android/app/build.gradle.kts`)
-- Swift/Objective-C -- iOS/macOS native layers (platform plugins, CocoaPods)
-- YAML -- CI workflows (`.github/workflows/`), Flutter config (`pubspec.yaml`)
+## 核心框架
 
-## Runtime
+- **Flutter** — 跨平台移动 UI（iOS/Android）
+- **Flutter BLoC** (`flutter_bloc ^9.1.0`) — 状态管理（Cubit 模式）
+- **auto_route** (`^11.1.0`) — 声明式路由
+- **freezed** (`^3.1.0`) — 不可变数据模型 + 联合类型
+- **flutter_hooks** (`^0.21.3+1`) — Hook 式 Widget 构建
+- **WebSocket** (`web_socket_channel ^3.0.3`, `ws ^8.18.0`) — 实时双向通信
 
-**Node.js:**
-- Version: 22 (specified in `.mise.toml`, `packages/bridge/package.json` engines, `functions/package.json` engines)
-- Current system: v22.22.2
-- Module system: ESM (type: module in both bridge and functions)
+## 关键依赖
 
-**Dart/Flutter:**
-- Dart SDK: ^3.11.0
-- Flutter: 3.41.5 (specified in `.mise.toml`)
-- Package Manager: pub (Flutter built-in)
+### 移动端（`apps/mobile/pubspec.yaml`）
 
-**Package Managers:**
-- npm workspaces (monorepo root `package.json` manages `packages/*`)
-- Lockfile: `package-lock.json` present at root
-- pub: `pubspec.lock` at `apps/mobile/pubspec.lock`)
+| 包 | 版本 | 用途 |
+|----|------|------|
+| `web_socket_channel` | ^3.0.3 | WebSocket 客户端 |
+| `marionette_flutter` | ^0.4.0 | Marionette 桌面通信协议 |
+| `shared_preferences` | ^2.5.0 | 本地 KV 存储 |
+| `sqflite` | ^2.4.2 | 本地 SQLite 数据库 |
+| `flutter_local_notifications` | ^20.0.0 | 本地通知 |
+| `flutter_markdown` | ^0.7.7+1 | Markdown 渲染 |
+| `google_fonts` | ^8.0.0 | 字体加载 |
+| `bonsoir` | ^6.0.1 | mDNS 服务发现（Bonjour） |
+| `mobile_scanner` | ^7.1.4 | 二维码扫描 |
+| `speech_to_text` | ^7.3.0 | 语音输入 |
+| `http` | ^1.6.0 | HTTP 客户端 |
+| `dartssh2` | ^2.10.0 | SSH 连接 |
+| `flutter_secure_storage` | ^10.0.0 | 安全存储 |
+| `firebase_core` | ^4.4.0 | Firebase 核心 |
+| `firebase_messaging` | ^16.1.1 | Firebase 推送通知 |
+| `shorebird_code_push` | ^2.0.5 | OTA 热更新 |
+| `highlight` / `syntax_highlight` | ^0.7.0 / ^0.5.0 | 代码语法高亮 |
+| `super_drag_and_drop` | ^0.9.1 | 跨应用拖放 |
+| `in_app_review` | ^2.0.11 | 应用内评分 |
 
-## Frameworks
+### Bridge 服务器（`packages/bridge/package.json`）
 
-**Core - Bridge Server:**
-- ws ^8.18.0 -- WebSocket server
-- @anthropic-ai/claude-agent-sdk ^0.2.74 -- Claude Code CLI integration via SDK
-- Node.js native `http` module -- HTTP server for health/version/usage endpoints
+| 包 | 版本 | 用途 |
+|----|------|------|
+| `@anthropic-ai/claude-agent-sdk` | ^0.2.74 | Claude Code Agent SDK |
+| `ws` | ^8.18.0 | WebSocket 服务器 |
+| `bonjour-service` | ^1.3.0 | mDNS 服务发布 |
+| `qrcode` | ^1.5.4 | 二维码生成 |
+| `socks` | ^2.8.7 | SOCKS 代理支持 |
+| `undici` | ^7.24.4 | HTTP 客户端 |
 
-**Core - Flutter Mobile App:**
-- flutter_bloc ^9.1.0 -- State management (Cubit pattern)
-- flutter_hooks ^0.21.3+1 -- React-like hooks for widgets
-- auto_route ^11.1.0 -- Declarative routing with code generation
-- freezed_annotation ^3.1.0 -- Immutable union types and data classes
-- json_annotation ^4.9.0 -- JSON serialization
+### 开发依赖
 
-**Core - Firebase Cloud Functions:**
-- firebase-functions ^6.6.0 -- Cloud Functions v2 (HTTPS trigger)
-- firebase-admin ^13.6.0 -- Admin SDK (Auth, Firestore, Messaging)
+| 工具 | 用途 |
+|------|------|
+| `vitest ^4.0.18` | Bridge 单元测试 |
+| `@vitest/coverage-v8 ^4.0.18` | 测试覆盖率 |
+| `bloc_test ^10.0.0` | BLoC 状态测试 |
+| `patrol_finders ^3.1.0` | UI 测试 Finder |
+| `build_runner ^2.5.4` | 代码生成（freezed, json_serializable, auto_route） |
 
-## Testing
+## 项目结构模式
 
-**Bridge Server:**
-- Vitest ^4.0.18 -- Test runner and assertion library
-- @vitest/coverage-v8 ^4.0.18 -- Code coverage via V8
-- Config: `packages/bridge/vitest.config.ts` (node environment, `src/**/*.test.ts`)
+- **Monorepo** — npm workspaces（`packages/*`）
+- **多应用** — `apps/mobile/`（Flutter） + `packages/bridge/`（Node.js） + `functions/`（Firebase）
+- **代码生成** — freezed + json_serializable + auto_route_generator
 
-**Flutter Mobile App:**
-- flutter_test -- Built-in Flutter widget/unit testing
-- bloc_test ^10.0.0 -- BLoC/Cubit state testing
-- patrol_finders ^3.1.0 -- UI integration testing (Patrol)
-- flutter_driver -- Deprecated driver testing (still listed as dev dep)
+## 版本信息
 
-## Build Tools and Dev Dependencies
+- **应用版本：** 1.53.0+89
+- **Bridge 版本：** 1.33.0
+- **Dart SDK：** ^3.11.0
+- **许可证：** FSL-1.1-MIT（应用）/ MIT（Bridge 包）
 
-**Bridge Server:**
-- tsx ^4.19.0 -- TypeScript execution in development
-- typescript ^5.7.0 -- Compiler (`tsc` for builds)
-- Target: ES2022, module: NodeNext, moduleResolution: NodeNext
-- Strict mode enabled
+## 配置文件
 
-**Flutter Mobile App:**
-- build_runner ^2.5.4 -- Code generation (Freezed, json_serializable, auto_route)
-- freezed ^3.1.0 -- Code generator for immutable classes
-- json_serializable ^6.9.5 -- JSON serialization code generator
-- auto_route_generator ^10.4.0 -- Route code generator
-- flutter_launcher_icons ^0.13.1 -- App icon generation
-- flutter_lints ^6.0.0 -- Recommended lint rules
-
-## Key Dependencies
-
-### Bridge Server - Production
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| @anthropic-ai/claude-agent-sdk | ^0.2.74 | Claude Code CLI process management |
-| ws | ^8.18.0 | WebSocket server |
-| bonjour-service | ^1.3.0 | mDNS advertisement (local network discovery) |
-| qrcode | ^1.5.4 | QR code generation for connection URL |
-| socks | ^2.8.7 | SOCKS4/SOCKS5 proxy support |
-| undici | ^7.24.4 | HTTP proxy agent for global fetch |
-
-### Bridge Server - Development
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| @types/node | ^22.0.0 | Node.js type definitions |
-| @types/qrcode | ^1.5.6 | QR code type definitions |
-| @types/ws | ^8.5.0 | WebSocket type definitions |
-
-### Flutter Mobile App - Production (key packages)
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| web_socket_channel | ^3.0.3 | WebSocket client for Bridge communication |
-| shared_preferences | ^2.5.0 | Local key-value persistence |
-| sqflite | ^2.4.2 | Local SQLite database (prompt history) |
-| flutter_local_notifications | ^20.0.0 | Local push notification display |
-| firebase_core | ^4.4.0 | Firebase initialization |
-| firebase_messaging | ^16.1.1 | FCM push notification handling |
-| bonsoir | ^6.0.1 | mDNS service discovery (find Bridge on LAN) |
-| mobile_scanner | ^7.1.4 | QR code scanning for connection setup |
-| speech_to_text | ^7.3.0 | Voice input for messages |
-| http | ^1.6.0 | HTTP client (usage checks, GitHub API) |
-| flutter_markdown | ^0.7.7+1 | Markdown rendering in chat |
-| google_fonts | ^8.0.0 | Custom typography (Space Grotesk, IBM Plex Sans) |
-| app_links | ^7.0.0 | Deep link handling (ccpocket://) |
-| share_plus | ^12.0.1 | Native share sheet |
-| image_picker | ^1.1.2 | Camera/gallery image selection |
-| dartssh2 | ^2.10.0 | SSH client for remote Bridge management |
-| flutter_secure_storage | ^10.0.0 | Secure credential storage |
-| shorebird_code_push | ^2.0.5 | OTA update delivery |
-| talker / talker_flutter | ^5.1.13 | Logging framework |
-| marionette_flutter | ^0.4.0 | E2E testing framework |
-| auto_route | ^11.1.0 | Declarative routing |
-| flutter_slidable | ^4.0.3 | Swipeable list actions |
-| super_drag_and_drop | ^0.9.1 | Cross-platform drag and drop |
-| highlight / syntax_highlight | ^0.7.0 / ^0.5.0 | Code syntax highlighting |
-| in_app_review | ^2.0.11 | Native app review prompting |
-| extended_image | ^10.0.1 | Advanced image loading/caching |
-| skeletonizer | ^2.1.3 | Loading skeleton placeholders |
-| collection | ^1.19.1 | Additional collection utilities |
-| uuid | ^4.5.1 | UUID generation |
-| super_clipboard | ^0.9.1 | Clipboard management |
-| smooth_page_indicator | ^2.0.1 | Page indicator widgets |
-| scroll_to_index | ^3.0.1 | Scrollable list position management |
-| expandable_page_view | ^1.2.1 | PageView with dynamic children |
-| flutter_svg | ^2.0.17 | SVG rendering |
-| url_launcher | ^6.3.1 | External URL opening |
-| package_info_plus | ^9.0.0 | App version/access info |
-| flutter_bloc | ^9.1.0 | State management |
-| flutter_hooks | ^0.21.3+1 | Widget lifecycle hooks |
-| freezed_annotation | ^3.1.0 | Immutable data class annotations |
-| json_annotation | ^4.9.0 | JSON serialization annotations |
-| cupertino_icons | ^1.0.8 | iOS-style icons |
-
-**Dependency Overrides:**
-- `irondash_engine_context` -- Git fork from Sabbar-Engineering for 16KB page alignment (temporary until irondash/irondash#77 merges)
-
-### Firebase Cloud Functions
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| firebase-admin | ^13.6.0 | Server-side Firebase (Auth, Firestore, Messaging) |
-| firebase-functions | ^6.6.0 | HTTPS Cloud Function v2 |
-
-## Configuration
-
-**Environment Variables (Bridge Server):**
-
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| BRIDGE_PORT | 8765 | WebSocket port |
-| BRIDGE_HOST | 0.0.0.0 | Bind address |
-| BRIDGE_API_KEY | (none) | API key authentication |
-| BRIDGE_ALLOWED_DIRS | /c/Users/T490 | Allowed project directories |
-| BRIDGE_RECORDING | (none) | Session recording |
-| BRIDGE_DISABLE_MDNS | (none) | Disable mDNS advertisement |
-| DIFF_IMAGE_AUTO_DISPLAY_KB | 1024 | Diff image auto-display threshold |
-| DIFF_IMAGE_MAX_SIZE_MB | 5 | Max diff image size |
-| BRIDGE_ENABLE_USAGE | (none) | Enable Claude usage fetching |
-| HTTPS_PROXY | (none) | HTTP/SOCKS proxy |
-
-**Build Configuration:**
-- TypeScript: `packages/bridge/tsconfig.json` (strict, ES2022, NodeNext)
-- Vitest: `packages/bridge/vitest.config.ts` (node env, v8 coverage)
-- Flutter analysis: `apps/mobile/analysis_options.yaml` (flutter_lints)
-- Flutter l10n: `flutter: generate: true` with ARB files in `lib/l10n/`
-- Shorebird: `apps/mobile/shorebird.yaml` (auto_update: false)
-
-**Tool Version Management:**
-- mise (`.mise.toml`): Node 22, Flutter 3.41.5
-
-## Platform Targets
-
-**iOS:**
-- Minimum deployment: iOS 15.0 (`ios/Podfile`)
-- Signing: Codemagic CLI Tools + App Store Connect API
-- Distribution: TestFlight, App Store (via Shorebird release)
-- Bundle ID: com.k9i.ccpocket
-
-**Android:**
-- Compile SDK: flutter.compileSdkVersion
-- Java: 17 (desugaring enabled)
-- Signing: Keystore (`keystore.properties` / `keystore.jks`)
-- Distribution: Google Play internal track (draft), Shorebird release
-- Package: com.k9i.ccpocket
-- Resource configurations: en, ja, zh-rCN
-
-**macOS:**
-- Minimum deployment: macOS 11.0 (`macos/Podfile`)
-- Signing: Developer ID Application (p12 import, notarized via notarytool)
-- Distribution: GitHub Release (DMG), no Shorebird for macOS
-
-**Web:**
-- Supported with `kIsWeb` guards in services
-- Limitations: No sqflite, no local notifications, no FCM, no speech_to_text, no bonsoir
-
-## Platform Requirements
-
-**Development:**
-- Node.js 22+
-- Flutter 3.41.5
-- Dart SDK ^3.11.0
-- mise (recommended for version management)
-- npm (for Bridge Server and Cloud Functions)
-
-**Production:**
-- Bridge Server: Node.js 18+ (published to npm as `@ccpocket/bridge`)
-- Cloud Functions: Node.js 22 (Firebase Gen 2)
-- Firebase project: ccpocket-ca33b (Cloud Functions, Firestore, FCM)
+| 文件 | 用途 |
+|------|------|
+| `apps/mobile/pubspec.yaml` | Flutter 依赖声明 |
+| `packages/bridge/package.json` | Bridge 依赖声明 |
+| `functions/package.json` | Firebase Functions 依赖 |
+| `apps/mobile/shorebird.yaml` | Shorebird OTA 配置 |
+| `apps/mobile/android/gradle.properties` | Android 构建配置 |
 
 ---
 
-*Stack analysis: 2026-04-02*
+*技术栈分析：2026-04-04*
