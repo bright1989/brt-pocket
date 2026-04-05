@@ -1,7 +1,8 @@
 import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, writeFileSync, unlinkSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const PLIST_LABEL = "com.ccpocket.bridge";
 
@@ -39,15 +40,20 @@ export function setupLaunchd(opts: SetupOptions): void {
     opts.publicWsUrl ?? process.env.BRIDGE_PUBLIC_WS_URL ?? "";
   const plistPath = getPlistPath();
 
-  // Resolve the npx binary path
-  let npxPath: string;
-  try {
-    npxPath = execSync("which npx", { encoding: "utf-8" }).trim();
-  } catch {
-    console.error("ERROR: npx not found in PATH. Install Node.js first.");
+  // Resolve the project root (packages/bridge/) from this file's location
+  const __filename = fileURLToPath(import.meta.url);
+  const projectRoot = resolve(__filename, "../..");
+  const nodePath = execSync("which node", { encoding: "utf-8" }).trim();
+  const cliPath = join(projectRoot, "dist", "cli.js");
+
+  if (!existsSync(cliPath)) {
+    console.error(`ERROR: Built file not found: ${cliPath}`);
+    console.error("    Run 'npm run build' first.");
     process.exit(1);
   }
-  console.log(`==> npx: ${npxPath}`);
+
+  console.log(`==> node: ${nodePath}`);
+  console.log(`==> cli:   ${cliPath}`);
 
   // Build environment variables block
   let envBlock = `        <key>BRIDGE_PORT</key>
@@ -68,8 +74,10 @@ export function setupLaunchd(opts: SetupOptions): void {
   }
 
   // Generate plist
-  // Use zsh -li -c to inherit the user's full shell environment
-  // (mise, nvm, pyenv, Homebrew, etc.)
+  // Use the local dist/cli.js directly instead of npx @ccpocket/bridge@latest
+  // to avoid running a stale global npm-cached version. The command runs
+  // inside zsh -li so that PATH includes the node binary.
+  const startCmd = `PATH="$(dirname "${nodePath}"):$PATH" exec node "${cliPath}"`;
   const plist = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -82,7 +90,7 @@ export function setupLaunchd(opts: SetupOptions): void {
         <string>/bin/zsh</string>
         <string>-li</string>
         <string>-c</string>
-        <string>exec npx @ccpocket/bridge@latest</string>
+        <string>${startCmd}</string>
     </array>
 
     <key>EnvironmentVariables</key>

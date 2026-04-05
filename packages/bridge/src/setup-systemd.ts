@@ -1,7 +1,8 @@
 import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, writeFileSync, unlinkSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const SERVICE_NAME = "ccpocket-bridge";
 
@@ -58,21 +59,23 @@ export function setupSystemd(opts: SetupOptions): void {
     opts.publicWsUrl ?? process.env.BRIDGE_PUBLIC_WS_URL ?? "";
   const servicePath = getServicePath();
 
-  // Resolve the npx binary path
-  let npxPath: string;
-  try {
-    npxPath = execSync("command -v npx", { encoding: "utf-8" }).trim();
-  } catch {
-    console.error("ERROR: npx not found in PATH. Install Node.js first.");
-    process.exit(1);
-    return; // unreachable, but helps TypeScript and tests
-  }
-  console.log(`==> npx: ${npxPath}`);
+  const __filename = fileURLToPath(import.meta.url);
+  const projectRoot = resolve(__filename, "../..");
+  const nodePath = execSync("which node", { encoding: "utf-8" }).trim();
+  const cliPath = join(projectRoot, "dist", "cli.js");
 
-  // Resolve the directory containing npx (and node)
-  // This is needed because systemd doesn't load .bashrc, so tools like
-  // nvm/mise/volta won't add node to PATH automatically.
-  const nodeBinDir = dirname(npxPath);
+  if (!existsSync(cliPath)) {
+    console.error(`ERROR: Built file not found: ${cliPath}`);
+    console.error("    Run 'npm run build' first.");
+    process.exit(1);
+  }
+
+  console.log(`==> node: ${nodePath}`);
+  console.log(`==> cli:   ${cliPath}`);
+
+  // systemd needs PATH that includes the directory containing node.
+  // This is needed because systemd doesn't load .bashrc.
+  const nodeBinDir = dirname(nodePath);
 
   // Build environment lines
   let envLines = `Environment=PATH=${nodeBinDir}:/usr/local/bin:/usr/bin:/bin
@@ -87,16 +90,15 @@ Environment=BRIDGE_HOST=${host}`;
   }
 
   // Generate systemd user service unit
-  // Run npx directly with its full path. We set Environment=PATH to include
-  // the node bin directory so that npx can find node (since systemd doesn't
-  // load .bashrc/.profile where nvm/mise/volta set up PATH).
+  // Run the local dist/cli.js directly instead of npx @ccpocket/bridge@latest
+  // to avoid running a stale/global npm-cached version.
   const unit = `[Unit]
 Description=CC Pocket Bridge Server
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=${npxPath} @ccpocket/bridge@latest
+ExecStart=${nodePath} "${cliPath}"
 ${envLines}
 Restart=on-failure
 RestartSec=5
