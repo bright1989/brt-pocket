@@ -13,76 +13,16 @@ ERRORS=0
 
 # ── 1. Forbidden file patterns ──────────────────────────────────────────────
 # Files that should NEVER be committed regardless of content.
-FORBIDDEN_FILES=(
-  '\.env$'
-  '\.env\.local$'
-  '\.env\.production$'
-  '\.env\.development$'
-  'id_rsa$'
-  'id_ed25519$'
-  '\.pem$'
-  '\.key$'
-  '\.p12$'
-  '\.pfx$'
-  '\.keystore$'
-  '\.jks$'
-  'credentials\.json$'
-  'service-account.*\.json$'
-  'google-services\.json$'
-  'GoogleService-Info\.plist$'
-)
+# Combined into a single extended regex for one-pass matching.
+FORBIDDEN_PATTERN='(\.env|\.env\.local|\.env\.production|\.env\.development|id_rsa|id_ed25519|\.pem|\.key|\.p12|\.pfx|\.keystore|\.jks|credentials\.json|service-account.*\.json|google-services\.json|GoogleService-Info\.plist)$'
 
 # ── 2. Suspicious content patterns ──────────────────────────────────────────
-# Regex patterns that likely indicate hardcoded secrets.
-# Each entry: "pattern|description"
-SECRET_PATTERNS=(
-  'AKIA[0-9A-Z]{16}|AWS Access Key ID'
-  'sk-[a-zA-Z0-9]{20,}|OpenAI / Stripe secret key'
-  'sk-ant-[a-zA-Z0-9-]{20,}|Anthropic API key'
-  'ghp_[a-zA-Z0-9]{36}|GitHub personal access token'
-  'gho_[a-zA-Z0-9]{36}|GitHub OAuth token'
-  'github_pat_[a-zA-Z0-9_]{22,}|GitHub fine-grained PAT'
-  'xoxb-[0-9]{10,}-[0-9]{10,}-[a-zA-Z0-9]{24}|Slack bot token'
-  'xoxp-[0-9]{10,}-[0-9]{10,}-[a-zA-Z0-9]{24}|Slack user token'
-  'hooks\.slack\.com/services/T[A-Z0-9]+/B[A-Z0-9]+/[a-zA-Z0-9]+|Slack webhook URL'
-  'AIza[0-9A-Za-z_-]{35}|Google API key'
-  '-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----|Private key file'
-  'BRIDGE_API_KEY\s*=\s*["\x27][^"\x27]{8,}|Hardcoded BRIDGE_API_KEY value'
-  'password\s*[:=]\s*["\x27][^"\x27]{8,}|Hardcoded password'
-  'secret\s*[:=]\s*["\x27][^"\x27]{8,}|Hardcoded secret'
-  'token\s*[:=]\s*["\x27][^"\x27]{8,}|Hardcoded token'
-)
+# Combined into a single extended regex for one-pass matching.
+# IMPORTANT: Order matters — put longer/more specific patterns first.
+COMBINED_SECRET_PATTERN='(AKIA[0-9A-Z]{16}|sk-ant-[a-zA-Z0-9-]{20,}|sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{36}|gho_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9_]{22,}|xoxb-[0-9]{10,}-[0-9]{10,}-[a-zA-Z0-9]{24}|xoxp-[0-9]{10,}-[0-9]{10,}-[a-zA-Z0-9]{24}|hooks\.slack\.com/services/T[A-Z0-9]+/B[A-Z0-9]+/[a-zA-Z0-9]+|AIza[0-9A-Za-z_-]{35}|-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----|BRIDGE_API_KEY[[:space:]]*=[[:space:]]*["\x27][^"\x27]{8,}|password[[:space:]]*[:=][[:space:]]*["\x27][^"\x27]{8,}|secret[[:space:]]*[:=][[:space:]]*["\x27][^"\x27]{8,}|token[[:space:]]*[:=][[:space:]]*["\x27][^"\x27]{8,})'
 
 # ── 3. Allowlist ────────────────────────────────────────────────────────────
-# Patterns to ignore (template placeholders, test fixtures, etc.)
-ALLOWLIST=(
-  'YOUR_SECRET_KEY_HERE'
-  'YOUR_USERNAME'
-  'your[-_]?api[-_]?key'
-  'placeholder'
-  'example\.com'
-  'test[-_]?key'
-  'dummy'
-  'xxxx'
-  'check-secrets\.sh'     # This script itself
-  'FIREBASE_API_KEY'      # Firebase Web API key (public, not a secret)
-  'mock-id-token'         # Test fixture mock token
-)
-
-# Build grep -v pattern from allowlist
-build_allowlist_pattern() {
-  local pattern=""
-  for item in "${ALLOWLIST[@]}"; do
-    if [ -z "$pattern" ]; then
-      pattern="$item"
-    else
-      pattern="$pattern|$item"
-    fi
-  done
-  echo "$pattern"
-}
-
-ALLOWLIST_PATTERN=$(build_allowlist_pattern)
+ALLOWLIST_PATTERN='(YOUR_SECRET_KEY_HERE|YOUR_USERNAME|your[-_]?api[-_]?key|placeholder|example\.com|test[-_]?key|dummy|xxxx|check-secrets\.sh|FIREBASE_API_KEY|mock-id-token)'
 
 # ── Get staged files ────────────────────────────────────────────────────────
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null || true)
@@ -94,58 +34,35 @@ fi
 
 # ── Check 1: Forbidden files ───────────────────────────────────────────────
 echo "Checking for forbidden files..."
-for file in $STAGED_FILES; do
-  for pattern in "${FORBIDDEN_FILES[@]}"; do
-    if echo "$file" | grep -qE "$pattern"; then
-      echo -e "${RED}BLOCKED${NC}: $file matches forbidden pattern ($pattern)"
-      ERRORS=$((ERRORS + 1))
-    fi
-  done
-done
+BLOCKED=$(echo "$STAGED_FILES" | grep -E "$FORBIDDEN_PATTERN" || true)
+if [ -n "$BLOCKED" ]; then
+  while IFS= read -r file; do
+    echo -e "${RED}BLOCKED${NC}: $file matches forbidden file pattern"
+    ERRORS=$((ERRORS + 1))
+  done <<< "$BLOCKED"
+fi
 
-# ── Check 2: Secret patterns in file content ──────────────────────────────
+# ── Check 2: Secret patterns in staged content ────────────────────────────
+# Pure pipe-based approach: extract added lines from diff, grep secrets,
+# filter allowlist — all in a single pipeline (3-4 processes total).
 echo "Scanning staged content for secrets..."
-for file in $STAGED_FILES; do
-  # Skip binary files
-  if file "$file" 2>/dev/null | grep -q "binary"; then
-    continue
-  fi
+MATCHES=$(git diff --cached --diff-filter=ACMR -U0 -- . 2>/dev/null \
+  | grep -E '^\+[^+]' \
+  | grep -Ei "$COMBINED_SECRET_PATTERN" \
+  | grep -viE "$ALLOWLIST_PATTERN" \
+  || true)
 
-  # Skip files that don't exist (deleted files)
-  if [ ! -f "$file" ]; then
-    continue
-  fi
-
-  # Get staged content (not working tree)
-  STAGED_CONTENT=$(git show ":$file" 2>/dev/null || true)
-  if [ -z "$STAGED_CONTENT" ]; then
-    continue
-  fi
-
-  for entry in "${SECRET_PATTERNS[@]}"; do
-    pattern="${entry%%|*}"
-    description="${entry##*|}"
-
-    # Search staged content, filter allowlist
-    MATCHES=$(echo "$STAGED_CONTENT" \
-      | grep -nEi "$pattern" 2>/dev/null \
-      | grep -vEi "$ALLOWLIST_PATTERN" 2>/dev/null \
-      || true)
-
-    if [ -n "$MATCHES" ]; then
-      echo -e "${RED}BLOCKED${NC}: Potential secret in ${YELLOW}$file${NC}"
-      echo "  Pattern: $description"
-      echo "$MATCHES" | head -3 | while IFS= read -r line; do
-        echo "  > $line"
-      done
-      ERRORS=$((ERRORS + 1))
-    fi
+if [ -n "$MATCHES" ]; then
+  echo -e "${RED}BLOCKED${NC}: Potential secrets found in staged content:"
+  echo "$MATCHES" | head -10 | while IFS= read -r line; do
+    echo -e "  ${YELLOW}>${NC} ${line:1}"
   done
-done
+  ERRORS=$((ERRORS + 1))
+fi
 
 # ── Check 3: Large files (might be binaries / data dumps) ─────────────────
 echo "Checking for large files..."
-for file in $STAGED_FILES; do
+echo "$STAGED_FILES" | while IFS= read -r file; do
   if [ -f "$file" ]; then
     SIZE=$(wc -c < "$file" 2>/dev/null || echo 0)
     # 1MB threshold
