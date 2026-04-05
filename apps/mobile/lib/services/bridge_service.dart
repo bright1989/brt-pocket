@@ -224,20 +224,20 @@ class BridgeService implements BridgeServiceBase {
     _setBridgeConnectionState(BridgeConnectionState.connecting);
     try {
       _channel = WebSocketChannel.connect(Uri.parse(url));
-      _setBridgeConnectionState(BridgeConnectionState.connecting);      // Note: _reconnectAttempt is reset only when we receive actual data from
-      // the server (in the stream listener below).  Resetting it here would
-      // defeat the max-reconnect cap because WebSocketChannel.connect returns
-      // immediately — if the TCP handshake fails, onDone fires and calls
-      // _scheduleReconnect which sees attempt 0 again.
+      // Don't set "connected" here — WebSocketChannel.connect returns
+      // immediately before the TCP handshake completes. The state will
+      // be upgraded to "connected" when we receive the first data from
+      // the server (below).
       _flushMessageQueue();
 
       _channelSub = _channel!.stream.listen(
         (data) {
+          // First data from server confirms the connection is truly alive.
+          _setBridgeConnectionState(BridgeConnectionState.connected);
+          _reconnectAttempt = 0;
           try {
             final json = jsonDecode(data as String) as Map<String, dynamic>;
             final sessionId = json['sessionId'] as String?;
-            // First data from server confirms the connection is truly alive.
-            _reconnectAttempt = 0;
             final msg = ServerMessage.fromJson(json);
             switch (msg) {
               case SessionListMessage(
@@ -1041,16 +1041,6 @@ class BridgeService implements BridgeServiceBase {
   ///
   /// Call this when the app returns to foreground — iOS may silently kill
   /// background WebSocket connections without triggering [onDone]/[onError].
-  /// Verify WebSocket health and reconnect if the connection is stale.
-  ///
-  /// Call this when the app returns to foreground — iOS may silently kill
-  /// background WebSocket connections without triggering [onDone]/[onError].
-  ///
-  /// When the previous session exhausted max-reconnect attempts (state is
-  /// [disconnected] with [_reconnectAttempt] at the cap), a quick health
-  /// check is performed first.  If the server is unreachable we stay
-  /// [disconnected] instead of starting another reconnect cycle, avoiding
-  /// the "endless reconnecting banner" the user described.
   void ensureConnected() {
     if (_lastUrl == null) return;
     if (_connectionState == BridgeConnectionState.connected) {
@@ -1059,17 +1049,16 @@ class BridgeService implements BridgeServiceBase {
       if (_channel?.closeCode != null) {
         _scheduleReconnect();
       }
-    } else if (_connectionState == BridgeConnectionState.connected) {
-      _flushMessageQueue();
-
+    } else if (_connectionState == BridgeConnectionState.disconnected) {
       // If we gave up after max reconnect attempts, probe health first.
       if (_reconnectAttempt >= _maxReconnectAttempts) {
         _probeAndReconnect();
       } else {
         connect(_lastUrl!);
       }
+    } else if (_connectionState == BridgeConnectionState.reconnecting) {
+      // Already reconnecting — do nothing.
     }
-    // If reconnecting, do nothing — already in progress.
   }
 
   /// HTTP health-check the bridge; if reachable, reset the attempt counter
@@ -1082,8 +1071,8 @@ class BridgeService implements BridgeServiceBase {
       _reconnectAttempt = 0;
       connect(url);
     } else {
-      // If health check succeeded, reset attempt counter and connect
-
+      // Server is unreachable — stay disconnected.
+      logger.info('Health probe failed — staying disconnected');
     }
   }
 
