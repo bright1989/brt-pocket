@@ -177,25 +177,9 @@ export function buildAuthError(
  * Returns authenticated=false with a message when login is required.
  */
 async function checkClaudeAuth(): Promise<AuthCheckResult> {
-  // API key authentication — always allowed.
-  if (process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN) {
-    return { authenticated: true };
-  }
-
-  // OAuth (subscription) authentication — validate stored credentials.
-  try {
-    const status = await getClaudeAuthStatus();
-    if (status.authenticated) {
-      return { authenticated: true };
-    }
-    return {
-      authenticated: false,
-      errorCode: status.errorCode as AuthErrorCode ?? "auth_login_required",
-      message: status.message ?? "Claude Code is not authenticated.",
-    };
-  } catch (err) {
-    return buildAuthError("general", err instanceof Error ? err.message : String(err));
-  }
+  // Delegate auth to Claude CLI itself — it handles API keys, OAuth,
+  // and ~/.claude/settings.json transparently.
+  return { authenticated: true };
 }
 
 export interface StartOptions {
