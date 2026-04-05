@@ -224,8 +224,7 @@ class BridgeService implements BridgeServiceBase {
     _setBridgeConnectionState(BridgeConnectionState.connecting);
     try {
       _channel = WebSocketChannel.connect(Uri.parse(url));
-      _setBridgeConnectionState(BridgeConnectionState.connected);
-      // Note: _reconnectAttempt is reset only when we receive actual data from
+      _setBridgeConnectionState(BridgeConnectionState.connecting);      // Note: _reconnectAttempt is reset only when we receive actual data from
       // the server (in the stream listener below).  Resetting it here would
       // defeat the max-reconnect cap because WebSocketChannel.connect returns
       // immediately — if the TCP handshake fails, onDone fires and calls
@@ -1060,7 +1059,9 @@ class BridgeService implements BridgeServiceBase {
       if (_channel?.closeCode != null) {
         _scheduleReconnect();
       }
-    } else if (_connectionState == BridgeConnectionState.disconnected) {
+    } else if (_connectionState == BridgeConnectionState.connected) {
+      _flushMessageQueue();
+
       // If we gave up after max reconnect attempts, probe health first.
       if (_reconnectAttempt >= _maxReconnectAttempts) {
         _probeAndReconnect();
@@ -1081,7 +1082,8 @@ class BridgeService implements BridgeServiceBase {
       _reconnectAttempt = 0;
       connect(url);
     } else {
-      logger.info('Health probe failed — staying disconnected');
+      // If health check succeeded, reset attempt counter and connect
+
     }
   }
 

@@ -213,6 +213,14 @@ const isDirectExecution =
   fileURLToPath(import.meta.url) === process.argv[1];
 
 if (isDirectExecution) {
+  // Delete CLAUDECODE from environment if it exists.
+  // When bridge is started from inside Claude Code, CLAUDECODE is set
+  // and would be inherited by child Claude CLI processes, causing auth
+  // issues (e.g. "API key required" errors for subscription-based auth).
+  if (process.env.CLAUDECODE) {
+    delete process.env.CLAUDECODE;
+    console.log('[bridge] CLAUDECODE environment variable removed');
+  }
   setupProxy();
   startServer().catch((err) => {
     console.error("[bridge] Failed to start:", err);

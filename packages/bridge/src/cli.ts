@@ -3,6 +3,15 @@ import { setupProxy } from "./proxy.js";
 import { platform } from "node:os";
 import { startServer } from "./index.js";
 
+// Delete CLAUDECODE from environment if it exists.
+// When bridge is started from inside Claude Code, CLAUDECODE is set
+// and would be inherited by child Claude CLI processes, causing auth
+// issues (e.g. "API key required" errors for subscription-based auth).
+if (process.env.CLAUDECODE) {
+  delete process.env.CLAUDECODE;
+  console.log('[bridge] CLAUDECODE environment variable removed');
+}
+
 // Configure global fetch proxy before any network calls
 setupProxy();
 
