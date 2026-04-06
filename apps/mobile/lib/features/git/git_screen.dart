@@ -198,8 +198,8 @@ class _GitScreenBody extends StatelessWidget {
                   Navigator.pop(context);
                   _confirmRevert(
                     context,
-                    title: 'この変更を破棄しますか',
-                    message: 'このファイルの未ステージ変更をすべて破棄します。',
+                    title: AppLocalizations.of(context)!.discardChangesTitle,
+                    message: AppLocalizations.of(context)!.discardChangesMessage,
                     onConfirm: () => cubit.revertFile(fileIdx),
                   );
                 },
@@ -293,8 +293,8 @@ class _GitScreenBody extends StatelessWidget {
                   Navigator.pop(context);
                   _confirmRevert(
                     context,
-                    title: 'この変更を破棄しますか',
-                    message: 'このハンクの未ステージ変更を破棄します。',
+                    title: AppLocalizations.of(context)!.discardHunkTitle,
+                    message: AppLocalizations.of(context)!.discardHunkMessage,
                     onConfirm: () => cubit.revertHunk(fileIdx, hunkIdx),
                   );
                 },
@@ -411,8 +411,8 @@ class _GitScreenContent extends StatelessWidget {
       onSwipeRevert: isProjectMode && state.viewMode != GitViewMode.staged
           ? (fileIdx) => onConfirmRevert(
               context,
-              title: 'この変更を破棄しますか',
-              message: 'このファイルの未ステージ変更をすべて破棄します。',
+              title: AppLocalizations.of(context)!.discardChangesTitle,
+              message: AppLocalizations.of(context)!.discardChangesMessage,
               onConfirm: () => cubit.revertFile(fileIdx),
             )
           : null,
@@ -425,8 +425,8 @@ class _GitScreenContent extends StatelessWidget {
       onSwipeRevertHunk: isProjectMode && state.viewMode == GitViewMode.unstaged
           ? (fileIdx, hunkIdx) => onConfirmRevert(
               context,
-              title: 'この変更を破棄しますか',
-              message: 'このハンクの未ステージ変更を破棄します。',
+              title: AppLocalizations.of(context)!.discardHunkTitle,
+              message: AppLocalizations.of(context)!.discardHunkMessage,
               onConfirm: () => cubit.revertHunk(fileIdx, hunkIdx),
             )
           : null,

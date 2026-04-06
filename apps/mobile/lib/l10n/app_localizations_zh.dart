@@ -1395,4 +1395,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get rateOnStoreAndroid => '在 Google Play 评分';
+
+  @override
+  String get discardChangesTitle => '放弃更改';
+
+  @override
+  String get discardChangesMessage => '此操作将撤销该文件的所有更改，且不可恢复。';
+
+  @override
+  String get discardHunkTitle => '放弃代码块';
+
+  @override
+  String get discardHunkMessage => '此操作将放弃所选更改，且不可恢复。';
+
+  @override
+  String get tipGitNotAvailable => '此会话不支持 Git';
 }

@@ -54,7 +54,9 @@ class _QrScanScreenState extends State<QrScanScreen> {
       appBar: AppBar(title: const Text('Scan QR Code')),
       body: Stack(
         children: [
-          MobileScanner(controller: _controller, onDetect: _onDetect),
+          SizedBox.expand(
+            child: MobileScanner(controller: _controller, onDetect: _onDetect),
+          ),
           // Scan frame overlay
           Center(
             child: Container(

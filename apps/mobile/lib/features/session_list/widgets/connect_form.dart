@@ -132,7 +132,6 @@ class ConnectForm extends StatelessWidget {
           if (!kIsWeb && !isDesktopPlatform) ...[
             SizedBox(
               width: double.infinity,
-              height: 52,
               child: FilledButton.icon(
                 key: const ValueKey('scan_qr_button'),
                 style: FilledButton.styleFrom(
@@ -140,6 +139,7 @@ class ConnectForm extends StatelessWidget {
                     context,
                   ).colorScheme.surfaceContainerHigh,
                   foregroundColor: Theme.of(context).colorScheme.onSurface,
+                  minimumSize: const Size.fromHeight(52),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                     side: BorderSide(

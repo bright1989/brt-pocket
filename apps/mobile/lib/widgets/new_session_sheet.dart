@@ -1738,28 +1738,28 @@ class _OptionsSection extends StatelessWidget {
             label: l.model,
             icon: Icons.smart_toy_outlined,
             title: provider == Provider.claude
-                ? (selectedClaudeModel ?? claudeModels.firstOrNull ?? '')
-                : (selectedModel ?? codexModels.firstOrNull ?? ''),
+                ? (selectedClaudeModel ?? l.defaultLabel)
+                : (selectedModel ?? l.defaultLabel),
             subtitle: '',
             onTap: () {
               final models = provider == Provider.claude
                   ? claudeModels
                   : codexModels;
               final current = provider == Provider.claude
-                  ? (selectedClaudeModel ?? models.firstOrNull)
-                  : (selectedModel ?? models.firstOrNull);
+                  ? selectedClaudeModel
+                  : selectedModel;
               final onChanged = provider == Provider.claude
                   ? onClaudeModelChanged
                   : onSelectedModelChanged;
               showModeSheet<String>(
                 title: l.model,
                 subtitle: l.sheetSubtitleModel,
-                modes: models,
+                modes: ['', ...models],
                 currentMode: current ?? '',
                 iconFor: (_) => Icons.smart_toy_outlined,
-                labelFor: (m) => m,
+                labelFor: (m) => m.isEmpty ? l.defaultLabel : m,
                 descriptionFor: (_) => '',
-                onSelected: (m) => onChanged(m),
+                onSelected: (m) => onChanged(m.isEmpty ? null : m),
               );
             },
           ),

@@ -604,5 +604,11 @@
   },
   "starOnGithub": "Star on GitHub",
   "rateOnStore": "Rate on App Store",
-  "rateOnStoreAndroid": "Rate on Google Play"
+  "rateOnStoreAndroid": "Rate on Google Play",
+
+  "discardChangesTitle": "Discard Changes",
+  "discardChangesMessage": "This will revert all changes in this file. This action cannot be undone.",
+  "discardHunkTitle": "Discard Hunk",
+  "discardHunkMessage": "This will discard the selected changes. This action cannot be undone.",
+  "tipGitNotAvailable": "Git is not available for this session"
 }

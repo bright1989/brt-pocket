@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../models/messages.dart';
 import '../../theme/app_theme.dart';
 
@@ -11,8 +12,8 @@ class TipChip extends StatelessWidget {
   final SystemMessage message;
   const TipChip({super.key, required this.message});
 
-  String get _text => switch (message.tipCode) {
-    'git_not_available' => 'Git未検出 — Diff・ファイル一覧は利用できません',
+  String _text(BuildContext context) => switch (message.tipCode) {
+    'git_not_available' => AppLocalizations.of(context)!.tipGitNotAvailable,
     _ => message.subtype,
   };
 
@@ -29,7 +30,7 @@ class TipChip extends StatelessWidget {
             const SizedBox(width: 4),
             Flexible(
               child: Text(
-                _text,
+                _text(context),
                 style: TextStyle(fontSize: 12, color: appColors.subtleText),
               ),
             ),

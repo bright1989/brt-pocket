@@ -27,11 +27,13 @@ class GuidePageReady extends StatelessWidget {
           const SizedBox(height: 32),
           SizedBox(
             width: double.infinity,
-            height: 48,
             child: FilledButton.icon(
               onPressed: onGetStarted,
               icon: const Icon(Icons.arrow_forward),
               label: Text(l.guideReadyStart),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
             ),
           ),
           const SizedBox(height: 12),

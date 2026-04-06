@@ -296,7 +296,8 @@ class _SessionListScreenState extends State<SessionListScreen>
       final attempted = await context.read<BridgeService>().autoConnect(
         apiKey: apiKey,
       );
-      if (!attempted) {
+      // Always reset the auto-connecting state after attempt
+      if (mounted) {
         setState(() => _isAutoConnecting = false);
       }
     }
@@ -445,7 +446,11 @@ class _SessionListScreenState extends State<SessionListScreen>
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
       final bridge = context.read<BridgeService>();
-      bridge.ensureConnected();
+      // Only call ensureConnected if we're not in the middle of auto-connecting
+      // to avoid duplicate connection attempts on app startup
+      if (!_isAutoConnecting) {
+        bridge.ensureConnected();
+      }
       if (bridge.isConnected) {
         bridge.requestSessionList();
         bridge.requestRecentSessions(projectPath: bridge.currentProjectFilter);

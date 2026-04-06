@@ -105,10 +105,15 @@ class BridgeService implements BridgeServiceBase {
   // Auto-reconnect
   String? _lastUrl;
   Timer? _reconnectTimer;
+  Timer? _connectionTimeoutTimer;
   int _reconnectAttempt = 0;
+  int _connectGeneration = 0;
   static const _maxReconnectDelay = 30;
   static const _maxReconnectAttempts = 10;
+  static const _connectionTimeoutSeconds = 10;
   bool _intentionalDisconnect = false;
+  bool _healthCheckInProgress = false;
+  bool _autoConnectInProgress = false;
 
   @override
   Stream<ServerMessage> get messages => _messageController.stream;
@@ -211,30 +216,62 @@ class BridgeService implements BridgeServiceBase {
     _connectionController.add(state);
   }
 
-  void connect(String url) {
-    _intentionalDisconnect = false;
+  void connect(String url, {bool resetReconnectAttempt = true}) {
+    // Bump generation so any stale onDone/onError from the previous channel
+    // are silently ignored.
+    final gen = ++_connectGeneration;
+    _intentionalDisconnect = true;
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
+    _connectionTimeoutTimer?.cancel();
+    _connectionTimeoutTimer = null;
     _channelSub?.cancel();
     _channelSub = null;
     _channel?.sink.close();
     _channel = null;
+
     _lastUrl = url;
+    if (resetReconnectAttempt) {
+      _reconnectAttempt = 0;
+    }
+    _intentionalDisconnect = false;
 
     _setBridgeConnectionState(BridgeConnectionState.connecting);
+    
+    // Set a timeout for connection - if we don't receive any message within
+    // _connectionTimeoutSeconds, assume the connection is stuck and disconnect
+    _connectionTimeoutTimer = Timer(
+      Duration(seconds: _connectionTimeoutSeconds),
+      () {
+        if (_connectGeneration == gen &&
+            _connectionState == BridgeConnectionState.connecting) {
+          logger.info('Connection timeout - no response from server');
+          _channel?.sink.close();
+          _channel = null;
+          _setBridgeConnectionState(BridgeConnectionState.disconnected);
+          _scheduleReconnect();
+        }
+      },
+    );
+    
     try {
       _channel = WebSocketChannel.connect(Uri.parse(url));
-      // Don't set "connected" here — WebSocketChannel.connect returns
-      // immediately before the TCP handshake completes. The state will
-      // be upgraded to "connected" when we receive the first data from
-      // the server (below).
-      _flushMessageQueue();
 
       _channelSub = _channel!.stream.listen(
         (data) {
+          // Stale callback from a previous connect() — ignore.
+          if (_connectGeneration != gen) return;
+          // Cancel connection timeout since we received data
+          _connectionTimeoutTimer?.cancel();
+          _connectionTimeoutTimer = null;
           // First data from server confirms the connection is truly alive.
           _setBridgeConnectionState(BridgeConnectionState.connected);
           _reconnectAttempt = 0;
+          // Cancel any pending reconnect timer since we're now connected
+          _reconnectTimer?.cancel();
+          _reconnectTimer = null;
+          // Flush messages that were queued while we were not connected.
+          _flushMessageQueue();
           try {
             final json = jsonDecode(data as String) as Map<String, dynamic>;
             final sessionId = json['sessionId'] as String?;
@@ -395,6 +432,9 @@ class BridgeService implements BridgeServiceBase {
           }
         },
         onError: (error, stackTrace) {
+          if (_connectGeneration != gen) return;
+          _connectionTimeoutTimer?.cancel();
+          _connectionTimeoutTimer = null;
           logger.error('WS stream error', error, stackTrace);
           _setBridgeConnectionState(BridgeConnectionState.disconnected);
           _messageController.add(
@@ -403,6 +443,9 @@ class BridgeService implements BridgeServiceBase {
           _scheduleReconnect();
         },
         onDone: () {
+          if (_connectGeneration != gen) return;
+          _connectionTimeoutTimer?.cancel();
+          _connectionTimeoutTimer = null;
           _channel = null;
           if (!_intentionalDisconnect) {
             _setBridgeConnectionState(BridgeConnectionState.disconnected);
@@ -437,7 +480,7 @@ class BridgeService implements BridgeServiceBase {
     _setBridgeConnectionState(BridgeConnectionState.reconnecting);
     _reconnectTimer = Timer(Duration(seconds: delay), () {
       if (_lastUrl != null && !_intentionalDisconnect) {
-        connect(_lastUrl!);
+        connect(_lastUrl!, resetReconnectAttempt: false);
       }
     });
   }
@@ -918,27 +961,49 @@ class BridgeService implements BridgeServiceBase {
   /// [MachineManagerService]. Falls back to legacy [SharedPreferences]
   /// for migration.
   Future<bool> autoConnect({String? apiKey}) async {
-    final prefs = await SharedPreferences.getInstance();
-    final url = prefs.getString(_prefKeyUrl);
-    if (url == null || url.isEmpty) return false;
-
-    // Prefer caller-provided apiKey (from SecureStorage), fall back to
-    // legacy SharedPreferences value for backward compatibility.
-    final effectiveApiKey = apiKey ?? prefs.getString(_prefKeyApiKey);
-
-    var connectUrl = url;
-    if (effectiveApiKey != null && effectiveApiKey.isNotEmpty) {
-      final sep = connectUrl.contains('?') ? '&' : '?';
-      connectUrl = '$connectUrl${sep}token=$effectiveApiKey';
+    // Prevent duplicate auto-connect attempts
+    if (_autoConnectInProgress) {
+      logger.info('Auto-connect already in progress, skipping');
+      return false;
     }
+    
+    _autoConnectInProgress = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final url = prefs.getString(_prefKeyUrl);
+      if (url == null || url.isEmpty) return false;
 
-    // Migrate: remove legacy plaintext API key from SharedPreferences.
-    if (prefs.containsKey(_prefKeyApiKey)) {
-      await prefs.remove(_prefKeyApiKey);
+      // Prefer caller-provided apiKey (from SecureStorage), fall back to
+      // legacy SharedPreferences value for backward compatibility.
+      final effectiveApiKey = apiKey ?? prefs.getString(_prefKeyApiKey);
+
+      var connectUrl = url;
+      if (effectiveApiKey != null && effectiveApiKey.isNotEmpty) {
+        final sep = connectUrl.contains('?') ? '&' : '?';
+        connectUrl = '$connectUrl${sep}token=$effectiveApiKey';
+      }
+
+      // Migrate: remove legacy plaintext API key from SharedPreferences.
+      if (prefs.containsKey(_prefKeyApiKey)) {
+        await prefs.remove(_prefKeyApiKey);
+      }
+
+      // Check server health before attempting to connect
+      final health = await checkHealth(url);
+      if (health == null) {
+        logger.info('Auto-connect: server unreachable, staying disconnected');
+        _setBridgeConnectionState(BridgeConnectionState.disconnected);
+        return false;
+      }
+
+      connect(connectUrl);
+      return true;
+    } finally {
+      // Reset flag after a short delay to allow connection to establish
+      Timer(Duration(seconds: 2), () {
+        _autoConnectInProgress = false;
+      });
     }
-
-    connect(connectUrl);
-    return true;
   }
 
   /// Save connection URL to preferences.
@@ -997,7 +1062,7 @@ class BridgeService implements BridgeServiceBase {
               'base64': base64Data,
               'mimeType': mimeType,
               'projectPath': projectPath,
-              'sessionId': ?sessionId,
+              if (sessionId != null) 'sessionId': sessionId,
             }),
           )
           .timeout(const Duration(seconds: 30));
@@ -1039,25 +1104,62 @@ class BridgeService implements BridgeServiceBase {
 
   /// Verify WebSocket health and reconnect if the connection is stale.
   ///
-  /// Call this when the app returns to foreground — iOS may silently kill
-  /// background WebSocket connections without triggering [onDone]/[onError].
+  /// Call this when the app returns to foreground — mobile OSes may silently
+  /// kill background WebSocket connections without triggering [onDone]/[onError],
+  /// leaving the channel in a "connected" state with a dead underlying socket.
   void ensureConnected() {
     if (_lastUrl == null) return;
+
+    // Don't attempt to reconnect if we're already in a connecting/reconnecting state
+    if (_connectionState == BridgeConnectionState.connecting ||
+        _connectionState == BridgeConnectionState.reconnecting) {
+      return;
+    }
+
     if (_connectionState == BridgeConnectionState.connected) {
-      // The channel may appear "connected" but the underlying socket is dead.
-      // A non-null closeCode means the socket has already been closed.
+      // Fast path: if Dart already knows the socket is closed, reconnect.
       if (_channel?.closeCode != null) {
         _scheduleReconnect();
+        return;
       }
-    } else if (_connectionState == BridgeConnectionState.disconnected) {
-      // If we gave up after max reconnect attempts, probe health first.
+      // The channel may appear open but the underlying TCP socket was killed
+      // by the OS in background (especially on Android). Verify with an async
+      // HTTP health check — if the server is unreachable, the WebSocket is
+      // likely dead too.
+      _verifyConnectionHealth();
+    } else {
+      // Disconnected state - only attempt to reconnect if we haven't exceeded
+      // max reconnect attempts. This prevents infinite reconnect loops.
       if (_reconnectAttempt >= _maxReconnectAttempts) {
-        _probeAndReconnect();
-      } else {
-        connect(_lastUrl!);
+        logger.info('Max reconnect attempts reached, not attempting auto-reconnect');
+        return;
       }
-    } else if (_connectionState == BridgeConnectionState.reconnecting) {
-      // Already reconnecting — do nothing.
+      
+      // Cancel any pending timer and probe server health
+      _reconnectTimer?.cancel();
+      _reconnectTimer = null;
+      _probeAndReconnect();
+    }
+  }
+
+  /// Async health check for a connection that appears alive but may have a
+  /// dead underlying socket (common on Android after backgrounding).
+  Future<void> _verifyConnectionHealth() async {
+    if (_healthCheckInProgress) return;
+    _healthCheckInProgress = true;
+    try {
+      final url = _lastUrl;
+      if (url == null || _intentionalDisconnect) return;
+      final health = await checkHealth(url);
+      if (health == null) {
+        logger.info('ensureConnected: health check failed, forcing reconnect');
+        _reconnectAttempt = 0;
+        connect(url);
+      }
+      // If health check succeeds, assume the WebSocket is alive.
+      // A truly dead WebSocket will be detected on the next send.
+    } finally {
+      _healthCheckInProgress = false;
     }
   }
 
@@ -1067,12 +1169,15 @@ class BridgeService implements BridgeServiceBase {
     final url = _lastUrl;
     if (url == null) return;
     final healthy = await checkHealth(url);
+    // Another path may have already connected while we awaited the probe.
+    if (_connectionState == BridgeConnectionState.connected) return;
     if (healthy != null) {
       _reconnectAttempt = 0;
       connect(url);
     } else {
       // Server is unreachable — stay disconnected.
       logger.info('Health probe failed — staying disconnected');
+      _setBridgeConnectionState(BridgeConnectionState.disconnected);
     }
   }
 
@@ -1080,6 +1185,8 @@ class BridgeService implements BridgeServiceBase {
     _intentionalDisconnect = true;
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
+    _connectionTimeoutTimer?.cancel();
+    _connectionTimeoutTimer = null;
     _channelSub?.cancel();
     _channelSub = null;
     _channel?.sink.close();
@@ -1115,6 +1222,9 @@ class BridgeService implements BridgeServiceBase {
   void dispose() {
     _intentionalDisconnect = true;
     _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    _connectionTimeoutTimer?.cancel();
+    _connectionTimeoutTimer = null;
     _channelSub?.cancel();
     _channelSub = null;
     _channel?.sink.close();

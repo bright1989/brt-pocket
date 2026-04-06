@@ -2721,6 +2721,36 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'Google Play で評価する'**
   String get rateOnStoreAndroid;
+
+  /// No description provided for @discardChangesTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'変更を破棄'**
+  String get discardChangesTitle;
+
+  /// No description provided for @discardChangesMessage.
+  ///
+  /// In ja, this message translates to:
+  /// **'このファイルのすべての変更が元に戻されます。この操作は元に戻せません。'**
+  String get discardChangesMessage;
+
+  /// No description provided for @discardHunkTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'ハンクを破棄'**
+  String get discardHunkTitle;
+
+  /// No description provided for @discardHunkMessage.
+  ///
+  /// In ja, this message translates to:
+  /// **'選択した変更が破棄されます。この操作は元に戻せません。'**
+  String get discardHunkMessage;
+
+  /// No description provided for @tipGitNotAvailable.
+  ///
+  /// In ja, this message translates to:
+  /// **'このセッションでは Git を使用できません'**
+  String get tipGitNotAvailable;
 }
 
 class _AppLocalizationsDelegate

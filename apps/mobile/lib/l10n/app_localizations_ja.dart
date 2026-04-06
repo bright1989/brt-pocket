@@ -1410,4 +1410,19 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get rateOnStoreAndroid => 'Google Play で評価する';
+
+  @override
+  String get discardChangesTitle => '変更を破棄';
+
+  @override
+  String get discardChangesMessage => 'このファイルのすべての変更が元に戻されます。この操作は元に戻せません。';
+
+  @override
+  String get discardHunkTitle => 'ハンクを破棄';
+
+  @override
+  String get discardHunkMessage => '選択した変更が破棄されます。この操作は元に戻せません。';
+
+  @override
+  String get tipGitNotAvailable => 'このセッションでは Git を使用できません';
 }

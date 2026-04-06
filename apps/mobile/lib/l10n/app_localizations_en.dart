@@ -1457,4 +1457,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rateOnStoreAndroid => 'Rate on Google Play';
+
+  @override
+  String get discardChangesTitle => 'Discard Changes';
+
+  @override
+  String get discardChangesMessage =>
+      'This will revert all changes in this file. This action cannot be undone.';
+
+  @override
+  String get discardHunkTitle => 'Discard Hunk';
+
+  @override
+  String get discardHunkMessage =>
+      'This will discard the selected changes. This action cannot be undone.';
+
+  @override
+  String get tipGitNotAvailable => 'Git is not available for this session';
 }

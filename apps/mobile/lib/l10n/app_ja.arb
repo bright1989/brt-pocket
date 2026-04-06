@@ -662,5 +662,11 @@
   },
   "starOnGithub": "GitHub にスターする",
   "rateOnStore": "App Store で評価する",
-  "rateOnStoreAndroid": "Google Play で評価する"
+  "rateOnStoreAndroid": "Google Play で評価する",
+
+  "discardChangesTitle": "変更を破棄",
+  "discardChangesMessage": "このファイルのすべての変更が元に戻されます。この操作は元に戻せません。",
+  "discardHunkTitle": "ハンクを破棄",
+  "discardHunkMessage": "選択した変更が破棄されます。この操作は元に戻せません。",
+  "tipGitNotAvailable": "このセッションでは Git を使用できません"
 }
