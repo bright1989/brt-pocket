@@ -114,6 +114,8 @@ class BridgeService implements BridgeServiceBase {
   bool _intentionalDisconnect = false;
   bool _healthCheckInProgress = false;
   bool _autoConnectInProgress = false;
+  bool _wasPreviouslyConnected = false;
+  Timer? _stabilityTimer;
 
   @override
   Stream<ServerMessage> get messages => _messageController.stream;
@@ -249,11 +251,13 @@ class BridgeService implements BridgeServiceBase {
           _channel?.sink.close();
           _channel = null;
           _setBridgeConnectionState(BridgeConnectionState.disconnected);
-          _scheduleReconnect();
+          if (_wasPreviouslyConnected) {
+            _scheduleReconnect();
+          }
         }
       },
     );
-    
+
     try {
       _channel = WebSocketChannel.connect(Uri.parse(url));
 
@@ -266,7 +270,15 @@ class BridgeService implements BridgeServiceBase {
           _connectionTimeoutTimer = null;
           // First data from server confirms the connection is truly alive.
           _setBridgeConnectionState(BridgeConnectionState.connected);
-          _reconnectAttempt = 0;
+          _wasPreviouslyConnected = true;
+          // Reset reconnect counter only after a stable connection (30s).
+          // This prevents infinite loops when the server connects briefly then drops.
+          _stabilityTimer?.cancel();
+          _stabilityTimer = Timer(const Duration(seconds: 30), () {
+            if (_connectionState == BridgeConnectionState.connected) {
+              _reconnectAttempt = 0;
+            }
+          });
           // Cancel any pending reconnect timer since we're now connected
           _reconnectTimer?.cancel();
           _reconnectTimer = null;
@@ -440,7 +452,9 @@ class BridgeService implements BridgeServiceBase {
           _messageController.add(
             ErrorMessage(message: 'WebSocket error: $error'),
           );
-          _scheduleReconnect();
+          if (_wasPreviouslyConnected) {
+            _scheduleReconnect();
+          }
         },
         onDone: () {
           if (_connectGeneration != gen) return;
@@ -449,7 +463,9 @@ class BridgeService implements BridgeServiceBase {
           _channel = null;
           if (!_intentionalDisconnect) {
             _setBridgeConnectionState(BridgeConnectionState.disconnected);
-            _scheduleReconnect();
+            if (_wasPreviouslyConnected) {
+              _scheduleReconnect();
+            }
           } else {
             _setBridgeConnectionState(BridgeConnectionState.disconnected);
           }
@@ -459,7 +475,9 @@ class BridgeService implements BridgeServiceBase {
       logger.error('WS connect failed', e, st);
       _setBridgeConnectionState(BridgeConnectionState.disconnected);
       _messageController.add(ErrorMessage(message: 'Connection failed: $e'));
-      _scheduleReconnect();
+      if (_wasPreviouslyConnected) {
+        _scheduleReconnect();
+      }
     }
   }
 
@@ -469,6 +487,9 @@ class BridgeService implements BridgeServiceBase {
     _reconnectAttempt++;
     if (_reconnectAttempt > _maxReconnectAttempts) {
       logger.info('Max reconnect attempts reached ($_reconnectAttempt), giving up');
+      _wasPreviouslyConnected = false;
+      _stabilityTimer?.cancel();
+      _stabilityTimer = null;
       _setBridgeConnectionState(BridgeConnectionState.disconnected);
       _messageController.add(
         ErrorMessage(message: 'Connection lost. Tap to reconnect.'),
@@ -1183,6 +1204,9 @@ class BridgeService implements BridgeServiceBase {
 
   void disconnect() {
     _intentionalDisconnect = true;
+    _wasPreviouslyConnected = false;
+    _stabilityTimer?.cancel();
+    _stabilityTimer = null;
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
     _connectionTimeoutTimer?.cancel();
@@ -1221,6 +1245,9 @@ class BridgeService implements BridgeServiceBase {
 
   void dispose() {
     _intentionalDisconnect = true;
+    _wasPreviouslyConnected = false;
+    _stabilityTimer?.cancel();
+    _stabilityTimer = null;
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
     _connectionTimeoutTimer?.cancel();
